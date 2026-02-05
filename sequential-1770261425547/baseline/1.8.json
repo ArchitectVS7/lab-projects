@@ -1,0 +1,27 @@
+{
+  "instanceName": "baseline",
+  "testId": "1.8",
+  "testName": "Drag-and-Drop Ordering",
+  "category": "task-management-saas",
+  "timestamp": "2026-02-05T03:17:06.479Z",
+  "turns": [
+    {
+      "turnNumber": 1,
+      "userPrompt": "Add drag-and-drop task reordering within columns:\n- Backend: Add position field to tasks table for ordering\n- API endpoint to update task positions: PATCH /tasks/reorder\n- Frontend: Use React DnD or similar library\n- Tasks can be reordered within the same status column\n- Position persists on page reload\n- Smooth animations for drag operations",
+      "agentResponse": "",
+      "tokensUsed": {
+        "total": 0
+      },
+      "responseTimeMs": 92,
+      "timestamp": "2026-02-05T03:17:06.479Z"
+    }
+  ],
+  "qualityEvaluation": {
+    "taskCompleted": true,
+    "contextRetained": true,
+    "codeWorks": true,
+    "notes": "Auto-generated - manual validation required"
+  },
+  "totalTokens": 0,
+  "totalTimeMs": 92
+}

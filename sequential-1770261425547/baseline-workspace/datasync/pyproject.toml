@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "datasync"
+version = "0.1.0"
+description = "Bidirectional sync between PostgreSQL and MongoDB"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "psycopg2-binary>=2.9.0",
+    "pymongo>=4.0.0",
+    "PyYAML>=6.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+datasync = "datasync.main:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "black>=23.0",
+    "mypy>=1.0",
+]

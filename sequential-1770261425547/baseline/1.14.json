@@ -1,0 +1,27 @@
+{
+  "instanceName": "baseline",
+  "testId": "1.14",
+  "testName": "Email Notifications",
+  "category": "task-management-saas",
+  "timestamp": "2026-02-05T03:17:07.088Z",
+  "turns": [
+    {
+      "turnNumber": 1,
+      "userPrompt": "Implement email notifications:\n- Backend: Set up email service with Nodemailer (or SendGrid)\n- Create notification system for:\n  - Task assigned to you\n  - Task due date approaching (24 hours before)\n  - New comment on your task\n  - Project invitation\n- API endpoint to manage notification preferences: GET/PUT /settings/notifications\n- Frontend: Settings page with notification toggles\n- Email templates with HTML styling",
+      "agentResponse": "",
+      "tokensUsed": {
+        "total": 0
+      },
+      "responseTimeMs": 101,
+      "timestamp": "2026-02-05T03:17:07.088Z"
+    }
+  ],
+  "qualityEvaluation": {
+    "taskCompleted": true,
+    "contextRetained": true,
+    "codeWorks": true,
+    "notes": "Auto-generated - manual validation required"
+  },
+  "totalTokens": 0,
+  "totalTimeMs": 101
+}

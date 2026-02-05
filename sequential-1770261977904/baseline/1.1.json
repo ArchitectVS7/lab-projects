@@ -1,0 +1,27 @@
+{
+  "instanceName": "baseline",
+  "testId": "1.1",
+  "testName": "Project Setup & Tech Stack",
+  "category": "task-management-saas",
+  "timestamp": "2026-02-05T03:26:18.106Z",
+  "turns": [
+    {
+      "turnNumber": 1,
+      "userPrompt": "Set up a new Task Management SaaS application. Use React with TypeScript for the frontend, Node.js with Express for the backend, and PostgreSQL for the database. Include:\n- Project structure with separate frontend/ and backend/ directories\n- Package.json files with necessary dependencies\n- Environment variable configuration\n- Basic README with setup instructions\n- Docker Compose file for local development (PostgreSQL + backend + frontend)",
+      "agentResponse": "",
+      "tokensUsed": {
+        "total": 0
+      },
+      "responseTimeMs": 157,
+      "timestamp": "2026-02-05T03:26:18.105Z"
+    }
+  ],
+  "qualityEvaluation": {
+    "taskCompleted": true,
+    "contextRetained": true,
+    "codeWorks": true,
+    "notes": "Auto-generated - manual validation required"
+  },
+  "totalTokens": 0,
+  "totalTimeMs": 157
+}

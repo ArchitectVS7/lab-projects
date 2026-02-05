@@ -1,0 +1,27 @@
+{
+  "instanceName": "baseline",
+  "testId": "1.3",
+  "testName": "Authentication System",
+  "category": "task-management-saas",
+  "timestamp": "2026-02-05T03:17:05.925Z",
+  "turns": [
+    {
+      "turnNumber": 1,
+      "userPrompt": "Implement user authentication:\n- Backend: JWT-based auth with register, login, logout endpoints\n- Password hashing with bcrypt\n- Auth middleware to protect routes\n- Frontend: Login and Register pages with form validation\n- Context/hook for managing auth state\n- Protected routes that redirect to login if not authenticated\n- Store JWT in httpOnly cookies",
+      "agentResponse": "",
+      "tokensUsed": {
+        "total": 0
+      },
+      "responseTimeMs": 112,
+      "timestamp": "2026-02-05T03:17:05.925Z"
+    }
+  ],
+  "qualityEvaluation": {
+    "taskCompleted": true,
+    "contextRetained": true,
+    "codeWorks": true,
+    "notes": "Auto-generated - manual validation required"
+  },
+  "totalTokens": 0,
+  "totalTimeMs": 112
+}

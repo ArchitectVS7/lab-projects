@@ -1,0 +1,27 @@
+{
+  "instanceName": "baseline",
+  "testId": "1.12",
+  "testName": "Dashboard with Analytics",
+  "category": "task-management-saas",
+  "timestamp": "2026-02-05T03:26:19.372Z",
+  "turns": [
+    {
+      "turnNumber": 1,
+      "userPrompt": "Create a dashboard homepage:\n- Backend: API endpoint for dashboard stats: GET /dashboard\n  - Total tasks, completed tasks, overdue tasks, tasks by priority\n  - Recent activity (last 10 task updates)\n- Frontend: Dashboard page with:\n  - Stats cards showing key metrics\n  - Pie chart of tasks by status\n  - Bar chart of tasks by project\n  - Recent activity feed\n  - Quick actions (Create Project, Create Task)\n- Use Chart.js or Recharts for visualizations",
+      "agentResponse": "",
+      "tokensUsed": {
+        "total": 0
+      },
+      "responseTimeMs": 120,
+      "timestamp": "2026-02-05T03:26:19.372Z"
+    }
+  ],
+  "qualityEvaluation": {
+    "taskCompleted": true,
+    "contextRetained": true,
+    "codeWorks": true,
+    "notes": "Auto-generated - manual validation required"
+  },
+  "totalTokens": 0,
+  "totalTimeMs": 120
+}

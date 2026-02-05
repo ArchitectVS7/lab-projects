@@ -1,0 +1,27 @@
+{
+  "instanceName": "baseline",
+  "testId": "1.11",
+  "testName": "Team Member Management",
+  "category": "task-management-saas",
+  "timestamp": "2026-02-05T03:17:06.780Z",
+  "turns": [
+    {
+      "turnNumber": 1,
+      "userPrompt": "Add project team management:\n- Backend: API endpoints for managing project members\n  - POST /projects/:id/members (invite by email)\n  - DELETE /projects/:id/members/:userId (remove member)\n  - GET /projects/:id/members (list members)\n- Frontend: \"Team\" tab in project view\n- Invite member modal with email input\n- Member list showing avatar, name, role, and remove button\n- Only project owner can add/remove members\n- Prevent owner from removing themselves",
+      "agentResponse": "",
+      "tokensUsed": {
+        "total": 0
+      },
+      "responseTimeMs": 98,
+      "timestamp": "2026-02-05T03:17:06.780Z"
+    }
+  ],
+  "qualityEvaluation": {
+    "taskCompleted": true,
+    "contextRetained": true,
+    "codeWorks": true,
+    "notes": "Auto-generated - manual validation required"
+  },
+  "totalTokens": 0,
+  "totalTimeMs": 98
+}

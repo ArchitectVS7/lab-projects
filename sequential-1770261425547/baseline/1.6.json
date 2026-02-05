@@ -1,0 +1,27 @@
+{
+  "instanceName": "baseline",
+  "testId": "1.6",
+  "testName": "Task Assignment",
+  "category": "task-management-saas",
+  "timestamp": "2026-02-05T03:17:06.260Z",
+  "turns": [
+    {
+      "turnNumber": 1,
+      "userPrompt": "Add task assignment functionality:\n- Backend: Update task model to include assignee_id\n- API endpoint to get project members: GET /projects/:id/members\n- Frontend: Assignee dropdown in task form showing project members\n- Display assignee avatar/name on task cards\n- \"My Tasks\" page showing all tasks assigned to current user across all projects\n- Unassigned tasks should show \"Unassigned\" label",
+      "agentResponse": "",
+      "tokensUsed": {
+        "total": 0
+      },
+      "responseTimeMs": 113,
+      "timestamp": "2026-02-05T03:17:06.260Z"
+    }
+  ],
+  "qualityEvaluation": {
+    "taskCompleted": true,
+    "contextRetained": true,
+    "codeWorks": true,
+    "notes": "Auto-generated - manual validation required"
+  },
+  "totalTokens": 0,
+  "totalTimeMs": 113
+}

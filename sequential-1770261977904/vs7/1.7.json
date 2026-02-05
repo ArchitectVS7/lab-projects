@@ -1,0 +1,27 @@
+{
+  "instanceName": "vs7",
+  "testId": "1.7",
+  "testName": "Task Status Workflow",
+  "category": "task-management-saas",
+  "timestamp": "2026-02-05T03:49:31.124Z",
+  "turns": [
+    {
+      "turnNumber": 1,
+      "userPrompt": "Implement task status management:\n- Backend: Add status field (todo, in_progress, done) with validation\n- API endpoint to update task status: PATCH /tasks/:id/status\n- Frontend: Task board view with 3 columns (Todo, In Progress, Done)\n- Tasks displayed as draggable cards in their respective columns\n- Quick status change via drag-and-drop between columns\n- Status badge on each task showing current status with color coding",
+      "agentResponse": "",
+      "tokensUsed": {
+        "total": 0
+      },
+      "responseTimeMs": 112,
+      "timestamp": "2026-02-05T03:49:31.124Z"
+    }
+  ],
+  "qualityEvaluation": {
+    "taskCompleted": true,
+    "contextRetained": true,
+    "codeWorks": true,
+    "notes": "Auto-generated - manual validation required"
+  },
+  "totalTokens": 0,
+  "totalTimeMs": 112
+}

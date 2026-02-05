@@ -1,0 +1,27 @@
+{
+  "instanceName": "vs7",
+  "testId": "1.5",
+  "testName": "Tasks CRUD",
+  "category": "task-management-saas",
+  "timestamp": "2026-02-05T03:49:30.888Z",
+  "turns": [
+    {
+      "turnNumber": 1,
+      "userPrompt": "Build the tasks management feature:\n- Backend API: GET /projects/:id/tasks, POST /tasks, PUT /tasks/:id, DELETE /tasks/:id\n- Frontend: Project detail page showing tasks in a list/table\n- Create task form (title, description, priority dropdown, due date picker)\n- Inline task editing\n- Task detail modal showing all information\n- Filter tasks by status (All/Todo/In Progress/Done)",
+      "agentResponse": "",
+      "tokensUsed": {
+        "total": 0
+      },
+      "responseTimeMs": 139,
+      "timestamp": "2026-02-05T03:49:30.888Z"
+    }
+  ],
+  "qualityEvaluation": {
+    "taskCompleted": true,
+    "contextRetained": true,
+    "codeWorks": true,
+    "notes": "Auto-generated - manual validation required"
+  },
+  "totalTokens": 0,
+  "totalTimeMs": 139
+}

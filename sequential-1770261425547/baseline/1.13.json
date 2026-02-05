@@ -1,0 +1,27 @@
+{
+  "instanceName": "baseline",
+  "testId": "1.13",
+  "testName": "Search Functionality",
+  "category": "task-management-saas",
+  "timestamp": "2026-02-05T03:17:06.986Z",
+  "turns": [
+    {
+      "turnNumber": 1,
+      "userPrompt": "Add global search feature:\n- Backend: Search endpoint GET /search?q=query\n  - Search across projects (name, description)\n  - Search across tasks (title, description)\n  - Return results grouped by type\n- Frontend: Search bar in navigation header\n- Search results dropdown with grouped results\n- Highlight matching text in results\n- Click result to navigate to project/task\n- Recent searches stored locally",
+      "agentResponse": "",
+      "tokensUsed": {
+        "total": 0
+      },
+      "responseTimeMs": 106,
+      "timestamp": "2026-02-05T03:17:06.986Z"
+    }
+  ],
+  "qualityEvaluation": {
+    "taskCompleted": true,
+    "contextRetained": true,
+    "codeWorks": true,
+    "notes": "Auto-generated - manual validation required"
+  },
+  "totalTokens": 0,
+  "totalTimeMs": 106
+}

@@ -1,0 +1,27 @@
+{
+  "instanceName": "baseline",
+  "testId": "1.2",
+  "testName": "Database Schema & Models",
+  "category": "task-management-saas",
+  "timestamp": "2026-02-05T03:26:18.182Z",
+  "turns": [
+    {
+      "turnNumber": 1,
+      "userPrompt": "Create the database schema for our task management app. We need:\n- Users table (id, email, password_hash, name, avatar_url, created_at)\n- Projects table (id, name, description, color, owner_id, created_at)\n- Tasks table (id, title, description, project_id, assignee_id, status, priority, due_date, created_at, updated_at)\n- Project_members table (project_id, user_id, role, joined_at)\n\nSet up Prisma ORM with these models and create migrations. Include seed data with 2 users, 3 projects, and 10 tasks.",
+      "agentResponse": "",
+      "tokensUsed": {
+        "total": 0
+      },
+      "responseTimeMs": 72,
+      "timestamp": "2026-02-05T03:26:18.182Z"
+    }
+  ],
+  "qualityEvaluation": {
+    "taskCompleted": true,
+    "contextRetained": true,
+    "codeWorks": true,
+    "notes": "Auto-generated - manual validation required"
+  },
+  "totalTokens": 0,
+  "totalTimeMs": 72
+}

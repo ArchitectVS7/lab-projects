@@ -1,0 +1,27 @@
+{
+  "instanceName": "baseline",
+  "testId": "1.10",
+  "testName": "File Attachments",
+  "category": "task-management-saas",
+  "timestamp": "2026-02-05T03:26:19.142Z",
+  "turns": [
+    {
+      "turnNumber": 1,
+      "userPrompt": "Add file attachment support for tasks:\n- Backend: Set up file upload with Multer (or similar)\n- Store files locally in uploads/ directory (or S3 if preferred)\n- Create attachments table (id, task_id, filename, file_url, uploaded_by, created_at)\n- API: POST /tasks/:id/attachments, GET /tasks/:id/attachments, DELETE /attachments/:id\n- Frontend: File upload dropzone in task detail modal\n- Display attached files with download/delete options\n- Show attachment count badge on task cards",
+      "agentResponse": "",
+      "tokensUsed": {
+        "total": 0
+      },
+      "responseTimeMs": 114,
+      "timestamp": "2026-02-05T03:26:19.142Z"
+    }
+  ],
+  "qualityEvaluation": {
+    "taskCompleted": true,
+    "contextRetained": true,
+    "codeWorks": true,
+    "notes": "Auto-generated - manual validation required"
+  },
+  "totalTokens": 0,
+  "totalTimeMs": 114
+}
