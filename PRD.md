@@ -80,6 +80,7 @@ The result is a single deployable system with enterprise-grade auth, efficient c
 
 #### 2.1.6 Frontend Auth State
 - Zustand store with persistence middleware (persists user object only, not the token -- token lives in HTTP-only cookie)
+- Persistence key: `'auth-storage'`
 - On app load: call `GET /api/auth/me` to validate session
 - On 401 from any API call: clear Zustand state, redirect to `/login`
 - All API requests use `credentials: 'include'` for automatic cookie attachment
@@ -101,7 +102,7 @@ The result is a single deployable system with enterprise-grade auth, efficient c
 - **Requires**: Authentication
 - **Input**:
   - `currentPassword`: required, verified against stored hash
-  - `newPassword`: minimum 8 characters, uppercase + lowercase + digit
+  - `newPassword`: minimum 8 characters, must contain uppercase, lowercase, and a digit
 - **Behavior**: Verify current password, hash new password, update record
 - **Returns**: Success message
 
@@ -130,7 +131,7 @@ The result is a single deployable system with enterprise-grade auth, efficient c
 #### 2.3.2 Get Project Detail
 - **Endpoint**: `GET /api/projects/:id`
 - **Requires**: Authentication + membership in project
-- **Returns**: Project with all tasks (including assignee info), all members (including email), owner details, task count
+- **Returns**: Project with all tasks (including assignee info and creator info), all members (including email), owner details, task count
 - **Validation**: UUID format on `:id` param
 
 #### 2.3.3 Create Project
@@ -215,6 +216,7 @@ The result is a single deployable system with enterprise-grade auth, efficient c
   - `status`: filter by status enum
   - `priority`: filter by priority enum
   - `assigneeId`: filter by assignee (UUID)
+  - `creatorId`: filter by creator (UUID)
   - `sortBy`: field to sort on (default: `createdAt`)
   - `order`: `asc` or `desc` (default: `desc`)
 - **Includes**: project (id, name, color), assignee (id, name, avatarUrl), creator (id, name)
@@ -243,13 +245,20 @@ The result is a single deployable system with enterprise-grade auth, efficient c
 #### 2.5.4 Update Task
 - **Endpoint**: `PUT /api/tasks/:id`
 - **Validation**: Same as create, but all fields optional (partial update). `projectId` excluded from updates.
-- **Authorization**: User must be a member of the task's project
+- **Authorization**:
+  - User must be a member of the task's project
+  - OWNER and ADMIN roles can update any task in the project
+  - MEMBER role can only update tasks they created (where `creatorId` matches authenticated user)
+  - VIEWER role cannot update tasks
 - **Assignee check**: If changing assignee, verify new assignee is a project member
 - **Returns**: Updated task with includes
 
 #### 2.5.5 Delete Task
 - **Endpoint**: `DELETE /api/tasks/:id`
-- **Authorization**: OWNER, ADMIN, or MEMBER role on the task's project
+- **Authorization**:
+  - OWNER and ADMIN roles can delete any task in the project
+  - MEMBER role can only delete tasks they created (where `creatorId` matches authenticated user)
+  - VIEWER role cannot delete tasks
 - **Returns**: 204 No Content
 
 #### 2.5.6 Bulk Status Update
@@ -274,7 +283,9 @@ The result is a single deployable system with enterprise-grade auth, efficient c
 - Column headers with status badge and task count
 - Task cards showing: title, description (2-line clamp), priority indicator, due date, assignee avatar
 - Minimum column height for visual consistency
-- Bulk status update API wired for drag-and-drop support
+- **Drag-and-drop**: Implement using `@dnd-kit/core` (modern, accessible, TypeScript-first)
+- Dragging a card to a different column triggers bulk status update API call
+- Visual feedback during drag (card elevation, drop zone highlighting)
 
 #### 2.5.9 Frontend: View Toggle
 - Toggle control in the task view header (Table / Kanban)
@@ -287,7 +298,7 @@ The result is a single deployable system with enterprise-grade auth, efficient c
   - Description (textarea, 3 rows)
   - Status (dropdown: TODO, IN_PROGRESS, IN_REVIEW, DONE)
   - Priority (dropdown: LOW, MEDIUM, HIGH, URGENT)
-  - Project (dropdown populated from user's projects)
+  - Project (dropdown populated from user's projects where role is OWNER, ADMIN, or MEMBER)
   - Assignee (dropdown populated from project members -- updates when project changes)
   - Due date (date picker)
 - Submit creates or updates depending on context
@@ -538,7 +549,7 @@ enum ProjectRole {
 | Native fetch (API client) | saas-2 | Replaced by React Query + fetch/axios -- adds caching, deduplication, retries |
 | express-validator (body validation) | Both | Replaced by Zod for request bodies -- better TypeScript inference. express-validator retained only for param validation (`:id` UUID checks) |
 | localStorage JWT | saas-1 | Replaced by HTTP-only cookies -- prevents XSS token theft |
-| Axios | saas-1 | Either Axios or fetch is acceptable. The API client should use `credentials: 'include'` with whatever HTTP client is chosen. React Query is the primary data-fetching abstraction regardless. |
+| Axios | saas-1 | Use native **fetch** with `credentials: 'include'` for all API requests. React Query abstracts the HTTP client, and fetch avoids an external dependency. |
 
 ---
 
@@ -589,17 +600,18 @@ For development and testing, the system should include a seed script that create
 - **3 projects**: with varied ownership and membership between the two users
 - **10 tasks**: distributed across projects with varied statuses, priorities, assignees, and due dates
 
+**Implementation**: Create as `prisma/seed.ts` and execute via `npx prisma db seed` (configured in `package.json` with `"prisma": { "seed": "tsx prisma/seed.ts" }`). The seed script should be idempotent (safe to run multiple times) and clear existing data before seeding.
+
 ---
 
 ## 9. Open Questions
 
 These items are deferred to the implementation planning phase:
 
-1. **Drag-and-drop library**: The Kanban view needs drag-and-drop for moving task cards between columns. The bulk-status API is ready, but no DnD library was used in either upstream. Candidates: `@dnd-kit/core`, `react-beautiful-dnd`, or native HTML5 drag API.
-2. **Notification system**: Neither upstream has notifications. Consider whether to add toast notifications for mutation success/error feedback.
-3. **Pagination**: Neither upstream paginates task or project lists. May be needed at scale but is not required for MVP.
-4. **Search**: Neither upstream has full-text search. Deferred.
-5. **Activity log**: With creatorId tracking, an activity/audit log is possible but deferred.
+1. **Notification system**: Neither upstream has notifications. Consider whether to add toast notifications for mutation success/error feedback.
+2. **Pagination**: Neither upstream paginates task or project lists. May be needed at scale but is not required for MVP.
+3. **Search**: Neither upstream has full-text search. Deferred.
+4. **Activity log**: With creatorId tracking, an activity/audit log is possible but deferred.
 
 ---
 
