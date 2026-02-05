@@ -202,7 +202,7 @@ export default function Projects() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
               <ColorPicker
-                color={formData.color || '#6366f1'}
+                value={formData.color || '#6366f1'}
                 onChange={(color) => setFormData({ ...formData, color })}
               />
             </div>

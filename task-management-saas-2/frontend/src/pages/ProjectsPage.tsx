@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { projectsApi } from '../lib/api';
-import { Plus, Trash2, Edit, X, Folder, Users, AlertTriangle, CheckSquare } from 'lucide-react';
+import { Plus, Trash2, Edit, X, Folder, AlertTriangle, CheckSquare } from 'lucide-react';
 import clsx from 'clsx';
 
 const COLORS = [
@@ -20,10 +20,10 @@ const COLORS = [
 interface Project {
   id: string;
   name: string;
-  description?: string;
+  description: string | null;
   color: string;
-  owner: { id: string; name: string; avatarUrl?: string };
-  members: Array<{ user: { id: string; name: string; avatarUrl?: string }; role: string }>;
+  owner: { id: string; name: string; avatarUrl: string | null };
+  members: Array<{ user: { id: string; name: string; avatarUrl: string | null }; role: string }>;
   _count: { tasks: number };
   createdAt: string;
 }
