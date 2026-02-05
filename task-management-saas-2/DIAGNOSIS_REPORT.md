@@ -116,14 +116,26 @@ The `-p` flag explicitly sets the port, and most versions of serve understand th
 - **Status:** Deployment 6704cd96 stuck in QUEUED since 17:49:25 (currently 17:52+)
 - **Expected Outcome:** Should work once deployment completes - Express explicitly binds to 0.0.0.0
 
-### Attempt 5/5: Reserved for final fix if needed
+### Attempt 5/5: Optimize Dockerfile, add health check, retrigger deploy
+- **Change:** Optimized frontend Dockerfile to only install express (not all React deps) in production stage. Added /health endpoint to server.js. Fresh commit to retrigger Railway deployment.
+- **Status:** IN PROGRESS
 
-## Current Situation (17:55 UTC)
-- **Blocking Issue:** Railway deployment stuck in QUEUED status for 10+ minutes
-- **Deployment ID:** 6704cd96-ce82-4a3b-b6ad-4df99c5dbddc (queued since 17:49:25)
-- **Fix Ready:** Express server solution should resolve 502 error once deployed
-- **CLI Attempts Failed:**
-  - `railway down --yes` → Removed old deployment but stuck one remains QUEUED
-  - `railway redeploy --yes` → Rejected ("cannot be redeployed" - platform sees QUEUED as active)
-- **Manual Action Needed:** Railway dashboard intervention to cancel stuck deployment, or wait for Railway queue to clear
-- **Alternative:** If queue never clears, may need to create new service or contact Railway support
+## Current Situation (Updated)
+
+### Railway Platform Blocker
+- **Deployment ID:** 6704cd96 stuck in QUEUED since 17:49:25
+- **Railway Message:** "Deployment blocked by upstream GitHub issues"
+- **Root Cause:** Railway experienced a GitHub rate-limiting incident starting Jan 28, 2026 (https://status.railway.com/cmkyc1kpj01iajcrmkwnczd5v). GitHub logins and deployments were timing out. Railway temporarily disabled GitHub logins to reduce load. If this incident is not fully resolved, it explains the stuck queue.
+- **Alternative Cause:** If the Railway service was originally deployed from a template, it may still be linked to the template's "upstream" GitHub repo instead of ArchitectVS7/lab-projects. Fix: Eject from upstream repo in Railway dashboard Settings.
+
+### Backend Logs Analysis
+- Backend starts correctly: `Server running on http://0.0.0.0:8080`
+- PostgreSQL `Connection reset by peer` errors appear just before SIGTERM
+- This is Railway cycling/stopping the container as part of the stuck deployment — the DB errors are a symptom, not a cause
+
+### Resolution Steps
+1. **Dashboard:** Cancel stuck deployment 6704cd96 in Railway dashboard
+2. **Dashboard:** Check Settings → Source for "Upstream Repo" — if present, click Eject
+3. **Dashboard:** Reconnect GitHub repo if needed (disconnect + reconnect)
+4. **Push:** Fresh commit pushed to trigger clean deployment
+5. **Fallback:** If queue remains stuck, create a new Railway service pointing to same repo/Dockerfile
