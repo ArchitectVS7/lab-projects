@@ -486,124 +486,162 @@ The estimated 36-60 hours of work would produce a superior system with:
                     └─────────────────────────────────────┘
 ```
 
-### 5.3 Deployment Steps
+### 5.3 Deployment Steps (Railway via GitHub)
 
-#### For task-management-saas-1
+Since this is a **monorepo** with two separate projects, you cannot use one-click deploy. Instead, you'll create **two Railway projects** (one for each app), each with **three services** (PostgreSQL, backend, frontend).
 
-**Step 1: Prepare for Production**
+---
 
-Create `frontend/vite.config.ts` changes:
-```typescript
-export default defineConfig({
-  plugins: [react()],
-  build: {
-    outDir: 'dist',
-  },
-});
+#### For task-management-saas-1 (TaskApp)
+
+**Step 1: Create Railway Project**
+
+1. Go to [railway.app](https://railway.app) and log in
+2. Click **"New Project"** → **"Empty Project"**
+3. Name it: `taskapp-saas-1`
+
+**Step 2: Add PostgreSQL Database**
+
+1. In your project, click **"+ New"** → **"Database"** → **"PostgreSQL"**
+2. Railway auto-provisions the database and sets `DATABASE_URL`
+
+**Step 3: Add Backend Service**
+
+1. Click **"+ New"** → **"GitHub Repo"**
+2. Select your `lab-projects` repository
+3. **IMPORTANT:** In service settings, set **Root Directory** to: `task-management-saas-1/backend`
+4. Railway will detect the Dockerfile and build automatically
+
+**Step 4: Configure Backend Environment Variables**
+
+In the backend service settings → Variables tab:
+```
+DATABASE_URL        → Click "Add Reference" → Select Postgres.DATABASE_URL
+JWT_SECRET          → Generate a secure 32+ character string
+JWT_EXPIRES_IN      → 7d
+CORS_ORIGIN         → (leave blank for now, update after frontend deploys)
+NODE_ENV            → production
+PORT                → 4000
 ```
 
-Create `backend/Dockerfile.prod`:
-```dockerfile
-FROM node:20-alpine
-WORKDIR /app
-RUN apk add --no-cache openssl
-COPY package*.json ./
-RUN npm ci --only=production
-COPY prisma ./prisma/
-RUN npx prisma generate
-COPY dist ./dist/
-EXPOSE 4000
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
+**Step 5: Add Frontend Service**
+
+1. Click **"+ New"** → **"GitHub Repo"**
+2. Select the same `lab-projects` repository
+3. Set **Root Directory** to: `task-management-saas-1/frontend`
+4. In Settings → Build, add **Build Arguments**:
+   ```
+   VITE_API_URL=https://<backend-service-domain>.railway.app
+   ```
+   (Get the backend domain from backend service → Settings → Domains)
+
+**Step 6: Generate Public Domains**
+
+1. For **Backend**: Settings → Networking → Generate Domain
+2. For **Frontend**: Settings → Networking → Generate Domain
+3. **Update Backend's CORS_ORIGIN** with the frontend's domain:
+   ```
+   CORS_ORIGIN=https://<frontend-domain>.railway.app
+   ```
+
+**Step 7: Verify Deployment**
+
+- Frontend URL: `https://<frontend-domain>.railway.app`
+- Backend health: `https://<backend-domain>.railway.app/health`
+- Test login: `alice@example.com` / `password123`
+
+---
+
+#### For task-management-saas-2 (TaskFlow)
+
+**Repeat Steps 1-7** with these differences:
+
+| Setting | Value |
+|---------|-------|
+| Project name | `taskflow-saas-2` |
+| Backend root directory | `task-management-saas-2/backend` |
+| Frontend root directory | `task-management-saas-2/frontend` |
+| Backend PORT | `3000` |
+
+**Additional Backend Variables for saas-2 (cookie-based auth):**
+```
+COOKIE_SECURE       → true
+COOKIE_SAME_SITE    → none
+COOKIE_DOMAIN       → .railway.app
 ```
 
-**Step 2: Railway Configuration**
+> **Note:** saas-2 uses HTTP-only cookies, so `COOKIE_SAME_SITE=none` is required for cross-origin cookie sending between Railway subdomains. In production with a custom domain, use `strict`.
 
-Create `railway.toml`:
-```toml
-[build]
-builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+---
 
-[deploy]
-startCommand = "npx prisma migrate deploy && npm start"
-healthcheckPath = "/health"
-healthcheckTimeout = 100
-restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 3
-```
+#### Deployment Checklist
 
-**Step 3: Deploy via Railway CLI or GitHub**
+| Step | saas-1 | saas-2 |
+|------|--------|--------|
+| Create Railway project | ☐ | ☐ |
+| Add PostgreSQL | ☐ | ☐ |
+| Add backend (set root dir) | ☐ | ☐ |
+| Configure backend env vars | ☐ | ☐ |
+| Add frontend (set root dir) | ☐ | ☐ |
+| Set VITE_API_URL build arg | ☐ | ☐ |
+| Generate domains | ☐ | ☐ |
+| Update CORS_ORIGIN | ☐ | ☐ |
+| Test health endpoint | ☐ | ☐ |
+| Test login | ☐ | ☐ |
 
+### 5.4 Quick Deploy Commands (CLI Alternative)
+
+> **Recommended:** Use the GitHub integration method in section 5.3 for monorepos. The CLI commands below are provided as a reference but require manual service linking.
+
+**Install Railway CLI:**
 ```bash
-# Option 1: Railway CLI
 npm install -g @railway/cli
 railway login
+```
+
+**Deploy saas-1 backend:**
+```bash
+cd /home/user/lab-projects/task-management-saas-1/backend
+
+# Create project and link (do this once)
 railway init
+
+# Add PostgreSQL via dashboard, then link this service
+railway link
+
+# Set environment variables
+railway variables set JWT_SECRET="your-secure-secret-here"
+railway variables set JWT_EXPIRES_IN="7d"
+railway variables set NODE_ENV="production"
+railway variables set PORT="4000"
+
+# Deploy
 railway up
-
-# Option 2: GitHub Integration
-# 1. Push to GitHub
-# 2. Connect repo in Railway dashboard
-# 3. Configure environment variables
-# 4. Deploy
 ```
 
-**Step 4: Environment Variables (Railway Dashboard)**
-
-```
-# Backend Service
-DATABASE_URL=${{Postgres.DATABASE_URL}}
-JWT_SECRET=<generate-secure-32-char-secret>
-JWT_EXPIRES_IN=7d
-CORS_ORIGIN=${{Frontend.RAILWAY_PUBLIC_DOMAIN}}
-NODE_ENV=production
-PORT=4000
-
-# Frontend Service
-VITE_API_URL=${{Backend.RAILWAY_PUBLIC_DOMAIN}}
-```
-
-#### For task-management-saas-2
-
-Same process, but note these differences:
-
-```
-# Backend Service (saas-2 differences)
-PORT=3000
-COOKIE_SECURE=true
-COOKIE_SAME_SITE=strict
-
-# Frontend Service
-VITE_API_URL=https://<backend-domain>.railway.app
-```
-
-### 5.4 Quick Deploy Commands
-
-**Deploy saas-1:**
+**Deploy saas-1 frontend:**
 ```bash
-cd /home/user/lab-projects/task-management-saas-1
+cd /home/user/lab-projects/task-management-saas-1/frontend
 
-# Build backend
-cd backend && npm run build && cd ..
+# Link to same project but as new service
+railway link
 
-# Deploy to Railway
-railway init --name taskapp-saas-1
-railway add --database postgres
-railway up
+# Deploy (VITE_API_URL is baked in at build time via Dockerfile ARG)
+railway up --build-arg VITE_API_URL=https://<backend-domain>.railway.app
 ```
 
-**Deploy saas-2:**
-```bash
-cd /home/user/lab-projects/task-management-saas-2
+**Deploy saas-2:** Repeat the above for `task-management-saas-2/backend` and `task-management-saas-2/frontend`.
 
-# Build backend
-cd backend && npm run build && cd ..
+---
 
-# Deploy to Railway
-railway init --name taskflow-saas-2
-railway add --database postgres
-railway up
-```
+**Why GitHub Integration is Preferred:**
+
+| Aspect | CLI | GitHub Integration |
+|--------|-----|-------------------|
+| Monorepo support | Manual service linking | Root directory setting per service |
+| Auto-deploy on push | Requires `railway up` | Automatic |
+| Environment variables | CLI commands | Visual dashboard |
+| Build logs | Terminal only | Dashboard with history |
 
 ### 5.5 Alternative: Docker Compose on a VPS
 
