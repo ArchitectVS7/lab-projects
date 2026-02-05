@@ -217,7 +217,10 @@ volumes:
     "zustand": "^4.5.2",
     "date-fns": "^3.4.0",
     "clsx": "^2.1.0",
-    "lucide-react": "^0.358.0"
+    "lucide-react": "^0.358.0",
+    "@dnd-kit/core": "^6.1.0",
+    "@dnd-kit/sortable": "^8.0.0",
+    "@dnd-kit/utilities": "^3.2.2"
   },
   "devDependencies": {
     "@types/react": "^18.2.64",
@@ -792,6 +795,7 @@ export interface TaskFilters {
   status?: string;
   priority?: string;
   assigneeId?: string;
+  creatorId?: string;
   sortBy?: string;
   order?: 'asc' | 'desc';
 }
@@ -1041,7 +1045,7 @@ Implement the following endpoints. Use the Zod schemas from Section 1.10. Refere
 | Endpoint | Key Logic |
 |----------|-----------|
 | `GET /` | `findMany` where user is owner OR member. Include owner, members with user, `_count.tasks`. Order by `createdAt desc`. |
-| `GET /:id` | `findFirst` with same OR condition. Include owner, members.user, tasks.assignee, `_count.tasks`. |
+| `GET /:id` | `findFirst` with same OR condition. Include owner, members.user, tasks.assignee, tasks.creator, `_count.tasks`. |
 | `POST /` | Validate with `createProjectSchema`. Create project + auto-create `ProjectMember` with role=OWNER in a single Prisma create. |
 | `PUT /:id` | Check membership role is OWNER or ADMIN. Validate with `updateProjectSchema`. |
 | `DELETE /:id` | Check `ownerId === req.userId`. Cascade handles tasks and members. Return 204. |
@@ -1147,14 +1151,42 @@ Use the Zod schemas from Section 1.10. Reference the saas-2 implementation for a
 
 | Endpoint | Key Logic |
 |----------|-----------|
-| `GET /` | Get all projectIds where user is a member. `findMany` with optional filters (projectId, status, priority, assigneeId), configurable `orderBy`. Include project, assignee, creator. |
+| `GET /` | Get all projectIds where user is a member. `findMany` with optional filters (projectId, status, priority, assigneeId, **creatorId**), configurable `orderBy`. Include project, assignee, creator. |
 | `GET /:id` | `findUnique` + verify project membership. Include project, assignee, creator. |
-| `POST /` | Validate with `createTaskSchema`. Check project membership. If `assigneeId`, verify assignee is also a member. Set `creatorId` to `req.userId`. |
-| `PUT /:id` | Validate with `updateTaskSchema`. Check membership on the task's existing project. If changing assignee, verify. |
-| `DELETE /:id` | Check membership role is OWNER, ADMIN, or MEMBER. Return 204. |
-| `PATCH /bulk-status` | Validate with `bulkStatusSchema`. Verify membership for each task's project. `updateMany`. Return `{ updated: count }`. |
+| `POST /` | Validate with `createTaskSchema`. Check project membership (**must be OWNER, ADMIN, or MEMBER -- not VIEWER**). If `assigneeId`, verify assignee is also a member. Set `creatorId` to `req.userId`. |
+| `PUT /:id` | Validate with `updateTaskSchema`. **Role-based authorization** (see below). If changing assignee, verify. |
+| `DELETE /:id` | **Role-based authorization** (see below). Return 204. |
+| `PATCH /bulk-status` | Validate with `bulkStatusSchema`. Verify membership for each task's project. **Same role logic as PUT** per task. `updateMany`. Return `{ updated: count }`. |
 
 **Important**: The `PATCH /bulk-status` route must be registered BEFORE `GET /:id`, otherwise Express will try to match `bulk-status` as an `:id` parameter.
+
+#### Task Authorization Model (PRD 2.5.4 / 2.5.5)
+
+Task update and delete enforce role + ownership rules. This is the key authorization helper for tasks:
+
+```typescript
+// Determines if user can modify a task based on their project role and task ownership
+function canModifyTask(
+  membership: { role: string } | null,
+  task: { creatorId: string },
+  userId: string
+): boolean {
+  if (!membership) return false;
+  // OWNER and ADMIN can modify any task in the project
+  if (['OWNER', 'ADMIN'].includes(membership.role)) return true;
+  // MEMBER can only modify tasks they created
+  if (membership.role === 'MEMBER' && task.creatorId === userId) return true;
+  // VIEWER cannot modify tasks
+  return false;
+}
+```
+
+| Role | Update own tasks | Update others' tasks | Delete own tasks | Delete others' tasks |
+|------|-----------------|---------------------|-----------------|---------------------|
+| OWNER | Yes | Yes | Yes | Yes |
+| ADMIN | Yes | Yes | Yes | Yes |
+| MEMBER | Yes | No (403) | Yes | No (403) |
+| VIEWER | No (403) | No (403) | No (403) | No (403) |
 
 ### 3.2 Backend Integration
 
@@ -1221,12 +1253,41 @@ Directly adapted from saas-1's `TasksPage.tsx`:
 Adapted from saas-2's `ProjectDetail.tsx` Kanban, but showing all tasks (not scoped to a single project):
 - 4 columns: TODO, IN_PROGRESS, IN_REVIEW, DONE.
 - Each task card: title, description (2-line clamp), priority color, project name chip, assignee avatar, due date.
-- For MVP: clicking a card opens the edit modal. Drag-and-drop deferred (noted in PRD Open Questions).
+- Clicking a card opens the edit modal.
+- **Drag-and-drop with `@dnd-kit`**: Cards are draggable between columns. Dropping a card in a different column calls `tasksApi.bulkStatus([taskId], newStatus)` and invalidates the `['tasks']` query. Visual feedback: card elevation on grab, drop zone highlighting on hover.
+
+`@dnd-kit` integration pattern:
+
+```typescript
+import { DndContext, DragEndEvent, closestCorners } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+
+function handleDragEnd(event: DragEndEvent) {
+  const { active, over } = event;
+  if (!over) return;
+
+  const taskId = active.id as string;
+  const newStatus = over.id as string; // column id = status value
+
+  if (taskId && newStatus) {
+    bulkStatusMutation.mutate({ taskIds: [taskId], status: newStatus });
+  }
+}
+```
 
 #### Task Modal
 
 Shared between both views. Fields:
 - Title, Description, Status, Priority, Project (dropdown), Assignee (dropdown -- filtered by selected project's members), Due Date (date input).
+- **Project dropdown filtering**: Only show projects where the current user's role is OWNER, ADMIN, or MEMBER. Exclude projects where user is VIEWER (read-only). Filter logic:
+
+```typescript
+const writableProjects = projects?.filter((p: any) => {
+  const membership = p.members?.find((m: any) => m.user.id === currentUser.id);
+  return membership && ['OWNER', 'ADMIN', 'MEMBER'].includes(membership.role);
+}) || [];
+```
+
 - When project selection changes, reset assignee if they're not a member of the new project.
 
 ### 3.4 Validation Checklist -- Phase 3
@@ -1234,21 +1295,29 @@ Shared between both views. Fields:
 ```
 Backend (curl):
   [ ] POST /api/tasks → 201, creatorId set automatically
+  [ ] POST /api/tasks as VIEWER → 403
   [ ] POST /api/tasks with assignee not in project → 400
   [ ] GET /api/tasks → returns only tasks from user's projects
   [ ] GET /api/tasks?status=TODO → filtered results
+  [ ] GET /api/tasks?creatorId=<uuid> → filtered by creator
   [ ] GET /api/tasks?sortBy=priority&order=asc → sorted results
-  [ ] PUT /api/tasks/:id → 200, updated task
-  [ ] DELETE /api/tasks/:id → 204
+  [ ] PUT /api/tasks/:id as OWNER/ADMIN → 200 (any task)
+  [ ] PUT /api/tasks/:id as MEMBER (own task) → 200
+  [ ] PUT /api/tasks/:id as MEMBER (other's task) → 403
+  [ ] PUT /api/tasks/:id as VIEWER → 403
+  [ ] DELETE /api/tasks/:id as MEMBER (own task) → 204
+  [ ] DELETE /api/tasks/:id as MEMBER (other's task) → 403
+  [ ] DELETE /api/tasks/:id as VIEWER → 403
   [ ] PATCH /api/tasks/bulk-status → { updated: N }
 
 Frontend (browser):
   [ ] Table view renders with all tasks
   [ ] Inline status dropdown updates task
   [ ] Kanban view renders 4 columns
+  [ ] Drag task card to different column → status updates
   [ ] View toggle switches between table and kanban
   [ ] View preference persists across page refresh
-  [ ] Create task modal shows projects dropdown
+  [ ] Create task modal shows only writable projects (not VIEWER)
   [ ] Assignee dropdown updates when project changes
   [ ] Edit task pre-fills all fields
   [ ] Delete task removes from list
@@ -1451,3 +1520,5 @@ End-to-end flow:
 | JWT cookie name mismatch | Single `COOKIE_NAME` constant in auth middleware, used by set/clear/extract. |
 | assigneeId referencing non-member | Membership check before create/update. Pattern shown in Zod + route logic. |
 | OWNER removal | Explicit check in `DELETE /members/:userId` prevents removing OWNER role. |
+| MEMBER modifying other users' tasks | `canModifyTask()` helper checks `creatorId === userId` for MEMBER role. Reference code provided in Phase 3. |
+| VIEWER creating/editing tasks | Membership role check in POST/PUT/DELETE handlers. VIEWERs excluded from task modal project dropdown on frontend. |
