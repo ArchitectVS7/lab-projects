@@ -516,65 +516,80 @@ Since this is a **monorepo** with two separate projects, you cannot use one-clic
 
 **Step 4: Configure Backend Environment Variables**
 
-In the backend service settings → Variables tab:
-```
-DATABASE_URL        → Click "Add Reference" → Select Postgres.DATABASE_URL
-JWT_SECRET          → Generate a secure 32+ character string
-JWT_EXPIRES_IN      → 7d
-CORS_ORIGIN         → (leave blank for now, update after frontend deploys)
-NODE_ENV            → production
-PORT                → 4000
-```
+In the backend service → **Variables** tab, add these variables:
 
-**Step 5: Add Frontend Service**
+| Variable | Value | Notes |
+|----------|-------|-------|
+| `DATABASE_URL` | (Reference) | Click "Add Reference" → Select `Postgres.DATABASE_URL` |
+| `JWT_SECRET` | `your-secure-secret-here` | Generate a secure 32+ character string |
+| `JWT_EXPIRES_IN` | `7d` | Token expiration time |
+| `CORS_ORIGIN` | (set after Step 6) | Will be the frontend domain |
+| `NODE_ENV` | `production` | |
+
+> **⚠️ Do NOT set a `PORT` variable.** Railway assigns the port automatically. The backend reads `process.env.PORT` which Railway provides.
+
+> **⚠️ Variable format:** Enter ONLY the value, not `KEY=value`. For example, enter `production` not `NODE_ENV=production`.
+
+**Step 5: Generate Backend Domain First**
+
+1. Go to **Backend service** → **Settings** → **Networking**
+2. Click **"Generate Domain"**
+3. Copy the generated URL (e.g., `https://taskapp-backend-production-xxxx.up.railway.app`)
+
+**Step 6: Add Frontend Service**
 
 1. Click **"+ New"** → **"GitHub Repo"**
 2. Select the same `lab-projects` repository
 3. Set **Root Directory** to: `task-management-saas-1/frontend`
 4. In the **Variables** tab, add:
-   ```
-   VITE_API_URL = https://<backend-service-domain>.railway.app
-   ```
-   (Get the backend domain from backend service → Settings → Networking → Domains)
 
-   > Railway passes service variables to Docker builds automatically via the Dockerfile's `ARG` directive.
+| Variable | Value |
+|----------|-------|
+| `VITE_API_URL` | `https://your-backend-domain.up.railway.app` |
 
-**Step 6: Generate Public Domains**
+> **⚠️ Important:** Enter ONLY the URL as the value. Do NOT enter `VITE_API_URL=https://...` - just the URL itself.
 
-1. For **Backend**: Settings → Networking → Generate Domain
-2. For **Frontend**: Settings → Networking → Generate Domain
-3. **Update Backend's CORS_ORIGIN** with the frontend's domain:
-   ```
-   CORS_ORIGIN=https://<frontend-domain>.railway.app
-   ```
+**Step 7: Generate Frontend Domain & Update CORS**
 
-**Step 7: Verify Deployment**
+1. Go to **Frontend service** → **Settings** → **Networking** → **Generate Domain**
+2. Copy the frontend URL
+3. Go back to **Backend service** → **Variables**
+4. Update `CORS_ORIGIN` with the frontend URL (just the URL, no `CORS_ORIGIN=` prefix)
 
-- Frontend URL: `https://<frontend-domain>.railway.app`
-- Backend health: `https://<backend-domain>.railway.app/health`
-- Test login: `alice@example.com` / `password123`
+**Step 8: Verify Deployment**
+
+1. Wait for both services to finish deploying (watch the Deployments tab)
+2. Check backend health: `https://<backend-domain>/health`
+3. Open frontend URL and register a new account
+4. The database tables are created automatically via Prisma migrations on first deploy
 
 ---
 
 #### For task-management-saas-2 (TaskFlow)
 
-**Repeat Steps 1-7** with these differences:
+**Repeat Steps 1-8** with these differences:
 
 | Setting | Value |
 |---------|-------|
 | Project name | `taskflow-saas-2` |
 | Backend root directory | `task-management-saas-2/backend` |
 | Frontend root directory | `task-management-saas-2/frontend` |
-| Backend PORT | `3000` |
 
-**Additional Backend Variables for saas-2 (cookie-based auth):**
-```
-COOKIE_SECURE       → true
-COOKIE_SAME_SITE    → none
-COOKIE_DOMAIN       → .railway.app
-```
+**Backend Variables for saas-2:**
 
-> **Note:** saas-2 uses HTTP-only cookies, so `COOKIE_SAME_SITE=none` is required for cross-origin cookie sending between Railway subdomains. In production with a custom domain, use `strict`.
+| Variable | Value | Notes |
+|----------|-------|-------|
+| `DATABASE_URL` | (Reference) | Click "Add Reference" → Select `Postgres.DATABASE_URL` |
+| `JWT_SECRET` | `your-secure-secret-here` | Generate a different secret than saas-1 |
+| `JWT_EXPIRES_IN` | `7d` | |
+| `CORS_ORIGIN` | (frontend URL) | Set after frontend domain is generated |
+| `NODE_ENV` | `production` | |
+| `COOKIE_SECURE` | `true` | Required for HTTPS |
+| `COOKIE_SAME_SITE` | `none` | Required for cross-subdomain cookies |
+
+> **Note:** saas-2 uses HTTP-only cookies for authentication. `COOKIE_SAME_SITE=none` is required because the frontend and backend have different Railway subdomains. In production with a custom domain where both share the same domain, use `strict`.
+
+> **⚠️ Do NOT set a `PORT` variable** - Railway assigns it automatically.
 
 ---
 
@@ -582,16 +597,17 @@ COOKIE_DOMAIN       → .railway.app
 
 | Step | saas-1 | saas-2 |
 |------|--------|--------|
-| Create Railway project | ☐ | ☐ |
-| Add PostgreSQL | ☐ | ☐ |
-| Add backend (set root dir) | ☐ | ☐ |
-| Configure backend env vars | ☐ | ☐ |
-| Add frontend (set root dir) | ☐ | ☐ |
-| Set VITE_API_URL variable | ☐ | ☐ |
-| Generate domains | ☐ | ☐ |
-| Update CORS_ORIGIN | ☐ | ☐ |
-| Test health endpoint | ☐ | ☐ |
-| Test login | ☐ | ☐ |
+| 1. Create Railway project | ☑ | ☐ |
+| 2. Add PostgreSQL database | ☑ | ☐ |
+| 3. Add backend service (set root dir) | ☑ | ☐ |
+| 4. Configure backend env vars (NO PORT!) | ☑ | ☐ |
+| 5. Generate backend domain | ☑ | ☐ |
+| 6. Add frontend service (set root dir) | ☑ | ☐ |
+| 7. Set VITE_API_URL (value only, no prefix) | ☑ | ☐ |
+| 8. Generate frontend domain | ☑ | ☐ |
+| 9. Update backend CORS_ORIGIN | ☑ | ☐ |
+| 10. Verify: backend /health returns 200 | ☑ | ☐ |
+| 11. Verify: can register new account | ☑ | ☐ |
 
 ### 5.4 Quick Deploy Commands (CLI Alternative)
 
