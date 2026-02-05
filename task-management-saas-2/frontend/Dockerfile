@@ -12,15 +12,17 @@ ENV VITE_API_URL=$VITE_API_URL
 
 RUN npm run build
 
-# Production stage - serve with lightweight static server
+# Production stage - serve with Express
 FROM node:20-alpine
 
 WORKDIR /app
 
-RUN npm install -g serve
+COPY package*.json ./
+RUN npm ci --omit=dev
 
+COPY server.js ./
 COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "serve -s dist -l $PORT"]
+CMD ["node", "server.js"]
