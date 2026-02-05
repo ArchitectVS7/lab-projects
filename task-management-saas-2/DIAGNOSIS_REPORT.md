@@ -92,4 +92,33 @@ The `-p` flag explicitly sets the port, and most versions of serve understand th
 5. If still failing, check dist directory contents (Hypothesis 3)
 
 ## Iteration Tracker
-- Attempt 1/5: Root cause analysis + Dockerfile serve command fix proposed
+
+### Attempt 1/5: Serve command syntax fix
+- **Change:** Updated `serve -l tcp://0.0.0.0:$PORT` → `serve -l $PORT`
+- **Result:** FAILED - serve crashed with "Unknown --listen endpoint scheme" error
+- **Learning:** serve doesn't accept `tcp://` prefix
+
+### Attempt 2/5: Explicit host binding
+- **Change:** Updated to `serve -l 0.0.0.0:$PORT`
+- **Result:** CRASHED - serve crashed with "Unknown --listen endpoint scheme: 0.0.0.0:"
+- **Learning:** serve doesn't accept `host:port` format in -l flag
+
+### Attempt 3/5: PORT-only approach
+- **Change:** Used `serve -l $PORT` (no host prefix)
+- **Result:** FAILED (502) - Container running but logs show `localhost:8080` binding
+- **Root Cause CONFIRMED:** serve defaults to localhost binding, not 0.0.0.0
+- **Learning:** Railway edge proxy can't connect to localhost-bound services
+
+### Attempt 4/5: Replace serve with Express
+- **Change:** Created custom Express server with explicit `app.listen(PORT, '0.0.0.0')`
+- **First Try:** BUILD FAILED - npm ci lockfile mismatch (added express but didn't update package-lock.json)
+- **Second Try:** Updated package-lock.json, deployment QUEUED for 3+ minutes (Railway queue stuck)
+- **Status:** Deployment 6704cd96 stuck in QUEUED since 17:49:25 (currently 17:52+)
+- **Expected Outcome:** Should work once deployment completes - Express explicitly binds to 0.0.0.0
+
+### Attempt 5/5: Reserved for final fix if needed
+
+## Current Situation (17:52 UTC)
+- **Blocking Issue:** Railway deployment stuck in QUEUED status
+- **Fix Ready:** Express server solution should resolve 502 error once deployed
+- **Manual Action Needed:** May need Railway console intervention to unstick deployment queue
