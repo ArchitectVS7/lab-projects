@@ -35,7 +35,7 @@ router.post(
       const user = await prisma.user.create({
         data: {
           email,
-          password: hashedPassword,
+          passwordHash: hashedPassword,
           name,
         },
         select: {
@@ -80,7 +80,7 @@ router.post(
         throw new AppError('Invalid credentials', 401);
       }
 
-      const isValidPassword = await bcrypt.compare(password, user.password);
+      const isValidPassword = await bcrypt.compare(password, user.passwordHash);
       if (!isValidPassword) {
         throw new AppError('Invalid credentials', 401);
       }

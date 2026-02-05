@@ -17,7 +17,7 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
 
     const tasks = await prisma.task.findMany({
       where: {
-        userId: req.userId,
+        creatorId: req.userId,
         ...(status && { status: status as any }),
         ...(priority && { priority: priority as any }),
         ...(projectId && { projectId: projectId as string }),
@@ -42,7 +42,7 @@ router.get('/:id', async (req: AuthRequest, res: Response, next: NextFunction) =
     const task = await prisma.task.findFirst({
       where: {
         id: req.params.id,
-        userId: req.userId,
+        creatorId: req.userId,
       },
       include: {
         project: {
@@ -66,7 +66,7 @@ router.post(
   '/',
   [
     body('title').trim().notEmpty(),
-    body('status').optional().isIn(['TODO', 'IN_PROGRESS', 'DONE']),
+    body('status').optional().isIn(['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE']),
     body('priority').optional().isIn(['LOW', 'MEDIUM', 'HIGH', 'URGENT']),
   ],
   async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -85,7 +85,7 @@ router.post(
           status,
           priority,
           dueDate: dueDate ? new Date(dueDate) : null,
-          userId: req.userId!,
+          creatorId: req.userId!,
           projectId,
         },
         include: {
@@ -107,7 +107,7 @@ router.put(
   '/:id',
   [
     body('title').optional().trim().notEmpty(),
-    body('status').optional().isIn(['TODO', 'IN_PROGRESS', 'DONE']),
+    body('status').optional().isIn(['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE']),
     body('priority').optional().isIn(['LOW', 'MEDIUM', 'HIGH', 'URGENT']),
   ],
   async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -120,7 +120,7 @@ router.put(
       const existingTask = await prisma.task.findFirst({
         where: {
           id: req.params.id,
-          userId: req.userId,
+          creatorId: req.userId,
         },
       });
 
@@ -160,7 +160,7 @@ router.delete('/:id', async (req: AuthRequest, res: Response, next: NextFunction
     const existingTask = await prisma.task.findFirst({
       where: {
         id: req.params.id,
-        userId: req.userId,
+        creatorId: req.userId,
       },
     });
 

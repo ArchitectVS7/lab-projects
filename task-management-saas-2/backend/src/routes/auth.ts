@@ -1,18 +1,17 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import { body, validationResult } from 'express-validator';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/prisma';
 import { AppError } from '../middleware/errorHandler';
-import { 
-  authenticate, 
-  AuthRequest, 
-  generateToken, 
-  setAuthCookie, 
-  clearAuthCookie 
+import {
+  authenticate,
+  AuthRequest,
+  generateToken,
+  setAuthCookie,
+  clearAuthCookie
 } from '../middleware/auth';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // Register
 router.post(
@@ -162,7 +161,7 @@ router.get('/me', authenticate, async (req: AuthRequest, res: Response, next: Ne
       throw new AppError('User not found', 404);
     }
 
-    res.json(user);
+    res.json({ user });
   } catch (error) {
     next(error);
   }

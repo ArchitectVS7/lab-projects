@@ -1,11 +1,11 @@
 import { Router, Response, NextFunction } from 'express';
 import { body, param, validationResult } from 'express-validator';
-import { PrismaClient, ProjectRole } from '@prisma/client';
+import { ProjectRole } from '@prisma/client';
+import prisma from '../lib/prisma';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // All routes require authentication
 router.use(authenticate);

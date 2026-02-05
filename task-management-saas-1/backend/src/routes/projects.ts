@@ -14,7 +14,7 @@ router.use(authenticate);
 router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const projects = await prisma.project.findMany({
-      where: { userId: req.userId },
+      where: { ownerId: req.userId },
       include: {
         _count: {
           select: { tasks: true },
@@ -35,7 +35,7 @@ router.get('/:id', async (req: AuthRequest, res: Response, next: NextFunction) =
     const project = await prisma.project.findFirst({
       where: {
         id: req.params.id,
-        userId: req.userId,
+        ownerId: req.userId,
       },
       include: {
         tasks: {
@@ -75,7 +75,7 @@ router.post(
           name,
           description,
           color,
-          userId: req.userId!,
+          ownerId: req.userId!,
         },
       });
 
@@ -103,7 +103,7 @@ router.put(
       const existingProject = await prisma.project.findFirst({
         where: {
           id: req.params.id,
-          userId: req.userId,
+          ownerId: req.userId,
         },
       });
 
@@ -135,7 +135,7 @@ router.delete('/:id', async (req: AuthRequest, res: Response, next: NextFunction
     const existingProject = await prisma.project.findFirst({
       where: {
         id: req.params.id,
-        userId: req.userId,
+        ownerId: req.userId,
       },
     });
 

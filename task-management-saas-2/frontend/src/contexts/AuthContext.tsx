@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     authApi.getMe()
-      .then((res) => setUser(res.data))
+      .then((res) => setUser(res.data.user))
       .catch(() => setUser(null))
       .finally(() => setIsLoading(false));
   }, []);
@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = useCallback(async () => {
     try {
       const res = await authApi.getMe();
-      setUser(res.data);
+      setUser(res.data.user);
     } catch {
       setUser(null);
     }
