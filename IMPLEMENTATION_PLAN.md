@@ -39,7 +39,9 @@ Create the unified project at `/task-management-unified/`:
 
 ```
 task-management-unified/
+├── .env.example
 ├── backend/
+│   ├── .dockerignore
 │   ├── src/
 │   │   ├── index.ts
 │   │   ├── lib/
@@ -58,16 +60,22 @@ task-management-unified/
 │   ├── tsconfig.json
 │   └── Dockerfile
 ├── frontend/
+│   ├── .dockerignore
 │   ├── src/
 │   │   ├── main.tsx
 │   │   ├── App.tsx
 │   │   ├── index.css
 │   │   ├── lib/
 │   │   │   └── api.ts
+│   │   ├── types/
+│   │   │   └── index.ts
 │   │   ├── store/
 │   │   │   └── auth.ts
 │   │   ├── components/
-│   │   │   └── Layout.tsx
+│   │   │   ├── Layout.tsx
+│   │   │   ├── ErrorBoundary.tsx
+│   │   │   ├── LoadingSpinner.tsx
+│   │   │   └── Toast.tsx
 │   │   └── pages/
 │   │       ├── LoginPage.tsx
 │   │       ├── RegisterPage.tsx
@@ -172,10 +180,11 @@ volumes:
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.18.3",
-    "express-validator": "^7.0.1",
+    "express-rate-limit": "^7.2.0",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "prisma": "^5.10.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -186,7 +195,6 @@ volumes:
     "@types/jsonwebtoken": "^9.0.6",
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.11.24",
-    "prisma": "^5.10.0",
     "tsx": "^4.7.1",
     "typescript": "^5.4.2"
   },
@@ -235,6 +243,178 @@ volumes:
 }
 ```
 
+#### `backend/tsconfig.json`
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+```
+
+**Why `NodeNext`**: The reference code uses `.js` extensions in all imports (e.g., `import { errorHandler } from './middleware/errorHandler.js'`). This is the correct pattern for Node.js ESM-compatible TypeScript and requires `module: "NodeNext"`.
+
+#### `frontend/tsconfig.json`
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
+```
+
+#### `frontend/tsconfig.node.json`
+
+```json
+{
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["vite.config.ts"]
+}
+```
+
+#### `frontend/vite.config.ts`
+
+```typescript
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    host: '0.0.0.0',
+    port: 3000,
+  },
+});
+```
+
+#### `frontend/tailwind.config.js`
+
+```javascript
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+```
+
+#### `frontend/postcss.config.js`
+
+```javascript
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+```
+
+#### `frontend/index.html`
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Management</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+```
+
+#### `frontend/src/index.css`
+
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+#### `.env.example`
+
+Template for local development outside Docker:
+
+```env
+# Backend
+PORT=4000
+DATABASE_URL=postgresql://taskapp:taskapp_secret@localhost:5432/taskapp?schema=public
+JWT_SECRET=dev-jwt-secret-change-in-production
+JWT_EXPIRES_IN=7d
+CORS_ORIGIN=http://localhost:3000
+NODE_ENV=development
+
+# Frontend
+VITE_API_URL=http://localhost:4000
+```
+
+#### `backend/.dockerignore`
+
+```
+node_modules
+dist
+.git
+*.md
+.env
+```
+
+#### `frontend/.dockerignore`
+
+```
+node_modules
+dist
+.git
+*.md
+.env
+```
+
 #### `backend/prisma/schema.prisma`
 
 Use the exact schema from PRD Section 3.1 (already finalized). No changes.
@@ -248,6 +428,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import prisma from './lib/prisma.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -264,9 +445,14 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(cookieParser());
 
-// Health check
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Health check -- verifies database connectivity
+app.get('/health', async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  } catch {
+    res.status(503).json({ status: 'unhealthy', timestamp: new Date().toISOString() });
+  }
 });
 
 // 404 handler
@@ -284,15 +470,30 @@ app.listen(PORT, '0.0.0.0', () => {
 export default app;
 ```
 
-### 0.3 Validation Checklist -- Phase 0
+**Why the DB check**: A `/health` endpoint that only returns `{ status: 'ok' }` without verifying database connectivity can mask production outages. Railway and other platforms use health checks to determine container readiness.
+
+### 0.3 Lock File Generation
+
+After creating `package.json` files, generate lock files required by `npm ci` in Dockerfiles:
+
+```bash
+cd task-management-unified/backend && npm install
+cd task-management-unified/frontend && npm install
+```
+
+Commit both `package-lock.json` files to the repository. Without them, `npm ci` (used in Dockerfiles) will fail.
+
+### 0.4 Validation Checklist -- Phase 0
 
 ```
 [ ] docker compose up --build starts all 3 services without errors
 [ ] curl http://localhost:4000/health returns { "status": "ok", ... }
+[ ] curl http://localhost:4000/health with DB down returns 503 { "status": "unhealthy" }
 [ ] PostgreSQL is reachable on localhost:5432
 [ ] npx prisma migrate dev (from backend/) creates tables
 [ ] npx prisma studio (from backend/) shows User, Project, Task, ProjectMember tables
-[ ] Frontend dev server (localhost:3000) loads a blank React page
+[ ] Frontend dev server (localhost:3000) loads a blank React page with Tailwind working
+[ ] Both package-lock.json files are committed
 ```
 
 ---
@@ -451,7 +652,7 @@ export const authenticate = (
 
 **Critical details**:
 - Cookie name `auth_token` must match exactly between `setAuthCookie`, `clearAuthCookie`, and `extractToken`.
-- `sameSite: 'lax'` in development allows the cookie to be sent on same-site navigations. In production with separate frontend/backend subdomains on Railway, this may need to be `'none'` (which requires `secure: true`).
+- `sameSite: 'lax'` in development, `'strict'` in production. The frontend and backend are deployed on the same domain, so cross-subdomain cookies are not needed.
 - The Bearer header fallback is kept intentionally so the API can be tested with curl without needing to manage cookies manually.
 
 ---
@@ -462,7 +663,6 @@ export const authenticate = (
 import { Router, Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { body, validationResult } from 'express-validator';
 import prisma from '../lib/prisma.js';
 import { AppError } from '../middleware/errorHandler.js';
 import {
@@ -713,10 +913,78 @@ export const useAuthStore = create<AuthState>()(
 
 ---
 
-### 1.7 Reference Implementation: `frontend/src/lib/api.ts`
+### 1.7 Reference Implementation: `frontend/src/types/index.ts`
+
+Shared TypeScript interfaces for API responses. Used across api.ts, store, and components to maintain type safety end-to-end.
+
+```typescript
+// --- User ---
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  avatarUrl: string | null;
+  createdAt: string;
+}
+
+// --- Project ---
+
+export type ProjectRole = 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER';
+
+export interface ProjectMember {
+  projectId: string;
+  userId: string;
+  role: ProjectRole;
+  joinedAt: string;
+  user: User;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  description: string | null;
+  color: string;
+  ownerId: string;
+  createdAt: string;
+  owner: User;
+  members: ProjectMember[];
+  tasks?: Task[];
+  _count?: { tasks: number };
+}
+
+// --- Task ---
+
+export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'IN_REVIEW' | 'DONE';
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+
+export interface Task {
+  id: string;
+  title: string;
+  description: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
+  dueDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+  projectId: string;
+  assigneeId: string | null;
+  creatorId: string;
+  project: Pick<Project, 'id' | 'name' | 'color'>;
+  assignee: Pick<User, 'id' | 'name' | 'avatarUrl'> | null;
+  creator: Pick<User, 'id' | 'name'>;
+}
+```
+
+**Why this matters**: The PRD specifies "TypeScript end-to-end" (Section 7.3). Without shared interfaces, the frontend degrades to `any` types on API boundaries, losing the primary benefit of TypeScript.
+
+---
+
+### 1.8 Reference Implementation: `frontend/src/lib/api.ts`
 
 ```typescript
 import { useAuthStore } from '../store/auth';
+import type { User, Task, Project, ProjectMember, TaskStatus, TaskPriority } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
@@ -755,13 +1023,13 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export const authApi = {
   register: (data: { email: string; password: string; name: string }) =>
-    request<{ message: string; user: any }>('/api/auth/register', {
+    request<{ message: string; user: User }>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
   login: (data: { email: string; password: string }) =>
-    request<{ message: string; user: any }>('/api/auth/login', {
+    request<{ message: string; user: User }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
@@ -770,13 +1038,13 @@ export const authApi = {
     request<{ message: string }>('/api/auth/logout', { method: 'POST' }),
 
   me: () =>
-    request<{ user: any }>('/api/auth/me'),
+    request<{ user: User }>('/api/auth/me'),
 
   refresh: () =>
     request<{ message: string }>('/api/auth/refresh', { method: 'POST' }),
 
   updateProfile: (data: { name?: string; avatarUrl?: string | null }) =>
-    request<{ user: any }>('/api/auth/profile', {
+    request<{ user: User }>('/api/auth/profile', {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
@@ -792,8 +1060,8 @@ export const authApi = {
 
 export interface TaskFilters {
   projectId?: string;
-  status?: string;
-  priority?: string;
+  status?: TaskStatus;
+  priority?: TaskPriority;
   assigneeId?: string;
   creatorId?: string;
   sortBy?: string;
@@ -809,30 +1077,30 @@ export const tasksApi = {
       });
     }
     const qs = params.toString();
-    return request<any[]>(`/api/tasks${qs ? `?${qs}` : ''}`);
+    return request<Task[]>(`/api/tasks${qs ? `?${qs}` : ''}`);
   },
 
   getOne: (id: string) =>
-    request<any>(`/api/tasks/${id}`),
+    request<Task>(`/api/tasks/${id}`),
 
   create: (data: {
     title: string;
     description?: string;
     projectId: string;
     assigneeId?: string | null;
-    status?: string;
-    priority?: string;
+    status?: TaskStatus;
+    priority?: TaskPriority;
     dueDate?: string | null;
   }) =>
-    request<any>('/api/tasks', { method: 'POST', body: JSON.stringify(data) }),
+    request<Task>('/api/tasks', { method: 'POST', body: JSON.stringify(data) }),
 
-  update: (id: string, data: Record<string, any>) =>
-    request<any>(`/api/tasks/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'project' | 'assignee' | 'creator'>>) =>
+    request<Task>(`/api/tasks/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 
   delete: (id: string) =>
     request<void>(`/api/tasks/${id}`, { method: 'DELETE' }),
 
-  bulkStatus: (taskIds: string[], status: string) =>
+  bulkStatus: (taskIds: string[], status: TaskStatus) =>
     request<{ updated: number }>('/api/tasks/bulk-status', {
       method: 'PATCH',
       body: JSON.stringify({ taskIds, status }),
@@ -843,22 +1111,22 @@ export const tasksApi = {
 
 export const projectsApi = {
   getAll: () =>
-    request<any[]>('/api/projects'),
+    request<Project[]>('/api/projects'),
 
   getOne: (id: string) =>
-    request<any>(`/api/projects/${id}`),
+    request<Project>(`/api/projects/${id}`),
 
   create: (data: { name: string; description?: string; color?: string }) =>
-    request<any>('/api/projects', { method: 'POST', body: JSON.stringify(data) }),
+    request<Project>('/api/projects', { method: 'POST', body: JSON.stringify(data) }),
 
-  update: (id: string, data: Record<string, any>) =>
-    request<any>(`/api/projects/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<Pick<Project, 'name' | 'description' | 'color'>>) =>
+    request<Project>(`/api/projects/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 
   delete: (id: string) =>
     request<void>(`/api/projects/${id}`, { method: 'DELETE' }),
 
   addMember: (projectId: string, data: { email: string; role?: string }) =>
-    request<any>(`/api/projects/${projectId}/members`, {
+    request<ProjectMember>(`/api/projects/${projectId}/members`, {
       method: 'POST',
       body: JSON.stringify(data),
     }),
@@ -874,10 +1142,11 @@ export const projectsApi = {
 - `credentials: 'include'` on every request -- this is what makes cookies work cross-origin.
 - The 401 interceptor calls `clearUser()` (not `logout()`) to avoid a circular API call.
 - Uses native `fetch` instead of Axios. React Query wraps these functions, so Axios adds no value here. One fewer dependency.
+- All response types use shared interfaces from `types/index.ts` instead of `any` -- this gives downstream components full type safety on API data.
 
 ---
 
-### 1.8 Reference Implementation: `frontend/src/main.tsx`
+### 1.9 Reference Implementation: `frontend/src/main.tsx`
 
 ```typescript
 import React from 'react';
@@ -885,6 +1154,7 @@ import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
+import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -898,23 +1168,31 @@ const queryClient = new QueryClient({
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );
 ```
 
 ---
 
-### 1.9 Reference Implementation: `frontend/src/App.tsx`
+### 1.10 Reference Implementation: `frontend/src/App.tsx`
+
+The App component includes session revalidation on mount (PRD 2.1.6) and uses stub page components that will be replaced in later phases.
 
 ```typescript
+import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from './store/auth';
+import { authApi } from './lib/api';
 import Layout from './components/Layout';
+import LoadingSpinner from './components/LoadingSpinner';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
@@ -935,28 +1213,225 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function SessionValidator({ children }: { children: React.ReactNode }) {
+  const { user, setUser, clearUser } = useAuthStore();
+  const [ready, setReady] = useState(!user); // If no persisted user, skip validation
+
+  useQuery({
+    queryKey: ['auth', 'me'],
+    queryFn: async () => {
+      try {
+        const res = await authApi.me();
+        setUser(res.user);
+        return res.user;
+      } catch {
+        clearUser();
+        return null;
+      } finally {
+        setReady(true);
+      }
+    },
+    enabled: !!user && !ready,
+    retry: false,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  if (!ready) return <LoadingSpinner />;
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
-      <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
-      <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-        <Route index element={<DashboardPage />} />
-        <Route path="tasks" element={<TasksPage />} />
-        <Route path="projects" element={<ProjectsPage />} />
-        <Route path="projects/:id" element={<ProjectDetailPage />} />
-        <Route path="profile" element={<ProfilePage />} />
-      </Route>
-    </Routes>
+    <SessionValidator>
+      <Routes>
+        <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
+        <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
+        <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          <Route index element={<DashboardPage />} />
+          <Route path="tasks" element={<TasksPage />} />
+          <Route path="projects" element={<ProjectsPage />} />
+          <Route path="projects/:id" element={<ProjectDetailPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+        </Route>
+      </Routes>
+    </SessionValidator>
   );
 }
 ```
 
-**Key additions vs saas-1**: `GuestRoute` wrapper redirects authenticated users away from login/register. `ProjectDetailPage` and `ProfilePage` routes added.
+**Key additions vs saas-1**: `GuestRoute` wrapper redirects authenticated users away from login/register. `SessionValidator` calls `GET /api/auth/me` on mount to revalidate persisted sessions (PRD 2.1.6), showing a loading spinner while checking so users never see a flash of authenticated content before redirect. `ProjectDetailPage` and `ProfilePage` routes added.
 
 ---
 
-### 1.10 Zod Validation Schemas for Phases 2-3
+### 1.11 Phase 1 Stub Components
+
+App.tsx imports page components from Phases 2-4. To keep the app compilable at the end of Phase 1, create minimal stubs. These will be replaced with full implementations in their respective phases.
+
+#### `frontend/src/components/ErrorBoundary.tsx`
+
+```typescript
+import React from 'react';
+
+interface Props { children: React.ReactNode; }
+interface State { hasError: boolean; }
+
+export default class ErrorBoundary extends React.Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): State {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('ErrorBoundary caught:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">Something went wrong</h1>
+            <p className="text-gray-600 mb-4">An unexpected error occurred.</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+            >
+              Reload page
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+```
+
+#### `frontend/src/components/LoadingSpinner.tsx`
+
+```typescript
+export default function LoadingSpinner() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+    </div>
+  );
+}
+```
+
+#### `frontend/src/components/Layout.tsx` (Minimal Phase 1 version)
+
+A minimal layout with sidebar navigation and `<Outlet />`. The full layout with user menu, active highlighting, and polish is completed in Phase 4.
+
+```typescript
+import { Outlet, Link, useLocation } from 'react-router-dom';
+import { useAuthStore } from '../store/auth';
+import { authApi } from '../lib/api';
+import { LayoutDashboard, CheckSquare, FolderKanban, LogOut } from 'lucide-react';
+import clsx from 'clsx';
+
+const navItems = [
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/tasks', label: 'Tasks', icon: CheckSquare },
+  { to: '/projects', label: 'Projects', icon: FolderKanban },
+];
+
+export default function Layout() {
+  const location = useLocation();
+  const { user, clearUser } = useAuthStore();
+
+  const handleLogout = async () => {
+    await authApi.logout();
+    clearUser();
+  };
+
+  return (
+    <div className="flex h-screen bg-gray-50">
+      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+        <div className="p-4 border-b border-gray-200">
+          <h1 className="text-xl font-bold text-indigo-600">TaskApp</h1>
+        </div>
+        <nav className="flex-1 p-4 space-y-1">
+          {navItems.map(({ to, label, icon: Icon }) => (
+            <Link
+              key={to}
+              to={to}
+              className={clsx(
+                'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium',
+                location.pathname === to
+                  ? 'bg-indigo-50 text-indigo-700'
+                  : 'text-gray-700 hover:bg-gray-100'
+              )}
+            >
+              <Icon size={18} />
+              {label}
+            </Link>
+          ))}
+        </nav>
+        <div className="p-4 border-t border-gray-200">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-medium text-indigo-700">
+              {user?.name?.charAt(0).toUpperCase()}
+            </div>
+            <span className="text-sm font-medium text-gray-700 truncate">{user?.name}</span>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700"
+          >
+            <LogOut size={16} />
+            Logout
+          </button>
+        </div>
+      </aside>
+      <main className="flex-1 overflow-auto p-6">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
+```
+
+#### Stub Pages (replaced in Phases 2-4)
+
+Create minimal stubs so the app compiles. Each file exports a default component with a placeholder:
+
+```typescript
+// frontend/src/pages/DashboardPage.tsx
+export default function DashboardPage() {
+  return <div className="text-gray-500">Dashboard — coming in Phase 4</div>;
+}
+
+// frontend/src/pages/TasksPage.tsx
+export default function TasksPage() {
+  return <div className="text-gray-500">Tasks — coming in Phase 3</div>;
+}
+
+// frontend/src/pages/ProjectsPage.tsx
+export default function ProjectsPage() {
+  return <div className="text-gray-500">Projects — coming in Phase 2</div>;
+}
+
+// frontend/src/pages/ProjectDetailPage.tsx
+export default function ProjectDetailPage() {
+  return <div className="text-gray-500">Project Detail — coming in Phase 2</div>;
+}
+
+// frontend/src/pages/ProfilePage.tsx
+export default function ProfilePage() {
+  return <div className="text-gray-500">Profile — coming in Phase 4</div>;
+}
+```
+
+**Why stubs are critical**: Without these files, Phase 1's `App.tsx` imports will fail at compile time. The full implementations in Phases 2-4 replace these stubs entirely.
+
+---
+
+### 1.12 Zod Validation Schemas for Phases 2-3
 
 These schemas are used in the backend route files. Defining them here ensures consistency across phases.
 
@@ -1004,7 +1479,7 @@ const bulkStatusSchema = z.object({
 
 ---
 
-### 1.11 Validation Checklist -- Phase 1
+### 1.13 Validation Checklist -- Phase 1
 
 ```
 Backend (curl):
@@ -1040,7 +1515,16 @@ Frontend (browser):
 
 ### 2.1 Backend: `backend/src/routes/projects.ts`
 
-Implement the following endpoints. Use the Zod schemas from Section 1.10. Reference the saas-2 implementation for the query patterns (membership-scoped queries, role checks).
+Implement the following endpoints. Use the Zod schemas from Section 1.12.
+
+**Important**: All project routes require authentication. Apply the middleware at the router level:
+
+```typescript
+import { authenticate, AuthRequest } from '../middleware/auth.js';
+
+const router = Router();
+router.use(authenticate);
+```
 
 | Endpoint | Key Logic |
 |----------|-----------|
@@ -1147,7 +1631,16 @@ Frontend (browser):
 
 ### 3.1 Backend: `backend/src/routes/tasks.ts`
 
-Use the Zod schemas from Section 1.10. Reference the saas-2 implementation for authorization patterns.
+Use the Zod schemas from Section 1.12.
+
+**Important**: All task routes require authentication. Apply the middleware at the router level:
+
+```typescript
+import { authenticate, AuthRequest } from '../middleware/auth.js';
+
+const router = Router();
+router.use(authenticate);
+```
 
 | Endpoint | Key Logic |
 |----------|-----------|
@@ -1216,12 +1709,18 @@ useEffect(() => {
 
 #### Shared Data Layer
 
-Both views use the same React Query hooks:
+Both views use the same React Query hooks and filter state:
 
 ```typescript
-const { data: tasks, isLoading } = useQuery({
-  queryKey: ['tasks'],
-  queryFn: () => tasksApi.getAll(),
+import type { TaskStatus, TaskPriority } from '../types';
+import type { TaskFilters } from '../lib/api';
+
+// --- Filter State ---
+const [filters, setFilters] = useState<TaskFilters>({});
+
+const { data: tasks, isLoading, isError, error } = useQuery({
+  queryKey: ['tasks', filters],
+  queryFn: () => tasksApi.getAll(filters),
 });
 
 const { data: projects } = useQuery({
@@ -1230,7 +1729,7 @@ const { data: projects } = useQuery({
 });
 
 const updateStatusMutation = useMutation({
-  mutationFn: ({ id, status }: { id: string; status: string }) =>
+  mutationFn: ({ id, status }: { id: string; status: TaskStatus }) =>
     tasksApi.update(id, { status }),
   onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
 });
@@ -1241,12 +1740,38 @@ const deleteMutation = useMutation({
 });
 ```
 
+#### Filter Controls
+
+A filter bar displayed above both views. Dropdowns for:
+- **Project**: filter by `projectId` (populated from user's projects)
+- **Status**: filter by `status` (TODO, IN_PROGRESS, IN_REVIEW, DONE)
+- **Priority**: filter by `priority` (LOW, MEDIUM, HIGH, URGENT)
+- **Clear filters** button resets all filters
+
+```typescript
+<div className="flex gap-3 mb-4">
+  <select value={filters.projectId || ''} onChange={(e) => setFilters(f => ({ ...f, projectId: e.target.value || undefined }))}>
+    <option value="">All Projects</option>
+    {projects?.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+  </select>
+  <select value={filters.status || ''} onChange={(e) => setFilters(f => ({ ...f, status: (e.target.value || undefined) as TaskStatus | undefined }))}>
+    <option value="">All Statuses</option>
+    <option value="TODO">To Do</option>
+    <option value="IN_PROGRESS">In Progress</option>
+    <option value="IN_REVIEW">In Review</option>
+    <option value="DONE">Done</option>
+  </select>
+  {/* Priority dropdown follows same pattern */}
+</div>
+```
+
 #### Table View Component
 
 Directly adapted from saas-1's `TasksPage.tsx`:
 - Full-width `<table>` with columns: Task (title + description), Status (inline `<select>`), Priority (badge), Project name, Actions (edit + delete).
 - Status dropdown uses `updateStatusMutation.mutate()` on change.
 - All 4 statuses in dropdown (TODO, IN_PROGRESS, IN_REVIEW, DONE).
+- Show loading spinner while `isLoading`, error message when `isError`.
 
 #### Kanban View Component
 
@@ -1254,36 +1779,102 @@ Adapted from saas-2's `ProjectDetail.tsx` Kanban, but showing all tasks (not sco
 - 4 columns: TODO, IN_PROGRESS, IN_REVIEW, DONE.
 - Each task card: title, description (2-line clamp), priority color, project name chip, assignee avatar, due date.
 - Clicking a card opens the edit modal.
+- Show loading spinner while `isLoading`, error message when `isError`.
 - **Drag-and-drop with `@dnd-kit`**: Cards are draggable between columns. Dropping a card in a different column calls `tasksApi.bulkStatus([taskId], newStatus)` and invalidates the `['tasks']` query. Visual feedback: card elevation on grab, drop zone highlighting on hover.
 
 `@dnd-kit` integration pattern:
 
 ```typescript
-import { DndContext, DragEndEvent, closestCorners } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners, useDroppable } from '@dnd-kit/core';
+import { useDraggable } from '@dnd-kit/core';
+
+const STATUSES: TaskStatus[] = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'];
+const [activeTask, setActiveTask] = useState<Task | null>(null);
+
+// --- Droppable Column ---
+// Each column is a droppable area with its status as the id
+function KanbanColumn({ status, tasks, children }: { status: TaskStatus; tasks: Task[]; children: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id: status });
+  return (
+    <div
+      ref={setNodeRef}
+      className={clsx('flex-1 min-w-[280px] p-3 rounded-lg', isOver ? 'bg-indigo-50' : 'bg-gray-100')}
+    >
+      <h3 className="font-medium mb-3">{status.replace('_', ' ')} ({tasks.length})</h3>
+      <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
+
+// --- Draggable Task Card ---
+// Each card uses useDraggable with the task id
+function DraggableTaskCard({ task }: { task: Task }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
+  const style = transform ? { transform: `translate(${transform.x}px, ${transform.y}px)` } : undefined;
+  return (
+    <div ref={setNodeRef} style={style} {...listeners} {...attributes}
+      className={clsx('bg-white p-3 rounded shadow-sm cursor-grab', isDragging && 'opacity-50 shadow-lg')}
+    >
+      {/* Card content: title, description, priority, project, assignee, due date */}
+    </div>
+  );
+}
+
+// --- DndContext Wrapper ---
+function handleDragStart(event: DragStartEvent) {
+  const task = tasks?.find(t => t.id === event.active.id);
+  setActiveTask(task || null);
+}
 
 function handleDragEnd(event: DragEndEvent) {
+  setActiveTask(null);
   const { active, over } = event;
   if (!over) return;
 
   const taskId = active.id as string;
-  const newStatus = over.id as string; // column id = status value
+  const newStatus = over.id as TaskStatus;
+  const task = tasks?.find(t => t.id === taskId);
 
-  if (taskId && newStatus) {
+  // Only update if dropped on a different status column
+  if (task && newStatus && task.status !== newStatus && STATUSES.includes(newStatus)) {
     bulkStatusMutation.mutate({ taskIds: [taskId], status: newStatus });
   }
 }
+
+// In render:
+<DndContext collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+  <div className="flex gap-4 overflow-x-auto">
+    {STATUSES.map(status => {
+      const columnTasks = tasks?.filter(t => t.status === status) || [];
+      return (
+        <KanbanColumn key={status} status={status} tasks={columnTasks}>
+          {columnTasks.map(task => (
+            <DraggableTaskCard key={task.id} task={task} />
+          ))}
+        </KanbanColumn>
+      );
+    })}
+  </div>
+  <DragOverlay>{activeTask ? <TaskCardOverlay task={activeTask} /> : null}</DragOverlay>
+</DndContext>
 ```
+
+**Key `@dnd-kit` details**:
+- Each column uses `useDroppable` with the status value as its `id`. This is how `over.id` maps to a status.
+- Each card uses `useDraggable` with the task id. The `transform` CSS is applied inline for smooth drag movement.
+- `DragOverlay` provides visual feedback during drag (a floating copy of the card).
+- The `handleDragEnd` checks `STATUSES.includes(newStatus)` to ensure we only update when dropped on a valid column (not another task card).
 
 #### Task Modal
 
 Shared between both views. Fields:
 - Title, Description, Status, Priority, Project (dropdown), Assignee (dropdown -- filtered by selected project's members), Due Date (date input).
+- Close on backdrop click or Escape key (`useEffect` with `keydown` listener).
 - **Project dropdown filtering**: Only show projects where the current user's role is OWNER, ADMIN, or MEMBER. Exclude projects where user is VIEWER (read-only). Filter logic:
 
 ```typescript
-const writableProjects = projects?.filter((p: any) => {
-  const membership = p.members?.find((m: any) => m.user.id === currentUser.id);
+const writableProjects = projects?.filter((p) => {
+  const membership = p.members?.find((m) => m.user.id === currentUser.id);
   return membership && ['OWNER', 'ADMIN', 'MEMBER'].includes(membership.role);
 }) || [];
 ```
@@ -1349,25 +1940,212 @@ Two sections:
 1. **Profile Info**: Name + Avatar URL fields. Submit → `authApi.updateProfile()`, update Zustand store with new user data.
 2. **Change Password**: Current password + New password + Confirm new password. Client-side check that new === confirm. Submit → `authApi.changePassword()`.
 
-### 4.3 Frontend: `Layout.tsx`
+### 4.3 Frontend: `Layout.tsx` (Full version -- replaces Phase 1 stub)
 
-Adapted from saas-1's Layout:
+Enhance the Phase 1 minimal layout with:
 
-- Sidebar with nav links: Dashboard (`/`), Tasks (`/tasks`), Projects (`/projects`).
-- Active route highlighting via `useLocation()`.
-- User section at bottom: avatar initial circle + name.
-- User menu (click to toggle): Profile (`/profile`), Logout.
-- `<Outlet />` for nested route content.
+- User menu dropdown (click to toggle): Profile (`/profile`), Logout.
+- Active route highlighting now supports nested routes (e.g., `/projects/:id` highlights Projects).
+- Mobile-responsive: sidebar collapses on small screens (hamburger toggle).
+- Polish: transition animations on nav items, hover states.
 
-### 4.4 Backend: `prisma/seed.ts`
+### 4.4 Frontend: `Toast.tsx` (Error/Success Feedback)
 
-Use the exact pattern from saas-1's seed script. Adjustments:
-- Password changed to `Password123` to pass the new validation rules (uppercase + lowercase + digit).
-- All other data (users, projects, members, tasks) stays the same.
+A lightweight toast notification component for mutation feedback:
 
-### 4.5 Dockerfiles
+```typescript
+// frontend/src/components/Toast.tsx
+import { useState, useEffect, useCallback } from 'react';
+import { X } from 'lucide-react';
+import clsx from 'clsx';
+import { create } from 'zustand';
+
+interface Toast {
+  id: string;
+  message: string;
+  type: 'success' | 'error';
+}
+
+interface ToastState {
+  toasts: Toast[];
+  addToast: (message: string, type: 'success' | 'error') => void;
+  removeToast: (id: string) => void;
+}
+
+export const useToastStore = create<ToastState>((set) => ({
+  toasts: [],
+  addToast: (message, type) => {
+    const id = crypto.randomUUID();
+    set((s) => ({ toasts: [...s.toasts, { id, message, type }] }));
+    setTimeout(() => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })), 4000);
+  },
+  removeToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
+}));
+
+export default function ToastContainer() {
+  const { toasts, removeToast } = useToastStore();
+  return (
+    <div className="fixed bottom-4 right-4 z-50 space-y-2">
+      {toasts.map((toast) => (
+        <div key={toast.id} className={clsx(
+          'flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg text-sm text-white',
+          toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+        )}>
+          <span>{toast.message}</span>
+          <button onClick={() => removeToast(toast.id)}><X size={14} /></button>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+Usage in mutations:
+
+```typescript
+const { addToast } = useToastStore();
+
+const createMutation = useMutation({
+  mutationFn: projectsApi.create,
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['projects'] });
+    addToast('Project created', 'success');
+  },
+  onError: (err: Error) => addToast(err.message, 'error'),
+});
+```
+
+Add `<ToastContainer />` in `Layout.tsx` so it's always visible on authenticated pages.
+
+### 4.5 Backend: Rate Limiting on Auth Endpoints
+
+Apply rate limiting to auth routes to prevent brute-force attacks:
+
+```typescript
+// In backend/src/routes/auth.ts, at the top:
+import rateLimit from 'express-rate-limit';
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // 20 requests per window per IP
+  message: { error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply to login and register
+router.post('/register', authLimiter, async (req, res, next) => { ... });
+router.post('/login', authLimiter, async (req, res, next) => { ... });
+```
+
+### 4.6 Backend: `prisma/seed.ts`
+
+The seed script creates test data for development. It must be idempotent (safe to run multiple times).
+
+```typescript
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+
+const prisma = new PrismaClient();
+
+async function main() {
+  // Clear existing data in correct order (respects foreign keys)
+  await prisma.task.deleteMany();
+  await prisma.projectMember.deleteMany();
+  await prisma.project.deleteMany();
+  await prisma.user.deleteMany();
+
+  const passwordHash = await bcrypt.hash('Password123', 12);
+
+  // Create users
+  const alice = await prisma.user.create({
+    data: { email: 'alice@example.com', passwordHash, name: 'Alice Johnson' },
+  });
+  const bob = await prisma.user.create({
+    data: { email: 'bob@example.com', passwordHash, name: 'Bob Smith' },
+  });
+
+  // Create projects with members
+  const projectWebsite = await prisma.project.create({
+    data: {
+      name: 'Website Redesign',
+      description: 'Complete overhaul of the company website',
+      color: '#6366f1',
+      ownerId: alice.id,
+      members: {
+        create: [
+          { userId: alice.id, role: 'OWNER' },
+          { userId: bob.id, role: 'MEMBER' },
+        ],
+      },
+    },
+  });
+
+  const projectMobile = await prisma.project.create({
+    data: {
+      name: 'Mobile App',
+      description: 'React Native mobile application',
+      color: '#f59e0b',
+      ownerId: alice.id,
+      members: {
+        create: [
+          { userId: alice.id, role: 'OWNER' },
+          { userId: bob.id, role: 'VIEWER' },
+        ],
+      },
+    },
+  });
+
+  const projectApi = await prisma.project.create({
+    data: {
+      name: 'API Platform',
+      description: 'Internal API gateway and documentation',
+      color: '#10b981',
+      ownerId: bob.id,
+      members: {
+        create: [
+          { userId: bob.id, role: 'OWNER' },
+          { userId: alice.id, role: 'ADMIN' },
+        ],
+      },
+    },
+  });
+
+  // Create tasks (10 total, distributed across projects)
+  const tasks = [
+    { title: 'Design homepage mockup', description: 'Create wireframes and visual design', status: 'DONE' as const, priority: 'HIGH' as const, projectId: projectWebsite.id, creatorId: alice.id, assigneeId: alice.id },
+    { title: 'Implement navigation', description: 'Build responsive navigation component', status: 'IN_PROGRESS' as const, priority: 'MEDIUM' as const, projectId: projectWebsite.id, creatorId: alice.id, assigneeId: bob.id },
+    { title: 'Set up CI/CD pipeline', description: 'Configure GitHub Actions for deployment', status: 'TODO' as const, priority: 'URGENT' as const, projectId: projectWebsite.id, creatorId: bob.id, assigneeId: null },
+    { title: 'Write unit tests', description: 'Add test coverage for core components', status: 'IN_REVIEW' as const, priority: 'MEDIUM' as const, projectId: projectWebsite.id, creatorId: bob.id, assigneeId: bob.id },
+    { title: 'Design app screens', description: 'Create mobile UI designs', status: 'TODO' as const, priority: 'HIGH' as const, projectId: projectMobile.id, creatorId: alice.id, assigneeId: alice.id },
+    { title: 'Set up React Native project', description: 'Initialize project with TypeScript template', status: 'DONE' as const, priority: 'HIGH' as const, projectId: projectMobile.id, creatorId: alice.id, assigneeId: alice.id },
+    { title: 'Implement auth flow', description: 'Login, register, and session management', status: 'IN_PROGRESS' as const, priority: 'URGENT' as const, projectId: projectMobile.id, creatorId: alice.id, assigneeId: alice.id },
+    { title: 'Define API schema', description: 'OpenAPI specification for all endpoints', status: 'DONE' as const, priority: 'HIGH' as const, projectId: projectApi.id, creatorId: bob.id, assigneeId: bob.id },
+    { title: 'Implement rate limiting', description: 'Add rate limiting middleware to all routes', status: 'TODO' as const, priority: 'MEDIUM' as const, projectId: projectApi.id, creatorId: bob.id, assigneeId: alice.id },
+    { title: 'Set up monitoring', description: 'Configure health checks and alerting', status: 'TODO' as const, priority: 'LOW' as const, projectId: projectApi.id, creatorId: alice.id, assigneeId: null, dueDate: new Date('2026-03-01') },
+  ];
+
+  for (const task of tasks) {
+    await prisma.task.create({ data: task });
+  }
+
+  console.log('Seed complete: 2 users, 3 projects, 10 tasks');
+}
+
+main()
+  .catch((e) => { console.error(e); process.exit(1); })
+  .finally(async () => { await prisma.$disconnect(); });
+```
+
+**Seed data summary**:
+- **Alice** (alice@example.com / Password123): Owns Website Redesign and Mobile App. Admin on API Platform. Sees all 3 projects.
+- **Bob** (bob@example.com / Password123): Owns API Platform. Member on Website Redesign. Viewer on Mobile App. Sees all 3 projects.
+
+### 4.7 Dockerfiles
 
 #### `backend/Dockerfile`
+
+**Note**: `prisma` is a production dependency (not devDependency) because the CMD runs `prisma migrate deploy` at startup.
 
 ```dockerfile
 FROM node:20-alpine AS builder
@@ -1413,7 +2191,7 @@ EXPOSE 3000
 CMD serve -s dist -l tcp://0.0.0.0:$PORT
 ```
 
-### 4.6 Validation Checklist -- Phase 4
+### 4.8 Validation Checklist -- Phase 4
 
 ```
 Dashboard:
@@ -1421,6 +2199,7 @@ Dashboard:
   [ ] Recent tasks display with badges
   [ ] Recent projects display with colors
   [ ] Data matches tasks/projects pages
+  [ ] Loading spinner shows while data is fetching
 
 Profile:
   [ ] Profile page loads current user info
@@ -1429,12 +2208,22 @@ Profile:
   [ ] Change password with wrong current password shows error
   [ ] Weak new password shows validation error
 
+Toast Notifications:
+  [ ] Creating a project shows success toast
+  [ ] Failed mutation shows error toast
+  [ ] Toasts auto-dismiss after 4 seconds
+  [ ] Toasts are manually dismissible
+
+Rate Limiting:
+  [ ] 21st login attempt within 15 minutes returns 429
+
 Seed Data:
   [ ] npx prisma db seed creates 2 users, 3 projects, 10 tasks
+  [ ] Running seed twice does not create duplicates (idempotent)
   [ ] Can log in as alice@example.com / Password123
   [ ] Can log in as bob@example.com / Password123
-  [ ] Alice sees 3 projects (2 owned, 1 member)
-  [ ] Bob sees 3 projects (1 owned, 2 member)
+  [ ] Alice sees 3 projects (2 owned, 1 as admin)
+  [ ] Bob sees 3 projects (1 owned, 1 as member, 1 as viewer)
 
 Docker:
   [ ] docker compose up --build starts all services
@@ -1443,12 +2232,13 @@ Docker:
 
 End-to-end flow:
   [ ] Register new user → dashboard loads with 0 tasks
-  [ ] Create project → appears in projects grid
+  [ ] Create project → appears in projects grid, success toast shown
   [ ] Create task in project → appears in table and kanban
   [ ] Switch views → same tasks displayed
   [ ] Change task status inline → task updates
   [ ] Add member to project → member appears in detail view
   [ ] Logout → redirect to login → login again → session persists
+  [ ] ErrorBoundary catches component errors (shows fallback, not white screen)
 ```
 
 ---
@@ -1475,11 +2265,6 @@ End-to-end flow:
 3. Environment variables for **Frontend**:
    - `VITE_API_URL` → backend Railway URL (e.g. `https://unified-backend-production.up.railway.app`)
 
-4. Cookie `sameSite` consideration:
-   - If frontend and backend are on different Railway subdomains, `sameSite` must be `'none'` and `secure` must be `true`.
-   - If using a custom domain where both share the same parent domain, `sameSite: 'strict'` works.
-   - The reference auth.ts implementation handles this via the `NODE_ENV` check, but may need to be adjusted to `'none'` for Railway's default subdomain setup.
-
 ### 5.2 Validation Checklist -- Phase 5
 
 ```
@@ -1498,14 +2283,14 @@ End-to-end flow:
 
 | Order | Phase | Files | Depends On |
 |-------|-------|-------|------------|
-| 1 | Phase 0 | docker-compose, package.json files, schema.prisma, tsconfig, vite config, tailwind config, base index.ts, errorHandler.ts | Nothing |
-| 2 | Phase 1 | prisma.ts, auth.ts (middleware), auth.ts (routes), auth store, api.ts, main.tsx, App.tsx, LoginPage, RegisterPage | Phase 0 |
+| 1 | Phase 0 | docker-compose, package.json files, schema.prisma, tsconfig files, vite config, tailwind/postcss config, index.html, index.css, .env.example, .dockerignore files, base index.ts, errorHandler.ts | Nothing |
+| 2 | Phase 1 | prisma.ts, auth.ts (middleware), auth.ts (routes), types/index.ts, auth store, api.ts, main.tsx, App.tsx (with SessionValidator), ErrorBoundary, LoadingSpinner, Layout (minimal), LoginPage, RegisterPage, stub pages | Phase 0 |
 | 3a | Phase 2 | projects.ts (routes), ProjectsPage, ProjectDetailPage | Phase 1 |
-| 3b | Phase 3 | tasks.ts (routes), TasksPage (table + kanban + modal) | Phase 1 |
-| 4 | Phase 4 | DashboardPage, ProfilePage, Layout, seed.ts, Dockerfiles | Phases 2 + 3 |
-| 5 | Phase 5 | Railway config, env vars, cookie sameSite adjustment | Phase 4 |
+| 3b | Phase 3 | tasks.ts (routes), TasksPage (table + kanban + filters + modal) | Phase 1 |
+| 4 | Phase 4 | DashboardPage, ProfilePage, Layout (full), Toast, seed.ts, Dockerfiles, rate limiting | Phases 2 + 3 |
+| 5 | Phase 5 | Railway config, env vars | Phase 4 |
 
-**Phases 2 and 3 can be worked in parallel** since they depend only on Phase 1 (shared auth middleware, API client, app shell) and not on each other.
+**Phases 2 and 3 can be worked in parallel** since they depend only on Phase 1 (shared auth middleware, API client, types, app shell) and not on each other.
 
 ---
 
@@ -1513,12 +2298,20 @@ End-to-end flow:
 
 | Risk | Mitigation |
 |------|------------|
-| Cookie not sent cross-origin | `credentials: 'include'` in fetch + `cors({ credentials: true })` + correct `sameSite`/`secure`. Reference code handles all three. |
+| Cookie not sent on API requests | `credentials: 'include'` in fetch + `cors({ credentials: true })` + `sameSite: 'lax'`/`'strict'`. Reference code handles all three. |
 | Prisma connection pool exhaustion in dev | Singleton pattern in `lib/prisma.ts` using `globalThis`. Reference code provided. |
+| Prisma CLI missing in production Docker | `prisma` moved to `dependencies` (not `devDependencies`) so `npm ci --omit=dev` still installs it. |
 | Zod errors returning 500 | `ZodError` catch in global `errorHandler`. Reference code provided. |
 | Password hash exposed to frontend | `userSelect` constant excludes `passwordHash` from all queries. Used in every auth route. |
 | JWT cookie name mismatch | Single `COOKIE_NAME` constant in auth middleware, used by set/clear/extract. |
+| Stale session after cookie expiry | `SessionValidator` in `App.tsx` calls `GET /api/auth/me` on mount. Shows spinner while validating, redirects to login if expired. |
 | assigneeId referencing non-member | Membership check before create/update. Pattern shown in Zod + route logic. |
 | OWNER removal | Explicit check in `DELETE /members/:userId` prevents removing OWNER role. |
 | MEMBER modifying other users' tasks | `canModifyTask()` helper checks `creatorId === userId` for MEMBER role. Reference code provided in Phase 3. |
 | VIEWER creating/editing tasks | Membership role check in POST/PUT/DELETE handlers. VIEWERs excluded from task modal project dropdown on frontend. |
+| Component rendering errors crash app | `ErrorBoundary` wraps entire app in `main.tsx`. Shows recovery UI instead of white screen. |
+| Silent mutation failures | `Toast` notification system shows success/error feedback on all mutations. |
+| Brute-force auth attacks | `express-rate-limit` applied to login/register endpoints (20 req/15 min per IP). |
+| `any` types undermining TypeScript | Shared interfaces in `frontend/src/types/index.ts` used across api.ts and components. |
+| Docker builds copying node_modules | `.dockerignore` files in both backend and frontend exclude `node_modules`, `dist`, `.git`. |
+| Missing package-lock.json breaks Docker | Explicit `npm install` step in Phase 0 generates lock files before first Docker build. |
