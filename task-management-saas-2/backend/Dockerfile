@@ -31,4 +31,4 @@ COPY prisma ./prisma/
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && npm start"]
+CMD ["sh", "-c", "echo '=== Starting deployment ===' && echo \"PORT=$PORT\" && echo \"NODE_ENV=$NODE_ENV\" && ./node_modules/.bin/prisma migrate deploy && echo '=== Migrations complete, starting server ===' && node dist/index.js"]
