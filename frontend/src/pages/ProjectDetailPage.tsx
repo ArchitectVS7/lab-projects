@@ -16,24 +16,24 @@ const STATUS_LABELS: Record<TaskStatus, string> = {
 };
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
-  TODO: 'bg-gray-100 text-gray-700',
-  IN_PROGRESS: 'bg-blue-100 text-blue-700',
-  IN_REVIEW: 'bg-yellow-100 text-yellow-700',
-  DONE: 'bg-green-100 text-green-700',
+  TODO: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
+  IN_PROGRESS: 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300',
+  IN_REVIEW: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300',
+  DONE: 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300',
 };
 
 const PRIORITY_COLORS: Record<TaskPriority, string> = {
-  LOW: 'bg-gray-100 text-gray-600',
-  MEDIUM: 'bg-blue-100 text-blue-600',
-  HIGH: 'bg-orange-100 text-orange-600',
-  URGENT: 'bg-red-100 text-red-600',
+  LOW: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300',
+  MEDIUM: 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300',
+  HIGH: 'bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-300',
+  URGENT: 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300',
 };
 
 const ROLE_BADGES: Record<ProjectRole, string> = {
-  OWNER: 'bg-purple-100 text-purple-700',
-  ADMIN: 'bg-indigo-100 text-indigo-700',
-  MEMBER: 'bg-gray-100 text-gray-700',
-  VIEWER: 'bg-gray-50 text-gray-500',
+  OWNER: 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300',
+  ADMIN: 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300',
+  MEMBER: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
+  VIEWER: 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
 };
 
 const STATUSES: TaskStatus[] = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'];
@@ -90,7 +90,7 @@ export default function ProjectDetailPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400" />
       </div>
     );
   }
@@ -98,8 +98,8 @@ export default function ProjectDetailPage() {
   if (isError) {
     return (
       <div className="text-center py-12">
-        <p className="text-red-600">Failed to load project: {(error as Error).message}</p>
-        <button onClick={() => navigate('/projects')} className="mt-4 text-indigo-600 hover:underline">
+        <p className="text-red-600 dark:text-red-400">Failed to load project: {(error as Error).message}</p>
+        <button onClick={() => navigate('/projects')} className="mt-4 text-indigo-600 dark:text-indigo-400 hover:underline">
           Back to Projects
         </button>
       </div>
@@ -109,8 +109,8 @@ export default function ProjectDetailPage() {
   if (!project) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Project not found.</p>
-        <Link to="/projects" className="text-indigo-600 hover:underline mt-2 inline-block">Back to Projects</Link>
+        <p className="text-gray-500 dark:text-gray-400">Project not found.</p>
+        <Link to="/projects" className="text-indigo-600 dark:text-indigo-400 hover:underline mt-2 inline-block">Back to Projects</Link>
       </div>
     );
   }
@@ -130,56 +130,56 @@ export default function ProjectDetailPage() {
       <div className="mb-6">
         <Link
           to="/projects"
-          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-3"
+          className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mb-3"
         >
           <ArrowLeft size={16} />
           Back to Projects
         </Link>
         <div className="flex items-center gap-3">
           <div className="w-4 h-4 rounded" style={{ backgroundColor: project.color }} />
-          <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{project.name}</h1>
         </div>
         {project.description && (
-          <p className="text-gray-500 mt-1 ml-7">{project.description}</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1 ml-7">{project.description}</p>
         )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Task Columns - 3/4 width */}
         <div className="lg:col-span-3">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Tasks</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Tasks</h2>
           <div className="flex gap-4 overflow-x-auto pb-4">
             {STATUSES.map((status) => {
               const columnTasks = project.tasks?.filter((t) => t.status === status) || [];
               return (
                 <div key={status} className="flex-1 min-w-[220px]">
-                  <div className="bg-gray-100 rounded-lg p-3">
+                  <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-3">
                       <span className={clsx('text-xs font-medium px-2 py-1 rounded', STATUS_COLORS[status])}>
                         {STATUS_LABELS[status]}
                       </span>
-                      <span className="text-xs text-gray-400">{columnTasks.length}</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">{columnTasks.length}</span>
                     </div>
                     <div className="space-y-2 min-h-[100px]">
                       {columnTasks.map((task) => (
-                        <div key={task.id} className="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                          <p className="text-sm font-medium text-gray-900 mb-1">{task.title}</p>
+                        <div key={task.id} className="bg-white dark:bg-gray-700 p-3 rounded-md shadow-sm border border-gray-100 dark:border-gray-600">
+                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">{task.title}</p>
                           {task.description && (
-                            <p className="text-xs text-gray-500 line-clamp-2 mb-2">{task.description}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">{task.description}</p>
                           )}
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className={clsx('text-[10px] px-1.5 py-0.5 rounded font-medium', PRIORITY_COLORS[task.priority])}>
                               {task.priority}
                             </span>
                             {task.dueDate && (
-                              <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                              <span className="text-[10px] text-gray-400 dark:text-gray-500 flex items-center gap-0.5">
                                 <Calendar size={10} />
                                 {format(new Date(task.dueDate), 'MMM d')}
                               </span>
                             )}
                             {task.assignee && (
                               <span className="ml-auto flex items-center gap-1">
-                                <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-medium text-indigo-700">
+                                <span className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-[10px] font-medium text-indigo-700 dark:text-indigo-300">
                                   {task.assignee.name.charAt(0).toUpperCase()}
                                 </span>
                               </span>
@@ -188,7 +188,7 @@ export default function ProjectDetailPage() {
                         </div>
                       ))}
                       {columnTasks.length === 0 && (
-                        <p className="text-xs text-gray-400 text-center py-4">No tasks</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-4">No tasks</p>
                       )}
                     </div>
                   </div>
@@ -201,11 +201,11 @@ export default function ProjectDetailPage() {
         {/* Members Panel - 1/4 width */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Members</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Members</h2>
             {isManager && (
               <button
                 onClick={() => setAddMemberOpen(!addMemberOpen)}
-                className="text-indigo-600 hover:text-indigo-700"
+                className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
                 title="Add member"
               >
                 <UserPlus size={18} />
@@ -215,32 +215,32 @@ export default function ProjectDetailPage() {
 
           {/* Add Member Form */}
           {addMemberOpen && isManager && (
-            <form onSubmit={handleAddMember} className="bg-white border border-gray-200 rounded-lg p-3 mb-4 space-y-2">
+            <form onSubmit={handleAddMember} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 mb-4 space-y-2">
               <input
                 type="email"
                 value={memberEmail}
                 onChange={(e) => setMemberEmail(e.target.value)}
                 placeholder="User email"
                 required
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
               <select
                 value={memberRole}
                 onChange={(e) => setMemberRole(e.target.value as 'ADMIN' | 'MEMBER' | 'VIEWER')}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="ADMIN">Admin</option>
                 <option value="MEMBER">Member</option>
                 <option value="VIEWER">Viewer</option>
               </select>
               {addMemberError && (
-                <p className="text-xs text-red-600">{addMemberError}</p>
+                <p className="text-xs text-red-600 dark:text-red-400">{addMemberError}</p>
               )}
               <div className="flex gap-2">
                 <button
                   type="submit"
                   disabled={addMemberMutation.isPending}
-                  className="flex-1 px-3 py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-md disabled:opacity-50"
+                  className="flex-1 px-3 py-1.5 text-sm text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 rounded-md disabled:opacity-50"
                 >
                   {addMemberMutation.isPending ? 'Adding...' : 'Add'}
                 </button>
@@ -250,7 +250,7 @@ export default function ProjectDetailPage() {
                     setAddMemberOpen(false);
                     setAddMemberError('');
                   }}
-                  className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-md"
+                  className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
                 >
                   Cancel
                 </button>
@@ -261,13 +261,13 @@ export default function ProjectDetailPage() {
           {/* Member List */}
           <div className="space-y-2">
             {project.members?.map((member) => (
-              <div key={member.userId} className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg p-2.5">
-                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-medium text-indigo-700 flex-shrink-0">
+              <div key={member.userId} className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2.5">
+                <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-sm font-medium text-indigo-700 dark:text-indigo-300 flex-shrink-0">
                   {member.user.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{member.user.name}</p>
-                  <p className="text-xs text-gray-400 truncate">{member.user.email}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{member.user.name}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{member.user.email}</p>
                 </div>
                 <span className={clsx('text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0', ROLE_BADGES[member.role])}>
                   {member.role}
@@ -279,13 +279,13 @@ export default function ProjectDetailPage() {
                         <button
                           onClick={() => removeMemberMutation.mutate(member.userId)}
                           disabled={removeMemberMutation.isPending}
-                          className="text-[10px] text-red-600 hover:text-red-700 font-medium"
+                          className="text-[10px] text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium"
                         >
                           {removeMemberMutation.isPending ? '...' : 'Yes'}
                         </button>
                         <button
                           onClick={() => setRemovingUserId(null)}
-                          className="text-[10px] text-gray-400 hover:text-gray-600"
+                          className="text-[10px] text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
                         >
                           No
                         </button>
@@ -293,7 +293,7 @@ export default function ProjectDetailPage() {
                     ) : (
                       <button
                         onClick={() => setRemovingUserId(member.userId)}
-                        className="text-gray-300 hover:text-red-500 flex-shrink-0"
+                        className="text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 flex-shrink-0"
                         title="Remove member"
                       >
                         <X size={14} />

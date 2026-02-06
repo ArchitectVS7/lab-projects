@@ -13,26 +13,26 @@ const STATUS_LABELS: Record<TaskStatus, string> = {
 };
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
-  TODO: 'bg-gray-100 text-gray-600',
-  IN_PROGRESS: 'bg-blue-100 text-blue-600',
-  IN_REVIEW: 'bg-yellow-100 text-yellow-600',
-  DONE: 'bg-green-100 text-green-600',
+  TODO: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300',
+  IN_PROGRESS: 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300',
+  IN_REVIEW: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-600 dark:text-yellow-300',
+  DONE: 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-300',
 };
 
 const PRIORITY_COLORS: Record<TaskPriority, string> = {
-  LOW: 'bg-gray-100 text-gray-600',
-  MEDIUM: 'bg-blue-100 text-blue-600',
-  HIGH: 'bg-orange-100 text-orange-600',
-  URGENT: 'bg-red-100 text-red-600',
+  LOW: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300',
+  MEDIUM: 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300',
+  HIGH: 'bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-300',
+  URGENT: 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300',
 };
 
 function StatCard({ title, value, icon: Icon, color }: { title: string; value: number; icon: React.ElementType; color: string }) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-500">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
         </div>
         <div className={clsx('p-3 rounded-full', color)}>
           <Icon size={24} className="text-white" />
@@ -44,9 +44,9 @@ function StatCard({ title, value, icon: Icon, color }: { title: string; value: n
 
 function TaskCard({ task }: { task: Task }) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between gap-2">
-        <h3 className="font-medium text-gray-900 line-clamp-1">{task.title}</h3>
+        <h3 className="font-medium text-gray-900 dark:text-gray-100 line-clamp-1">{task.title}</h3>
         <span className={clsx('text-xs px-2 py-0.5 rounded font-medium', PRIORITY_COLORS[task.priority])}>
           {task.priority}
         </span>
@@ -57,7 +57,7 @@ function TaskCard({ task }: { task: Task }) {
         </span>
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: task.project.color }} />
-          <span className="text-xs text-gray-500">{task.project.name}</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">{task.project.name}</span>
         </div>
       </div>
     </div>
@@ -66,11 +66,11 @@ function TaskCard({ task }: { task: Task }) {
 
 function ProjectCard({ project }: { project: Project }) {
   return (
-    <Link to={`/projects/${project.id}`} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
+    <Link to={`/projects/${project.id}`} className="flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
       <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: project.color }} />
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-gray-900 truncate">{project.name}</p>
-        <p className="text-xs text-gray-500">{project._count?.tasks || 0} tasks</p>
+        <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{project.name}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{project._count?.tasks || 0} tasks</p>
       </div>
     </Link>
   );
@@ -102,14 +102,14 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400" />
       </div>
     );
   }
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Dashboard</h1>
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -123,8 +123,8 @@ export default function DashboardPage() {
         {/* Recent Tasks */}
         <div className="lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Tasks</h2>
-            <Link to="/tasks" className="text-sm text-indigo-600 hover:text-indigo-700">View all →</Link>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Tasks</h2>
+            <Link to="/tasks" className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">View all →</Link>
           </div>
           {recentTasks.length > 0 ? (
             <div className="grid gap-3">
@@ -133,9 +133,9 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-              <p className="text-gray-500">No tasks yet. Create your first task!</p>
-              <Link to="/tasks" className="mt-2 inline-block text-indigo-600 hover:text-indigo-700">Go to Tasks →</Link>
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
+              <p className="text-gray-500 dark:text-gray-400">No tasks yet. Create your first task!</p>
+              <Link to="/tasks" className="mt-2 inline-block text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">Go to Tasks →</Link>
             </div>
           )}
         </div>
@@ -143,17 +143,17 @@ export default function DashboardPage() {
         {/* Recent Projects */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Projects</h2>
-            <Link to="/projects" className="text-sm text-indigo-600 hover:text-indigo-700">View all →</Link>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Projects</h2>
+            <Link to="/projects" className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">View all →</Link>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
             {recentProjects.length > 0 ? (
               recentProjects.map((project) => (
                 <ProjectCard key={project.id} project={project} />
               ))
             ) : (
               <div className="p-6 text-center">
-                <p className="text-gray-500 text-sm">No projects yet.</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">No projects yet.</p>
               </div>
             )}
           </div>

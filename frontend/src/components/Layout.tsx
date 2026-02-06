@@ -4,6 +4,8 @@ import { authApi } from '../lib/api';
 import { LayoutDashboard, CheckSquare, FolderKanban, LogOut, User } from 'lucide-react';
 import clsx from 'clsx';
 import ToastContainer from './Toast';
+import ThemeToggle from './ThemeToggle';
+import NotificationCenter from './NotificationCenter';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -26,10 +28,10 @@ export default function Layout() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-indigo-600">TaskApp</h1>
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+      <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <h1 className="text-xl font-bold text-indigo-600 dark:text-indigo-400">TaskApp</h1>
         </div>
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map(({ to, label, icon: Icon }) => (
@@ -39,8 +41,8 @@ export default function Layout() {
               className={clsx(
                 'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
                 isActive(to)
-                  ? 'bg-indigo-50 text-indigo-700'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
               )}
             >
               <Icon size={18} />
@@ -48,24 +50,28 @@ export default function Layout() {
             </Link>
           ))}
         </nav>
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-medium text-indigo-700">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <NotificationCenter />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-sm font-medium text-indigo-700 dark:text-indigo-300">
               {user?.name?.charAt(0).toUpperCase()}
             </div>
-            <span className="text-sm font-medium text-gray-700 truncate">{user?.name}</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{user?.name}</span>
           </div>
           <div className="space-y-1">
             <Link
               to="/profile"
-              className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 px-1"
+              className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 px-1"
             >
               <User size={16} />
               Profile
             </Link>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 px-1"
+              className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 px-1"
             >
               <LogOut size={16} />
               Logout
