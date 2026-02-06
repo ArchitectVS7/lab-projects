@@ -95,7 +95,8 @@ TaskMan/
 Backend (`.env`):
 ```env
 PORT=4000
-DATABASE_URL=postgresql://user:password@localhost:5432/taskman
+# IMPORTANT: When using Docker Compose, use 'postgres' (service name) not 'localhost'
+DATABASE_URL=postgresql://user:password@postgres:5432/taskman?schema=public
 JWT_SECRET=your-secret-key
 JWT_EXPIRES_IN=7d
 CORS_ORIGIN=http://localhost:5173
@@ -106,6 +107,10 @@ Frontend (`.env.local`):
 ```env
 VITE_API_URL=http://localhost:4000
 ```
+
+**Docker vs Local:**
+- **Docker Compose**: Use `postgres` as the hostname (line 3 above) - services communicate using service names
+- **Local PostgreSQL**: Use `localhost` instead of `postgres`
 
 See `.env.example` for all available options.
 
