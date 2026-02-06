@@ -8,6 +8,7 @@ import prisma from './lib/prisma.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/auth.js';
 import projectRoutes from './routes/projects.js';
+import taskRoutes from './routes/tasks.js';
 
 dotenv.config();
 
@@ -29,6 +30,7 @@ app.use(cookieParser());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/tasks', taskRoutes);
 
 // Health check -- verifies database connectivity
 app.get('/health', async (_req, res) => {
