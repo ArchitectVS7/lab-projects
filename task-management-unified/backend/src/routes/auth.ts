@@ -88,28 +88,25 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
   try {
     const data = loginSchema.parse(req.body);
 
-    const user = await prisma.user.findUnique({ where: { email: data.email } });
-    if (!user) {
+    const userWithHash = await prisma.user.findUnique({ where: { email: data.email } });
+    if (!userWithHash) {
       throw new AppError('Invalid email or password', 401);
     }
 
-    const valid = await bcrypt.compare(data.password, user.passwordHash);
+    const valid = await bcrypt.compare(data.password, userWithHash.passwordHash);
     if (!valid) {
       throw new AppError('Invalid email or password', 401);
     }
 
-    const token = generateToken(user.id);
+    const token = generateToken(userWithHash.id);
     setAuthCookie(res, token);
 
-    res.json({
-      message: 'Login successful',
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        avatarUrl: user.avatarUrl,
-      },
+    const user = await prisma.user.findUnique({
+      where: { id: userWithHash.id },
+      select: userSelect,
     });
+
+    res.json({ message: 'Login successful', user });
   } catch (error) {
     next(error);
   }

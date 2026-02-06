@@ -40,14 +40,16 @@ export const clearAuthCookie = (res: Response): void => {
 };
 
 const extractToken = (req: Request): string | null => {
-  // 1. Try HTTP-only cookie (primary)
+  // 1. Try HTTP-only cookie (primary -- PRD 7.1: tokens in HTTP-only cookies only)
   if (req.cookies?.[COOKIE_NAME]) {
     return req.cookies[COOKIE_NAME];
   }
-  // 2. Fallback to Authorization header (for curl/Postman testing)
-  const authHeader = req.headers.authorization;
-  if (authHeader?.startsWith('Bearer ')) {
-    return authHeader.split(' ')[1];
+  // 2. Fallback to Authorization header in dev only (for curl/Postman testing)
+  if (process.env.NODE_ENV !== 'production') {
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith('Bearer ')) {
+      return authHeader.split(' ')[1];
+    }
   }
   return null;
 };

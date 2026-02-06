@@ -3,6 +3,9 @@ import type { User, Task, Project, ProjectMember, TaskStatus, TaskPriority } fro
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
+// Paths where 401 is expected and should NOT trigger global redirect
+const AUTH_PATHS = ['/api/auth/login', '/api/auth/register', '/api/auth/me'];
+
 // --- Core fetch wrapper ---
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -15,7 +18,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     },
   });
 
-  if (res.status === 401) {
+  if (res.status === 401 && !AUTH_PATHS.includes(path)) {
     useAuthStore.getState().clearUser();
     window.location.href = '/login';
     throw new Error('Unauthorized');

@@ -15,7 +15,7 @@ export default function Layout() {
   const { user, clearUser } = useAuthStore();
 
   const handleLogout = async () => {
-    await authApi.logout();
+    try { await authApi.logout(); } catch { /* server unreachable is fine */ }
     clearUser();
   };
 
