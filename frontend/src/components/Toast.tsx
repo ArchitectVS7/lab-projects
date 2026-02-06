@@ -33,11 +33,11 @@ export default function ToastContainer() {
                     key={toast.id}
                     className={clsx(
                         'flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg text-sm text-white transition-all',
-                        toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+                        toast.type === 'success' ? 'bg-green-600 dark:bg-green-700' : 'bg-red-600 dark:bg-red-700'
                     )}
                 >
                     <span>{toast.message}</span>
-                    <button onClick={() => removeToast(toast.id)} className="hover:opacity-80">
+                    <button onClick={() => removeToast(toast.id)} className="hover:opacity-80 transition-opacity">
                         <X size={14} />
                     </button>
                 </div>

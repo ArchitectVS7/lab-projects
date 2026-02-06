@@ -160,6 +160,15 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
       projectId: { in: projectIds },
     };
 
+    // Text search on title and description
+    if (req.query.q) {
+      const searchTerm = req.query.q as string;
+      where.OR = [
+        { title: { contains: searchTerm, mode: 'insensitive' } },
+        { description: { contains: searchTerm, mode: 'insensitive' } },
+      ];
+    }
+
     if (req.query.projectId) {
       where.projectId = req.query.projectId as string;
     }
@@ -174,6 +183,17 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
     }
     if (req.query.creatorId) {
       where.creatorId = req.query.creatorId as string;
+    }
+
+    // Date range filtering
+    if (req.query.dueDateFrom || req.query.dueDateTo) {
+      where.dueDate = {};
+      if (req.query.dueDateFrom) {
+        where.dueDate.gte = new Date(req.query.dueDateFrom as string);
+      }
+      if (req.query.dueDateTo) {
+        where.dueDate.lte = new Date(req.query.dueDateTo as string);
+      }
     }
 
     // Build orderBy with validation to prevent injection

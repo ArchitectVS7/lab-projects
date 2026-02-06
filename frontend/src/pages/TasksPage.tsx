@@ -28,17 +28,17 @@ const STATUS_BG: Record<TaskStatus, string> = {
 };
 
 const STATUS_COLUMN_COLORS: Record<TaskStatus, string> = {
-  TODO: 'bg-gray-100',
-  IN_PROGRESS: 'bg-blue-50',
-  IN_REVIEW: 'bg-yellow-50',
-  DONE: 'bg-green-50',
+  TODO: 'bg-gray-100 dark:bg-gray-800',
+  IN_PROGRESS: 'bg-blue-50 dark:bg-blue-900/20',
+  IN_REVIEW: 'bg-yellow-50 dark:bg-yellow-900/20',
+  DONE: 'bg-green-50 dark:bg-green-900/20',
 };
 
 const PRIORITY_COLORS: Record<TaskPriority, string> = {
-  LOW: 'bg-gray-100 text-gray-600',
-  MEDIUM: 'bg-blue-100 text-blue-600',
-  HIGH: 'bg-orange-100 text-orange-600',
-  URGENT: 'bg-red-100 text-red-600',
+  LOW: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300',
+  MEDIUM: 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300',
+  HIGH: 'bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-300',
+  URGENT: 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300',
 };
 
 function canEditTask(task: Task, currentUserId: string, projects: Project[]): boolean {
@@ -132,32 +132,32 @@ function TaskModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">{task ? 'Edit Task' : 'New Task'}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{task ? 'Edit Task' : 'New Task'}</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"><X size={20} /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label>
             <input type="text" required maxLength={200} value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               placeholder="Task title" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
             <textarea rows={3} maxLength={2000} value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
               placeholder="Optional description" />
           </div>
           {!task && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Project *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Project *</label>
               <select required value={form.projectId}
                 onChange={(e) => setForm((f) => ({ ...f, projectId: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <option value="">Select a project</option>
                 {writableProjects.map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
@@ -167,10 +167,10 @@ function TaskModal({
           )}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
               <select value={form.status}
                 onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as TaskStatus }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm">
                 <option value="TODO">To Do</option>
                 <option value="IN_PROGRESS">In Progress</option>
                 <option value="IN_REVIEW">In Review</option>
@@ -178,10 +178,10 @@ function TaskModal({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
               <select value={form.priority}
                 onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value as TaskPriority }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm">
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
                 <option value="HIGH">High</option>
@@ -190,10 +190,10 @@ function TaskModal({
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Assignee</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assignee</label>
             <select value={form.assigneeId} disabled={!form.projectId}
               onChange={(e) => setForm((f) => ({ ...f, assigneeId: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 disabled:text-gray-400">
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-400 dark:disabled:text-gray-500">
               <option value="">Unassigned</option>
               {assigneeOptions.map((m) => (
                 <option key={m.userId} value={m.userId}>{m.user.name}</option>
@@ -201,16 +201,16 @@ function TaskModal({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label>
             <input type="date" value={form.dueDate}
               onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm" />
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={onClose}
-              className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">Cancel</button>
+              className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md">Cancel</button>
             <button type="submit" disabled={isSubmitting || !form.title.trim() || (!task && !form.projectId)}
-              className="px-4 py-2 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-md disabled:opacity-50">
+              className="px-4 py-2 text-sm text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 rounded-md disabled:opacity-50">
               {isSubmitting ? 'Saving...' : task ? 'Update' : 'Create'}
             </button>
           </div>
@@ -235,15 +235,15 @@ function DeleteConfirmDialog({
 }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-sm mx-4 p-6" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Task</h3>
-        <p className="text-sm text-gray-600 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-sm mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Delete Task</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
           Are you sure you want to delete <span className="font-medium">"{taskTitle}"</span>?
         </p>
         <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">Cancel</button>
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md">Cancel</button>
           <button onClick={onConfirm} disabled={isDeleting}
-            className="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-md disabled:opacity-50">
+            className="px-4 py-2 text-sm text-white bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800 rounded-md disabled:opacity-50">
             {isDeleting ? 'Deleting...' : 'Delete'}
           </button>
         </div>
@@ -270,30 +270,30 @@ function TableView({
   onDelete: (task: Task) => void;
 }) {
   if (tasks.length === 0) {
-    return <p className="text-center py-8 text-gray-400">No tasks match the current filters.</p>;
+    return <p className="text-center py-8 text-gray-400 dark:text-gray-500">No tasks match the current filters.</p>;
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="bg-gray-50 border-b border-gray-200">
-            <th className="px-4 py-3 text-left font-medium text-gray-600">Task</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-600">Status</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-600">Priority</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-600">Project</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-600">Assignee</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-600">Due</th>
-            <th className="px-4 py-3 text-right font-medium text-gray-600">Actions</th>
+          <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+            <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Task</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Status</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Priority</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Project</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Assignee</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Due</th>
+            <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-400">Actions</th>
           </tr>
         </thead>
         <tbody>
           {tasks.map((task) => (
-            <tr key={task.id} className="border-b border-gray-100 hover:bg-gray-50">
+            <tr key={task.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
               <td className="px-4 py-3">
-                <div className="font-medium text-gray-900">{task.title}</div>
+                <div className="font-medium text-gray-900 dark:text-gray-100">{task.title}</div>
                 {task.description && (
-                  <div className="text-gray-500 text-xs line-clamp-1 mt-0.5">{task.description}</div>
+                  <div className="text-gray-500 dark:text-gray-400 text-xs line-clamp-1 mt-0.5">{task.description}</div>
                 )}
               </td>
               <td className="px-4 py-3">
@@ -315,31 +315,31 @@ function TableView({
               <td className="px-4 py-3">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: task.project.color }} />
-                  <span className="text-gray-700 text-xs">{task.project.name}</span>
+                  <span className="text-gray-700 dark:text-gray-300 text-xs">{task.project.name}</span>
                 </div>
               </td>
               <td className="px-4 py-3">
                 {task.assignee ? (
                   <div className="flex items-center gap-1.5">
-                    <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-medium text-indigo-700">
+                    <div className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-[10px] font-medium text-indigo-700 dark:text-indigo-300">
                       {task.assignee.name.charAt(0).toUpperCase()}
                     </div>
-                    <span className="text-xs text-gray-600">{task.assignee.name}</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">{task.assignee.name}</span>
                   </div>
                 ) : (
-                  <span className="text-xs text-gray-400">--</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">--</span>
                 )}
               </td>
-              <td className="px-4 py-3 text-xs text-gray-500">
+              <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
                 {task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : '--'}
               </td>
               <td className="px-4 py-3 text-right">
                 {canEditTask(task, currentUserId, projects) && (
                   <div className="flex items-center justify-end gap-1">
-                    <button onClick={() => onEdit(task)} className="p-1 text-gray-400 hover:text-indigo-600" title="Edit">
+                    <button onClick={() => onEdit(task)} className="p-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" title="Edit">
                       <Pencil size={14} />
                     </button>
-                    <button onClick={() => onDelete(task)} className="p-1 text-gray-400 hover:text-red-600" title="Delete">
+                    <button onClick={() => onDelete(task)} className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400" title="Delete">
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -362,14 +362,14 @@ function KanbanColumn({ status, tasks, children }: { status: TaskStatus; tasks: 
       ref={setNodeRef}
       className={clsx(
         'flex-1 min-w-[260px] p-3 rounded-lg transition-colors',
-        isOver ? 'bg-indigo-50 ring-2 ring-indigo-300' : STATUS_COLUMN_COLORS[status]
+        isOver ? 'bg-indigo-50 dark:bg-indigo-900/30 ring-2 ring-indigo-300 dark:ring-indigo-600' : STATUS_COLUMN_COLORS[status]
       )}
     >
       <div className="flex items-center justify-between mb-3">
         <span className={clsx('text-xs font-semibold px-2 py-1 rounded text-white', STATUS_BG[status])}>
           {STATUS_LABELS[status]}
         </span>
-        <span className="text-xs text-gray-400 font-medium">{tasks.length}</span>
+        <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">{tasks.length}</span>
       </div>
       <div className="space-y-2 min-h-[80px]">{children}</div>
     </div>
@@ -387,17 +387,17 @@ function DraggableTaskCard({ task, onEdit, canEdit }: { task: Task; onEdit: (tas
       {...listeners}
       {...attributes}
       className={clsx(
-        'bg-white p-3 rounded-md shadow-sm border border-gray-200 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow',
+        'bg-white dark:bg-gray-800 p-3 rounded-md shadow-sm border border-gray-200 dark:border-gray-700 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow',
         isDragging && 'opacity-50 shadow-lg'
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-medium text-gray-900 line-clamp-2 flex-1">{task.title}</p>
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2 flex-1">{task.title}</p>
         {canEdit && (
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(task); }}
             onPointerDown={(e) => e.stopPropagation()}
-            className="text-gray-300 hover:text-indigo-600 flex-shrink-0 mt-0.5"
+            className="text-gray-300 dark:text-gray-600 hover:text-indigo-600 dark:hover:text-indigo-400 flex-shrink-0 mt-0.5"
             title="Edit"
           >
             <Pencil size={12} />
@@ -405,7 +405,7 @@ function DraggableTaskCard({ task, onEdit, canEdit }: { task: Task; onEdit: (tas
         )}
       </div>
       {task.description && (
-        <p className="text-xs text-gray-500 line-clamp-2 mt-1">{task.description}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">{task.description}</p>
       )}
       <div className="flex items-center gap-2 mt-2 flex-wrap">
         <span className={clsx('text-[10px] px-1.5 py-0.5 rounded font-medium', PRIORITY_COLORS[task.priority])}>
@@ -413,16 +413,16 @@ function DraggableTaskCard({ task, onEdit, canEdit }: { task: Task; onEdit: (tas
         </span>
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: task.project.color }} />
-          <span className="text-[10px] text-gray-500">{task.project.name}</span>
+          <span className="text-[10px] text-gray-500 dark:text-gray-400">{task.project.name}</span>
         </div>
         {task.dueDate && (
-          <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+          <span className="text-[10px] text-gray-400 dark:text-gray-500 flex items-center gap-0.5">
             <Calendar size={9} />
             {format(new Date(task.dueDate), 'MMM d')}
           </span>
         )}
         {task.assignee && (
-          <span className="ml-auto w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-medium text-indigo-700">
+          <span className="ml-auto w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-[10px] font-medium text-indigo-700 dark:text-indigo-300">
             {task.assignee.name.charAt(0).toUpperCase()}
           </span>
         )}
@@ -433,15 +433,15 @@ function DraggableTaskCard({ task, onEdit, canEdit }: { task: Task; onEdit: (tas
 
 function TaskCardOverlay({ task }: { task: Task }) {
   return (
-    <div className="bg-white p-3 rounded-md shadow-xl border border-indigo-300 opacity-90 w-[260px]">
-      <p className="text-sm font-medium text-gray-900 line-clamp-2">{task.title}</p>
+    <div className="bg-white dark:bg-gray-800 p-3 rounded-md shadow-xl border border-indigo-300 dark:border-indigo-600 opacity-90 w-[260px]">
+      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">{task.title}</p>
       <div className="flex items-center gap-2 mt-2">
         <span className={clsx('text-[10px] px-1.5 py-0.5 rounded font-medium', PRIORITY_COLORS[task.priority])}>
           {task.priority}
         </span>
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: task.project.color }} />
-          <span className="text-[10px] text-gray-500">{task.project.name}</span>
+          <span className="text-[10px] text-gray-500 dark:text-gray-400">{task.project.name}</span>
         </div>
       </div>
     </div>
@@ -498,7 +498,7 @@ function KanbanView({
                 />
               ))}
               {columnTasks.length === 0 && (
-                <p className="text-xs text-gray-400 text-center py-4">No tasks</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-4">No tasks</p>
               )}
             </KanbanColumn>
           );
@@ -639,7 +639,7 @@ export default function TasksPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400" />
       </div>
     );
   }
@@ -647,7 +647,7 @@ export default function TasksPage() {
   if (isError) {
     return (
       <div className="text-center py-12">
-        <p className="text-red-600">Failed to load tasks: {(error as Error).message}</p>
+        <p className="text-red-600 dark:text-red-400">Failed to load tasks: {(error as Error).message}</p>
       </div>
     );
   }
@@ -656,15 +656,15 @@ export default function TasksPage() {
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tasks</h1>
         <div className="flex items-center gap-3">
           {/* View Toggle */}
-          <div className="flex bg-gray-100 rounded-md p-0.5">
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-md p-0.5">
             <button
               onClick={() => setViewMode('table')}
               className={clsx(
                 'flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors',
-                viewMode === 'table' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                viewMode === 'table' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               )}
             >
               <Table size={14} />
@@ -674,7 +674,7 @@ export default function TasksPage() {
               onClick={() => setViewMode('kanban')}
               className={clsx(
                 'flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors',
-                viewMode === 'kanban' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                viewMode === 'kanban' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               )}
             >
               <Columns3 size={14} />
@@ -683,7 +683,7 @@ export default function TasksPage() {
           </div>
           <button
             onClick={() => { setEditingTask(null); setModalOpen(true); }}
-            className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-md"
+            className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 rounded-md"
           >
             <Plus size={16} />
             New Task
@@ -694,11 +694,11 @@ export default function TasksPage() {
       {/* Filter Bar */}
       <div className="flex gap-3 items-end flex-wrap mb-6">
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Project</label>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Project</label>
           <select
             value={filters.projectId || ''}
             onChange={(e) => setFilters((f) => ({ ...f, projectId: e.target.value || undefined }))}
-            className="px-3 py-1.5 border border-gray-300 rounded-md text-sm bg-white"
+            className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 dark:text-gray-100"
           >
             <option value="">All Projects</option>
             {projects.map((p) => (
@@ -707,11 +707,11 @@ export default function TasksPage() {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Status</label>
           <select
             value={filters.status || ''}
             onChange={(e) => setFilters((f) => ({ ...f, status: (e.target.value || undefined) as TaskStatus | undefined }))}
-            className="px-3 py-1.5 border border-gray-300 rounded-md text-sm bg-white"
+            className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 dark:text-gray-100"
           >
             <option value="">All Statuses</option>
             {STATUSES.map((s) => (
@@ -720,11 +720,11 @@ export default function TasksPage() {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Priority</label>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Priority</label>
           <select
             value={filters.priority || ''}
             onChange={(e) => setFilters((f) => ({ ...f, priority: (e.target.value || undefined) as TaskPriority | undefined }))}
-            className="px-3 py-1.5 border border-gray-300 rounded-md text-sm bg-white"
+            className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 dark:text-gray-100"
           >
             <option value="">All Priorities</option>
             <option value="LOW">Low</option>
@@ -736,7 +736,7 @@ export default function TasksPage() {
         {(filters.projectId || filters.status || filters.priority) && (
           <button
             onClick={() => setFilters({})}
-            className="px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md border border-red-200 transition-colors"
+            className="px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md border border-red-200 dark:border-red-800 transition-colors"
           >
             Clear All Filters
           </button>

@@ -19,6 +19,7 @@ model User {
   projectMembers ProjectMember[]
   assignedTasks  Task[]          @relation("TaskAssignee")
   createdTasks   Task[]          @relation("TaskCreator")
+  notifications  Notification[]
 
   @@map("users")
 }
@@ -96,4 +97,32 @@ enum ProjectRole {
   ADMIN
   MEMBER
   VIEWER
+}
+
+enum NotificationType {
+  TASK_ASSIGNED
+  TASK_DUE_SOON
+  TASK_OVERDUE
+  PROJECT_INVITE
+  TASK_COMMENT
+  TASK_STATUS_CHANGED
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  taskId    String? @map("task_id")
+  projectId String? @map("project_id")
+
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notifications")
 }

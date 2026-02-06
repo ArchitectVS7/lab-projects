@@ -77,11 +77,14 @@ export const authApi = {
 // --- Tasks API ---
 
 export interface TaskFilters {
+  q?: string; // Search query for title/description
   projectId?: string;
   status?: TaskStatus;
   priority?: TaskPriority;
   assigneeId?: string;
   creatorId?: string;
+  dueDateFrom?: string; // ISO date string
+  dueDateTo?: string; // ISO date string
   sortBy?: string;
   order?: 'asc' | 'desc';
 }
