@@ -17,7 +17,10 @@ const COOKIE_NAME = 'auth_token';
 export const getCookieOptions = () => ({
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: (process.env.NODE_ENV === 'production' ? 'strict' : 'lax') as 'strict' | 'lax',
+  // 'none' is required when frontend and backend are on different origins
+  // (e.g. Railway subdomains under *.up.railway.app, which is on the public suffix list).
+  // 'none' requires secure: true, which is already set in production above.
+  sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   path: '/',
 });

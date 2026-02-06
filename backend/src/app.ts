@@ -22,10 +22,24 @@ const app = express();
 app.set('trust proxy', 1);
 
 app.use(helmet());
+
+// CORS: support comma-separated origins for Railway multi-service deployments
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (server-to-server, health checks)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true,
 }));
+
+console.log('CORS allowed origins:', allowedOrigins);
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(cookieParser());
