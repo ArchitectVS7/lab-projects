@@ -486,14 +486,14 @@ Commit both `package-lock.json` files to the repository. Without them, `npm ci` 
 ### 0.4 Validation Checklist -- Phase 0
 
 ```
-[ ] docker compose up --build starts all 3 services without errors
-[ ] curl http://localhost:4000/health returns { "status": "ok", ... }
-[ ] curl http://localhost:4000/health with DB down returns 503 { "status": "unhealthy" }
-[ ] PostgreSQL is reachable on localhost:5432
-[ ] npx prisma migrate dev (from backend/) creates tables
-[ ] npx prisma studio (from backend/) shows User, Project, Task, ProjectMember tables
-[ ] Frontend dev server (localhost:3000) loads a blank React page with Tailwind working
-[ ] Both package-lock.json files are committed
+[x] docker compose up --build starts all 3 services without errors
+[x] curl http://localhost:4000/health returns { "status": "ok", ... }
+[x] curl http://localhost:4000/health with DB down returns 503 { "status": "unhealthy" }
+[x] PostgreSQL is reachable on localhost:5432
+[x] npx prisma migrate dev (from backend/) creates tables
+[x] npx prisma studio (from backend/) shows User, Project, Task, ProjectMember tables
+[x] Frontend dev server (localhost:3000) loads a blank React page with Tailwind working
+[x] Both package-lock.json files are committed
 ```
 
 ---
@@ -1483,28 +1483,28 @@ const bulkStatusSchema = z.object({
 
 ```
 Backend (curl):
-  [ ] POST /api/auth/register with valid data → 201, Set-Cookie header present
-  [ ] POST /api/auth/register with duplicate email → 409
-  [ ] POST /api/auth/register with weak password → 400 with Zod field errors
-  [ ] POST /api/auth/login with valid credentials → 200, Set-Cookie header present
-  [ ] POST /api/auth/login with wrong password → 401, generic error
-  [ ] GET /api/auth/me with valid cookie → 200, returns user (no passwordHash)
-  [ ] GET /api/auth/me without cookie → 401
-  [ ] POST /api/auth/logout → 200, Set-Cookie with maxAge=0
-  [ ] POST /api/auth/refresh with valid cookie → 200, new Set-Cookie
-  [ ] PUT /api/auth/profile with valid data → 200, updated user
-  [ ] PUT /api/auth/password with correct current → 200
-  [ ] PUT /api/auth/password with wrong current → 401
+  [x] POST /api/auth/register with valid data → 201, Set-Cookie header present
+  [x] POST /api/auth/register with duplicate email → 409
+  [x] POST /api/auth/register with weak password → 400 with Zod field errors
+  [x] POST /api/auth/login with valid credentials → 200, Set-Cookie header present
+  [x] POST /api/auth/login with wrong password → 401, generic error
+  [x] GET /api/auth/me with valid cookie → 200, returns user (no passwordHash)
+  [x] GET /api/auth/me without cookie → 401
+  [x] POST /api/auth/logout → 200, Set-Cookie with maxAge=0
+  [x] POST /api/auth/refresh with valid cookie → 200, new Set-Cookie
+  [x] PUT /api/auth/profile with valid data → 200, updated user
+  [x] PUT /api/auth/password with correct current → 200
+  [x] PUT /api/auth/password with wrong current → 401
 
 Frontend (browser):
-  [ ] /login page renders
-  [ ] /register page renders
-  [ ] Register → redirects to /
-  [ ] Login → redirects to /
-  [ ] Refresh page while logged in → stays on /
-  [ ] Navigate to /login while logged in → redirects to /
-  [ ] Click logout → redirects to /login
-  [ ] Navigate to / while logged out → redirects to /login
+  [x] /login page renders
+  [x] /register page renders
+  [x] Register → redirects to /
+  [x] Login → redirects to /
+  [x] Refresh page while logged in → stays on /
+  [x] Navigate to /login while logged in → redirects to /
+  [x] Click logout → redirects to /login
+  [x] Navigate to / while logged out → redirects to /login
 ```
 
 ---
@@ -1601,26 +1601,26 @@ const { data: project } = useQuery({
 
 ```
 Backend (curl):
-  [ ] POST /api/projects → 201, auto-creates OWNER membership
-  [ ] GET /api/projects → returns only projects where user is member
-  [ ] GET /api/projects/:id → returns project with tasks, members
-  [ ] PUT /api/projects/:id as OWNER → 200
-  [ ] PUT /api/projects/:id as VIEWER → 403
-  [ ] DELETE /api/projects/:id as OWNER → 204
-  [ ] DELETE /api/projects/:id as MEMBER → 403
-  [ ] POST /api/projects/:id/members → 201, new member added
-  [ ] POST /api/projects/:id/members (duplicate) → 409
-  [ ] DELETE /api/projects/:id/members/:userId → 204
-  [ ] DELETE /api/projects/:id/members/:ownerId → 400 (cannot remove owner)
+  [x] POST /api/projects → 201, auto-creates OWNER membership
+  [x] GET /api/projects → returns only projects where user is member
+  [x] GET /api/projects/:id → returns project with tasks, members
+  [x] PUT /api/projects/:id as OWNER → 200
+  [x] PUT /api/projects/:id as VIEWER → 403
+  [x] DELETE /api/projects/:id as OWNER → 204
+  [x] DELETE /api/projects/:id as MEMBER → 403
+  [x] POST /api/projects/:id/members → 201, new member added
+  [x] POST /api/projects/:id/members (duplicate) → 409
+  [x] DELETE /api/projects/:id/members/:userId → 204
+  [x] DELETE /api/projects/:id/members/:ownerId → 400 (cannot remove owner)
 
 Frontend (browser):
-  [ ] Projects page shows grid of user's projects
-  [ ] Create project modal works, project appears in grid
-  [ ] Click project → project detail page loads
-  [ ] Member list displays with roles
-  [ ] Add member by email works (OWNER/ADMIN only)
-  [ ] Remove member works (OWNER/ADMIN only)
-  [ ] Project tasks visible in columns
+  [x] Projects page shows grid of user's projects
+  [x] Create project modal works, project appears in grid
+  [x] Click project → project detail page loads
+  [x] Member list displays with roles
+  [x] Add member by email works (OWNER/ADMIN only)
+  [x] Remove member works (OWNER/ADMIN only)
+  [x] Project tasks visible in columns
 ```
 
 ---
@@ -1885,33 +1885,33 @@ const writableProjects = projects?.filter((p) => {
 
 ```
 Backend (curl):
-  [ ] POST /api/tasks → 201, creatorId set automatically
-  [ ] POST /api/tasks as VIEWER → 403
-  [ ] POST /api/tasks with assignee not in project → 400
-  [ ] GET /api/tasks → returns only tasks from user's projects
-  [ ] GET /api/tasks?status=TODO → filtered results
-  [ ] GET /api/tasks?creatorId=<uuid> → filtered by creator
-  [ ] GET /api/tasks?sortBy=priority&order=asc → sorted results
-  [ ] PUT /api/tasks/:id as OWNER/ADMIN → 200 (any task)
-  [ ] PUT /api/tasks/:id as MEMBER (own task) → 200
-  [ ] PUT /api/tasks/:id as MEMBER (other's task) → 403
-  [ ] PUT /api/tasks/:id as VIEWER → 403
-  [ ] DELETE /api/tasks/:id as MEMBER (own task) → 204
-  [ ] DELETE /api/tasks/:id as MEMBER (other's task) → 403
-  [ ] DELETE /api/tasks/:id as VIEWER → 403
-  [ ] PATCH /api/tasks/bulk-status → { updated: N }
+  [x] POST /api/tasks → 201, creatorId set automatically
+  [x] POST /api/tasks as VIEWER → 403
+  [x] POST /api/tasks with assignee not in project → 400
+  [x] GET /api/tasks → returns only tasks from user's projects
+  [x] GET /api/tasks?status=TODO → filtered results
+  [x] GET /api/tasks?creatorId=<uuid> → filtered by creator
+  [x] GET /api/tasks?sortBy=priority&order=asc → sorted results
+  [x] PUT /api/tasks/:id as OWNER/ADMIN → 200 (any task)
+  [x] PUT /api/tasks/:id as MEMBER (own task) → 200
+  [x] PUT /api/tasks/:id as MEMBER (other's task) → 403
+  [x] PUT /api/tasks/:id as VIEWER → 403
+  [x] DELETE /api/tasks/:id as MEMBER (own task) → 204
+  [x] DELETE /api/tasks/:id as MEMBER (other's task) → 403
+  [x] DELETE /api/tasks/:id as VIEWER → 403
+  [x] PATCH /api/tasks/bulk-status → { updated: N }
 
 Frontend (browser):
-  [ ] Table view renders with all tasks
-  [ ] Inline status dropdown updates task
-  [ ] Kanban view renders 4 columns
-  [ ] Drag task card to different column → status updates
-  [ ] View toggle switches between table and kanban
-  [ ] View preference persists across page refresh
-  [ ] Create task modal shows only writable projects (not VIEWER)
-  [ ] Assignee dropdown updates when project changes
-  [ ] Edit task pre-fills all fields
-  [ ] Delete task removes from list
+  [x] Table view renders with all tasks
+  [x] Inline status dropdown updates task
+  [x] Kanban view renders 4 columns
+  [x] Drag task card to different column → status updates
+  [x] View toggle switches between table and kanban
+  [x] View preference persists across page refresh
+  [x] Create task modal shows only writable projects (not VIEWER)
+  [x] Assignee dropdown updates when project changes
+  [x] Edit task pre-fills all fields
+  [x] Delete task removes from list
 ```
 
 ---
@@ -2195,50 +2195,50 @@ CMD serve -s dist -l tcp://0.0.0.0:$PORT
 
 ```
 Dashboard:
-  [ ] Stats cards show correct counts
-  [ ] Recent tasks display with badges
-  [ ] Recent projects display with colors
-  [ ] Data matches tasks/projects pages
-  [ ] Loading spinner shows while data is fetching
+  [x] Stats cards show correct counts
+  [x] Recent tasks display with badges
+  [x] Recent projects display with colors
+  [x] Data matches tasks/projects pages
+  [x] Loading spinner shows while data is fetching
 
 Profile:
-  [ ] Profile page loads current user info
-  [ ] Update name works, sidebar reflects change
-  [ ] Change password with correct current password works
-  [ ] Change password with wrong current password shows error
-  [ ] Weak new password shows validation error
+  [x] Profile page loads current user info
+  [x] Update name works, sidebar reflects change
+  [x] Change password with correct current password works
+  [x] Change password with wrong current password shows error
+  [x] Weak new password shows validation error
 
 Toast Notifications:
-  [ ] Creating a project shows success toast
-  [ ] Failed mutation shows error toast
-  [ ] Toasts auto-dismiss after 4 seconds
-  [ ] Toasts are manually dismissible
+  [x] Creating a project shows success toast
+  [x] Failed mutation shows error toast
+  [x] Toasts auto-dismiss after 4 seconds
+  [x] Toasts are manually dismissible
 
 Rate Limiting:
-  [ ] 21st login attempt within 15 minutes returns 429
+  [x] 21st login attempt within 15 minutes returns 429
 
 Seed Data:
-  [ ] npx prisma db seed creates 2 users, 3 projects, 10 tasks
-  [ ] Running seed twice does not create duplicates (idempotent)
-  [ ] Can log in as alice@example.com / Password123
-  [ ] Can log in as bob@example.com / Password123
-  [ ] Alice sees 3 projects (2 owned, 1 as admin)
-  [ ] Bob sees 3 projects (1 owned, 1 as member, 1 as viewer)
+  [x] npx prisma db seed creates 2 users, 3 projects, 10 tasks
+  [x] Running seed twice does not create duplicates (idempotent)
+  [x] Can log in as alice@example.com / Password123
+  [x] Can log in as bob@example.com / Password123
+  [x] Alice sees 3 projects (2 owned, 1 as admin)
+  [x] Bob sees 3 projects (1 owned, 1 as member, 1 as viewer)
 
 Docker:
-  [ ] docker compose up --build starts all services
-  [ ] Full auth flow works via browser at localhost:3000
-  [ ] Health check returns 200
+  [x] docker compose up --build starts all services
+  [x] Full auth flow works via browser at localhost:3000
+  [x] Health check returns 200
 
 End-to-end flow:
-  [ ] Register new user → dashboard loads with 0 tasks
-  [ ] Create project → appears in projects grid, success toast shown
-  [ ] Create task in project → appears in table and kanban
-  [ ] Switch views → same tasks displayed
-  [ ] Change task status inline → task updates
-  [ ] Add member to project → member appears in detail view
-  [ ] Logout → redirect to login → login again → session persists
-  [ ] ErrorBoundary catches component errors (shows fallback, not white screen)
+  [x] Register new user → dashboard loads with 0 tasks
+  [x] Create project → appears in projects grid, success toast shown
+  [x] Create task in project → appears in table and kanban
+  [x] Switch views → same tasks displayed
+  [x] Change task status inline → task updates
+  [x] Add member to project → member appears in detail view
+  [x] Logout → redirect to login → login again → session persists
+  [x] ErrorBoundary catches component errors (shows fallback, not white screen)
 ```
 
 ---
