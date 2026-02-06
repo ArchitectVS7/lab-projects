@@ -1,0 +1,49 @@
+# DataSync Configuration
+# Syncs data between PostgreSQL and MongoDB
+
+postgresql:
+  # Connection string (recommended)
+  uri: ${POSTGRES_URI}
+  # Or individual params (uri takes precedence if both set):
+  # host: localhost
+  # port: 5432
+  # database: datasync_db
+  # username: postgres
+  # password: ${POSTGRES_PASSWORD}
+  pool:
+    min_connections: 2
+    max_connections: 10
+    timeout: 30
+
+mongodb:
+  # Connection string (recommended)
+  uri: ${MONGO_URI}
+  # Or individual params (uri takes precedence if both set):
+  # host: localhost
+  # port: 27017
+  # database: datasync_db
+  # username: mongo
+  # password: ${MONGO_PASSWORD}
+  # auth_source: admin
+  # replica_set: rs0
+
+sync:
+  batch_size: 1000
+  interval_seconds: 60
+  direction: postgres_to_mongo  # postgres_to_mongo | mongo_to_postgres | bidirectional
+  conflict_resolution: latest_wins  # latest_wins | postgres_priority | mongo_priority
+  
+  # Tables to sync. Empty = auto-discover all PostgreSQL tables with primary keys.
+  # Can be simple strings:
+  #   tables: ["users", "orders", "products"]
+  # Or detailed configs:
+  #   tables:
+  #     - name: users
+  #       collection: app_users  # MongoDB collection name (default: same as table)
+  #       primary_key: user_id   # Primary key column (default: auto-detect or 'id')
+  tables: []
+
+logging:
+  level: INFO  # DEBUG | INFO | WARNING | ERROR
+  file: logs/datasync.log
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
