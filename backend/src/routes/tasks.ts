@@ -104,7 +104,7 @@ router.patch('/bulk-status', async (req: AuthRequest, res: Response, next: NextF
     });
 
     // Optimization: Group tasks by project to avoid N+1 queries
-    const projectIds = [...new Set(tasks.map((t) => t.projectId))];
+    const projectIds = Array.from(new Set(tasks.map((t) => t.projectId)));
     const memberships = new Map<string, { role: string } | null>();
 
     for (const projectId of projectIds) {

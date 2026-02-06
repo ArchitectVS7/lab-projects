@@ -18,6 +18,9 @@ if (!process.env.JWT_SECRET) {
 
 const app = express();
 
+// Trust first proxy (required for rate limiting to use X-Forwarded-For)
+app.set('trust proxy', 1);
+
 app.use(helmet());
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:3000',

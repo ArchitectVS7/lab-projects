@@ -1,12 +1,13 @@
 import type { Config } from 'jest';
 
 const config: Config = {
-  preset: 'ts-jest',
+  preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
   roots: ['<rootDir>/tests'],
   moduleFileExtensions: ['ts', 'js', 'json'],
   transform: {
     '^.+\\.ts$': ['ts-jest', {
+      useESM: true,
       tsconfig: 'tsconfig.json',
       // Override module resolution for tests (jest doesn't support NodeNext .js imports)
       diagnostics: { ignoreDiagnostics: [151001, 151002] },

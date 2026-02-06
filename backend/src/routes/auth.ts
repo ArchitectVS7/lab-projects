@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
 import prisma from '../lib/prisma.js';
 import { AppError } from '../middleware/errorHandler.js';
 import {
@@ -12,6 +13,15 @@ import {
 } from '../middleware/auth.js';
 
 const router = Router();
+
+// Rate limiter for auth endpoints (brute-force protection)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // 20 requests per window per IP
+  message: { error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // --- Zod Schemas ---
 
@@ -58,7 +68,7 @@ const userSelect = {
 // --- Routes ---
 
 // POST /api/auth/register
-router.post('/register', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/register', authLimiter, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = registerSchema.parse(req.body);
 
@@ -84,7 +94,7 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
 });
 
 // POST /api/auth/login
-router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/login', authLimiter, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = loginSchema.parse(req.body);
 

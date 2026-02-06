@@ -3,6 +3,7 @@ import { useAuthStore } from '../store/auth';
 import { authApi } from '../lib/api';
 import { LayoutDashboard, CheckSquare, FolderKanban, LogOut, User } from 'lucide-react';
 import clsx from 'clsx';
+import ToastContainer from './Toast';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -75,6 +76,8 @@ export default function Layout() {
       <main className="flex-1 overflow-auto p-6">
         <Outlet />
       </main>
+      <ToastContainer />
     </div>
   );
 }
+
