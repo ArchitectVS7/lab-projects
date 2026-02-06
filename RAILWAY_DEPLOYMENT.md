@@ -15,57 +15,68 @@ Railway will run 3 services:
 2. **Backend API** - Express + Prisma backend
 3. **Frontend** - React + Vite frontend
 
-## Step 1: Create Railway Project
-
-### Option A: Via Railway Dashboard (Recommended)
+## Step 1: Create Empty Railway Project
 
 1. Go to https://railway.app/new
 2. Click "New Project"
-3. Select "Deploy from GitHub repo"
-4. Connect your GitHub account and select the TaskMan repository
-5. Railway will detect it's a monorepo
+3. Click "Create Empty Project"
+4. Give it a name (e.g., "TaskMan")
 
-### Option B: Via Railway CLI
+Then set up the CLI on your local machine:
 
 ```bash
 # Login to Railway
 railway login
 
-# Initialize project from current directory
-railway init
-
-# Link to your Railway project
+# Link this directory to your Railway project
 railway link
+
+# Verify the link
+railway status
 ```
+
+You should see your project listed. You now have an empty Railway project ready to add services.
 
 ## Step 2: Add PostgreSQL Database
 
-1. In your Railway project dashboard, click "New Service"
-2. Select "Database" → "PostgreSQL"
-3. Railway will provision a PostgreSQL instance and automatically set the `DATABASE_URL` variable
-4. Note: The database URL is automatically injected into services that need it
+1. Go to your Railway project dashboard
+2. Click "New Service" (or "+ Add Service")
+3. Select "Database" → "PostgreSQL"
+4. Railway will provision a PostgreSQL instance and automatically set the `DATABASE_URL` variable
+5. The database URL will be automatically available to any service that needs it
 
-## Step 3: Configure Backend Service
+## Step 3: Add Backend Service
 
 ### 3.1 Create Backend Service
 
-1. Click "New Service" → "GitHub Repo"
-2. Select your repository
-3. Set **Root Directory**: `backend`
-4. Railway will auto-detect the `Dockerfile`
+1. In Railway dashboard, click "New Service" → "GitHub Repo"
+2. Connect your GitHub account if not already connected
+3. Select the **TaskMan** repository
+4. Set **Root Directory**: `backend`
+5. Railway will auto-detect the `Dockerfile` and deploy
 
-### 3.2 Set Backend Environment Variables
+### 3.2 Generate Backend URL (Important!)
 
-In the Backend service settings, add these variables:
+After backend deploys:
 
-| Variable | Value | Notes |
-|----------|-------|-------|
-| `DATABASE_URL` | (auto-set by Railway) | Injected from PostgreSQL service |
-| `JWT_SECRET` | Generate strong secret | Use: `openssl rand -base64 32` |
-| `JWT_EXPIRES_IN` | `7d` | Token expiration time |
-| `CORS_ORIGIN` | Frontend URL | Get from frontend service after deployment |
-| `NODE_ENV` | `production` | Production environment |
-| `PORT` | `4000` | Railway injects $PORT, but explicit is safer |
+1. Go to Backend service → "Settings" tab
+2. Look for "Networking" section
+3. Click "Generate Domain"
+4. Copy the generated URL (e.g., `https://taskman-backend-production.up.railway.app`)
+5. **Save this URL** - you'll need it for the frontend in Step 4
+
+### 3.3 Set Backend Environment Variables
+
+In the Backend service, go to "Variables" tab and add:
+
+| Variable | Value | How to Get |
+|----------|-------|-----------|
+| `DATABASE_URL` | (auto-set) | Already injected from PostgreSQL service |
+| `JWT_SECRET` | Generate strong secret | Run: `openssl rand -base64 32` |
+| `JWT_EXPIRES_IN` | `7d` | Fixed value |
+| `CORS_ORIGIN` | Frontend URL | **You'll add this in Step 5** (after frontend deploys) |
+| `NODE_ENV` | `production` | Fixed value |
+| `PORT` | `4000` | Fixed value |
 
 **To generate JWT_SECRET:**
 ```bash
@@ -76,59 +87,68 @@ openssl rand -base64 32
 [Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))
 ```
 
-### 3.3 Configure Backend Build
+⚠️ **Note**: Leave `CORS_ORIGIN` empty for now. You'll update it after the frontend is deployed (Step 5).
 
-Railway should auto-detect the Dockerfile, but verify:
-- **Build Command**: (uses Dockerfile - no need to set)
-- **Start Command**: (uses Dockerfile CMD - no need to set)
-
-## Step 4: Configure Frontend Service
+## Step 4: Add Frontend Service
 
 ### 4.1 Create Frontend Service
 
-1. Click "New Service" → "GitHub Repo"
-2. Select your repository (same as backend)
+1. In Railway dashboard, click "New Service" → "GitHub Repo"
+2. Select the **TaskMan** repository
 3. Set **Root Directory**: `frontend`
-4. Railway will auto-detect the `Dockerfile`
+4. Railway will auto-detect the `Dockerfile` and deploy
 
 ### 4.2 Set Frontend Environment Variables
 
-In the Frontend service settings, add:
+In the Frontend service, go to "Variables" tab and add:
 
 | Variable | Value |
 |----------|-------|
-| `VITE_API_URL` | Backend URL |
+| `VITE_API_URL` | Paste the **backend URL from Step 3.2** |
 
-**To get the Backend URL:**
-1. Go to Backend service → Settings → Networking
-2. Click "Generate Domain"
-3. Copy the generated URL (e.g., `https://taskman-backend-production.up.railway.app`)
-4. Paste it as `VITE_API_URL` in Frontend service
+**Example:** If your backend URL is `https://taskman-backend-production.up.railway.app`, then:
+```
+VITE_API_URL=https://taskman-backend-production.up.railway.app
+```
 
-### 4.3 Configure Frontend Build
+After adding this variable, the frontend will automatically redeploy with the correct backend URL.
 
-Railway should auto-detect the Dockerfile. The Dockerfile handles:
-- Building the Vite app with the `VITE_API_URL` build arg
-- Serving the static files with `serve`
-
-## Step 5: Update CORS_ORIGIN
+### 4.3 Generate Frontend URL
 
 After frontend deploys:
 
-1. Go to Frontend service → Settings → Networking
-2. Click "Generate Domain"
-3. Copy the frontend URL (e.g., `https://taskman-frontend-production.up.railway.app`)
-4. Go to Backend service → Variables
-5. Update `CORS_ORIGIN` to the frontend URL
-6. Backend will automatically redeploy
+1. Go to Frontend service → "Settings" tab
+2. Look for "Networking" section
+3. Click "Generate Domain"
+4. Copy the generated URL (e.g., `https://taskman-frontend-production.up.railway.app`)
+5. **Save this URL** - you'll need it for the backend in Step 5
 
-## Step 6: Deploy!
+## Step 5: Connect Frontend URL to Backend (URL Exchange)
 
-Railway automatically deploys on every git push to your main branch.
+Now that both services have their URLs, connect them:
 
-### Manual Deploy
+### 5.1 Update Backend with Frontend URL
 
-If needed, you can manually trigger deployment:
+1. Go to Backend service → "Variables" tab
+2. Find the `CORS_ORIGIN` variable (you left it empty)
+3. Paste the **frontend URL from Step 4.3**
+4. **Example:** If your frontend URL is `https://taskman-frontend-production.up.railway.app`, then:
+   ```
+   CORS_ORIGIN=https://taskman-frontend-production.up.railway.app
+   ```
+5. Click save - the backend will automatically redeploy with this setting
+
+### 5.2 Verify Connection
+
+After the backend redeploys:
+- Frontend should now be able to communicate with the backend
+- Cross-origin requests should work properly
+
+## Step 6: Automatic Deployments
+
+Railway automatically deploys whenever you push to your main branch.
+
+If you need to manually trigger a deployment:
 
 ```bash
 # Deploy backend
@@ -136,19 +156,22 @@ railway up --service backend
 
 # Deploy frontend
 railway up --service frontend
+
+# Deploy both
+railway up
 ```
 
-## Step 7: Run Database Migrations
+## Step 7: Database Migrations
 
-The backend Dockerfile automatically runs `prisma migrate deploy` on startup, so migrations run automatically.
+The backend Dockerfile automatically runs `prisma migrate deploy` on startup, so your database schema will be set up automatically when the backend first deploys.
 
-To manually run migrations or seed data:
+If needed, you can manually run migrations:
 
 ```bash
-# Connect to backend service
+# Manually run migrations
 railway run --service backend npx prisma migrate deploy
 
-# Seed database (optional - creates test users)
+# Seed database (optional - creates test data)
 railway run --service backend npx prisma db seed
 ```
 
