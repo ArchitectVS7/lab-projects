@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { projectsApi } from '../lib/api';
 import { useAuthStore } from '../store/auth';
-import { ArrowLeft, UserPlus, X, Trash2, Calendar } from 'lucide-react';
+import { ArrowLeft, UserPlus, X, Calendar } from 'lucide-react';
 import clsx from 'clsx';
 import { format } from 'date-fns';
 import type { Project, ProjectRole, TaskStatus, TaskPriority } from '../types';
