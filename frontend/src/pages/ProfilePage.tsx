@@ -3,7 +3,9 @@ import { useMutation } from '@tanstack/react-query';
 import { authApi } from '../lib/api';
 import { useAuthStore } from '../store/auth';
 import { useToastStore } from '../components/Toast';
-import { User, Lock } from 'lucide-react';
+import { User, Lock, Palette } from 'lucide-react';
+import ThemePicker from '../components/ThemePicker';
+import LayoutSwitcher from '../components/LayoutSwitcher';
 
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
@@ -59,6 +61,25 @@ export default function ProfilePage() {
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Profile Settings</h1>
+
+      {/* Appearance */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <Palette size={20} className="text-gray-400 dark:text-gray-500" />
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Appearance</h2>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color Theme</label>
+            <ThemePicker />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Interface Density</label>
+            <LayoutSwitcher />
+          </div>
+        </div>
+      </div>
+
 
       {/* Profile Info */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">

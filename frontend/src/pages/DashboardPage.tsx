@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { tasksApi, projectsApi } from '../lib/api';
 import { CheckCircle2, Clock, AlertTriangle, ListTodo } from 'lucide-react';
+import InsightsWidget from '../components/InsightsWidget';
 import clsx from 'clsx';
 import type { Task, Project, TaskStatus, TaskPriority } from '../types';
 
@@ -110,6 +111,11 @@ export default function DashboardPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Dashboard</h1>
+
+      {/* Insights Widget */}
+      <div className="mb-8">
+        <InsightsWidget />
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

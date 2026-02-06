@@ -157,3 +157,22 @@ export const projectsApi = {
       method: 'DELETE',
     }),
 };
+
+// --- Analytics API ---
+
+export interface AnalyticsData {
+  velocity: {
+    thisWeek: number;
+    lastWeek: number;
+    changePercent: number;
+  };
+  patterns: {
+    mostProductiveDay: string;
+    tasksAnalyzed: number;
+  };
+  insight: string;
+}
+
+export const analyticsApi = {
+  getInsights: () => request<AnalyticsData>('/api/analytics/insights'),
+};

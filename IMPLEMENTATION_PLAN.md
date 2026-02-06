@@ -2241,7 +2241,18 @@ End-to-end flow:
   [x] ErrorBoundary catches component errors (shows fallback, not white screen)
 ```
 
+
+## Sprint 2: Visual Customization & AI Foundation (Completed)
+
+**Goal**: Enhance UX with themes, layouts, and productivity insights.
+
+### S2.1 Features Implemented
+- **Color Theme System**: 5 presets (Indigo, Purple, Rose, Emerald, Amber) using CSS variables.
+- **Layout Templates**: Compact, Standard, Spacious, and Minimal density settings.
+- **AI Task Insights**: Dashboard widget showing velocity and peak productivity days.
+
 ---
+
 
 ## Phase 5: Railway Deployment
 
