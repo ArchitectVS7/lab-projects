@@ -614,6 +614,25 @@ describe('Phase 2: Projects & Team Management', () => {
       expect(res.body.userId).toBe(charlie.id);
     });
 
+    it('normalizes email to lowercase when adding member', async () => {
+      // Create project
+      const projectRes = await request(app)
+        .post('/api/projects')
+        .set('Cookie', alice.cookie)
+        .send({ name: 'Email Normalization Test' });
+      const projectId = projectRes.body.id;
+
+      // Add Bob using mixed case email
+      const mixedCaseEmail = bob.email.toUpperCase();
+      const res = await request(app)
+        .post(`/api/projects/${projectId}/members`)
+        .set('Cookie', alice.cookie)
+        .send({ email: mixedCaseEmail, role: 'MEMBER' });
+
+      expect(res.status).toBe(201);
+      expect(res.body.user.email).toBe(bob.email);
+    });
+
     it('defaults to MEMBER role if not specified', async () => {
       const projectRes = await request(app)
         .post('/api/projects')

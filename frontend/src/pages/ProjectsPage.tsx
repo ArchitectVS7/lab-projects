@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { projectsApi } from '../lib/api';
+import { useAuthStore } from '../store/auth';
 import { Plus, Trash2, Users, CheckSquare, X } from 'lucide-react';
 import clsx from 'clsx';
 import type { Project } from '../types';
@@ -173,6 +174,7 @@ export default function ProjectsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
+  const currentUser = useAuthStore((s) => s.user);
 
   const { data: projects, isLoading, isError, error } = useQuery({
     queryKey: ['projects'],
@@ -185,6 +187,9 @@ export default function ProjectsPage() {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setModalOpen(false);
     },
+    onError: (err: Error) => {
+      alert(`Failed to create project: ${err.message}`);
+    },
   });
 
   const updateMutation = useMutation({
@@ -194,6 +199,9 @@ export default function ProjectsPage() {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setEditingProject(null);
     },
+    onError: (err: Error) => {
+      alert(`Failed to update project: ${err.message}`);
+    },
   });
 
   const deleteMutation = useMutation({
@@ -201,6 +209,9 @@ export default function ProjectsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setDeletingProject(null);
+    },
+    onError: (err: Error) => {
+      alert(`Failed to delete project: ${err.message}`);
     },
   });
 
@@ -270,15 +281,17 @@ export default function ProjectsPage() {
               <div className="p-4">
                 <div className="flex items-start justify-between">
                   <h3 className="font-semibold text-gray-900 truncate flex-1">{project.name}</h3>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditingProject(project);
-                    }}
-                    className="text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity ml-2 text-xs"
-                  >
-                    Edit
-                  </button>
+                  {(project.ownerId === currentUser?.id || project.members?.some(m => m.userId === currentUser?.id && ['OWNER', 'ADMIN'].includes(m.role))) && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingProject(project);
+                      }}
+                      className="text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity ml-2 text-xs"
+                    >
+                      Edit
+                    </button>
+                  )}
                 </div>
                 {project.description && (
                   <p className="text-sm text-gray-500 mt-1 line-clamp-2">{project.description}</p>

@@ -18,7 +18,7 @@ const createProjectSchema = z.object({
 const updateProjectSchema = createProjectSchema.partial();
 
 const addMemberSchema = z.object({
-  email: z.string().email('Invalid email format'),
+  email: z.string().email('Invalid email format').toLowerCase(),
   role: z.enum(['ADMIN', 'MEMBER', 'VIEWER']).optional(),
 });
 
@@ -215,7 +215,7 @@ router.post('/:id/members', async (req: AuthRequest, res: Response, next: NextFu
 
     // Find target user by email
     const targetUser = await prisma.user.findUnique({
-      where: { email: data.email.toLowerCase().trim() },
+      where: { email: data.email.trim() },
     });
     if (!targetUser) {
       throw new AppError('User not found', 404);
