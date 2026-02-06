@@ -103,14 +103,25 @@ router.patch('/bulk-status', async (req: AuthRequest, res: Response, next: NextF
       },
     });
 
-    // Filter tasks user can modify
-    const updatableTaskIds: string[] = [];
+    // Optimization: Group tasks by project to avoid N+1 queries
+    const projectIds = [...new Set(tasks.map((t) => t.projectId))];
+    const memberships = new Map<string, { role: string } | null>();
+
+    for (const projectId of projectIds) {
+      const membership = await getProjectMembership(req.userId!, projectId);
+      memberships.set(projectId, membership);
+    }
+
     for (const task of tasks) {
-      const membership = await getProjectMembership(req.userId!, task.projectId);
-      if (canModifyTask(membership, task, req.userId!)) {
-        updatableTaskIds.push(task.id);
+      const membership = memberships.get(task.projectId) || null;
+      if (!canModifyTask(membership, task, req.userId!)) {
+        throw new AppError('Unauthorized to modify one or more tasks', 403);
       }
     }
+
+    // Since we throw on any error, all tasks in 'data.taskIds' are effectively authorized.
+    // However, we should use the IDs that were actually found in the DB.
+    const updatableTaskIds = tasks.map(t => t.id);
 
     // Update all authorized tasks
     const result = await prisma.task.updateMany({
@@ -168,6 +179,10 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
     // Build orderBy with validation to prevent injection
     const sortBy = (req.query.sortBy as string) || 'createdAt';
     const order = (req.query.order as 'asc' | 'desc') || 'desc';
+
+    // Validate sortBy to prevent injection
+    // SECURITY: Only allow specific sort fields to prevent query injection.
+    // If adding new filters/sorting in the future, always validate against allowlist.
     const allowedSortFields = ['createdAt', 'updatedAt', 'title', 'status', 'priority', 'dueDate'];
     const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
 
@@ -269,6 +284,7 @@ router.put('/:id', async (req: AuthRequest, res: Response, next: NextFunction) =
 
     const task = await prisma.task.findUnique({
       where: { id: req.params.id },
+      include: taskInclude,
     });
 
     if (!task) {
@@ -315,6 +331,7 @@ router.delete('/:id', async (req: AuthRequest, res: Response, next: NextFunction
 
     const task = await prisma.task.findUnique({
       where: { id: req.params.id },
+      include: taskInclude,
     });
 
     if (!task) {

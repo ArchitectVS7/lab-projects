@@ -41,6 +41,14 @@ const PRIORITY_COLORS: Record<TaskPriority, string> = {
   URGENT: 'bg-red-100 text-red-600',
 };
 
+function canEditTask(task: Task, currentUserId: string, projects: Project[]): boolean {
+  const project = projects.find(p => p.id === task.projectId);
+  const membership = project?.members?.find(m => m.userId === currentUserId);
+  if (!membership) return false;
+  if (['OWNER', 'ADMIN'].includes(membership.role)) return true;
+  return membership.role === 'MEMBER' && task.creatorId === currentUserId;
+}
+
 // --- Task Modal ---
 
 interface TaskFormData {
@@ -248,11 +256,15 @@ function DeleteConfirmDialog({
 
 function TableView({
   tasks,
+  projects,
+  currentUserId,
   onStatusChange,
   onEdit,
   onDelete,
 }: {
   tasks: Task[];
+  projects: Project[];
+  currentUserId: string;
   onStatusChange: (id: string, status: TaskStatus) => void;
   onEdit: (task: Task) => void;
   onDelete: (task: Task) => void;
@@ -322,14 +334,16 @@ function TableView({
                 {task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : '--'}
               </td>
               <td className="px-4 py-3 text-right">
-                <div className="flex items-center justify-end gap-1">
-                  <button onClick={() => onEdit(task)} className="p-1 text-gray-400 hover:text-indigo-600" title="Edit">
-                    <Pencil size={14} />
-                  </button>
-                  <button onClick={() => onDelete(task)} className="p-1 text-gray-400 hover:text-red-600" title="Delete">
-                    <Trash2 size={14} />
-                  </button>
-                </div>
+                {canEditTask(task, currentUserId, projects) && (
+                  <div className="flex items-center justify-end gap-1">
+                    <button onClick={() => onEdit(task)} className="p-1 text-gray-400 hover:text-indigo-600" title="Edit">
+                      <Pencil size={14} />
+                    </button>
+                    <button onClick={() => onDelete(task)} className="p-1 text-gray-400 hover:text-red-600" title="Delete">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                )}
               </td>
             </tr>
           ))}
@@ -362,7 +376,7 @@ function KanbanColumn({ status, tasks, children }: { status: TaskStatus; tasks: 
   );
 }
 
-function DraggableTaskCard({ task, onEdit }: { task: Task; onEdit: (task: Task) => void }) {
+function DraggableTaskCard({ task, onEdit, canEdit }: { task: Task; onEdit: (task: Task) => void; canEdit: boolean }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
 
@@ -379,14 +393,16 @@ function DraggableTaskCard({ task, onEdit }: { task: Task; onEdit: (task: Task) 
     >
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-medium text-gray-900 line-clamp-2 flex-1">{task.title}</p>
-        <button
-          onClick={(e) => { e.stopPropagation(); onEdit(task); }}
-          onPointerDown={(e) => e.stopPropagation()}
-          className="text-gray-300 hover:text-indigo-600 flex-shrink-0 mt-0.5"
-          title="Edit"
-        >
-          <Pencil size={12} />
-        </button>
+        {canEdit && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onEdit(task); }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="text-gray-300 hover:text-indigo-600 flex-shrink-0 mt-0.5"
+            title="Edit"
+          >
+            <Pencil size={12} />
+          </button>
+        )}
       </div>
       {task.description && (
         <p className="text-xs text-gray-500 line-clamp-2 mt-1">{task.description}</p>
@@ -434,10 +450,14 @@ function TaskCardOverlay({ task }: { task: Task }) {
 
 function KanbanView({
   tasks,
+  projects,
+  currentUserId,
   onEdit,
   onBulkStatus,
 }: {
   tasks: Task[];
+  projects: Project[];
+  currentUserId: string;
   onEdit: (task: Task) => void;
   onBulkStatus: (taskIds: string[], status: TaskStatus) => void;
 }) {
@@ -470,7 +490,12 @@ function KanbanView({
           return (
             <KanbanColumn key={status} status={status} tasks={columnTasks}>
               {columnTasks.map((task) => (
-                <DraggableTaskCard key={task.id} task={task} onEdit={onEdit} />
+                <DraggableTaskCard
+                  key={task.id}
+                  task={task}
+                  onEdit={onEdit}
+                  canEdit={canEditTask(task, currentUserId, projects)}
+                />
               ))}
               {columnTasks.length === 0 && (
                 <p className="text-xs text-gray-400 text-center py-4">No tasks</p>
@@ -521,6 +546,9 @@ export default function TasksPage() {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setModalOpen(false);
     },
+    onError: (err: Error) => {
+      alert(`Failed to create task: ${err.message}`);
+    },
   });
 
   const updateMutation = useMutation({
@@ -532,6 +560,9 @@ export default function TasksPage() {
       setEditingTask(null);
       setModalOpen(false);
     },
+    onError: (err: Error) => {
+      alert(`Failed to update task: ${err.message}`);
+    },
   });
 
   const deleteMutation = useMutation({
@@ -541,18 +572,37 @@ export default function TasksPage() {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setDeletingTask(null);
     },
+    onError: (err: Error) => {
+      alert(`Failed to delete task: ${err.message}`);
+    },
   });
 
   const bulkStatusMutation = useMutation({
     mutationFn: ({ taskIds, status }: { taskIds: string[]; status: TaskStatus }) =>
       tasksApi.bulkStatus(taskIds, status),
+    onMutate: async ({ taskIds, status }) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks', filters] });
+      const previousTasks = queryClient.getQueryData<Task[]>(['tasks', filters]);
+      queryClient.setQueryData(['tasks', filters], (old: Task[] | undefined) => {
+        return old?.map((t) => (taskIds.includes(t.id) ? { ...t, status } : t)) || [];
+      });
+      return { previousTasks };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+    onError: (err: Error, _, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['tasks', filters], context.previousTasks);
+      }
+      alert(`Failed to update task status: ${err.message}`);
     },
   });
 
   const handleStatusChange = (id: string, status: TaskStatus) => {
-    updateMutation.mutate({ id, data: { status } });
+    // For single status changes, we can use the optimistic bulk update or standard update
+    // Using bulk mutation for consistency with Kanban drop
+    bulkStatusMutation.mutate({ taskIds: [id], status });
   };
 
   const handleSave = (formData: TaskFormData) => {
@@ -686,9 +736,9 @@ export default function TasksPage() {
         {(filters.projectId || filters.status || filters.priority) && (
           <button
             onClick={() => setFilters({})}
-            className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700"
+            className="px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md border border-red-200 transition-colors"
           >
-            Clear Filters
+            Clear All Filters
           </button>
         )}
       </div>
@@ -697,6 +747,8 @@ export default function TasksPage() {
       {viewMode === 'table' ? (
         <TableView
           tasks={tasks}
+          projects={projects}
+          currentUserId={currentUser!.id}
           onStatusChange={handleStatusChange}
           onEdit={handleEdit}
           onDelete={(task) => setDeletingTask(task)}
@@ -704,6 +756,8 @@ export default function TasksPage() {
       ) : (
         <KanbanView
           tasks={tasks}
+          projects={projects}
+          currentUserId={currentUser!.id}
           onEdit={handleEdit}
           onBulkStatus={handleBulkStatus}
         />
