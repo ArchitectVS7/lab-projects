@@ -20,6 +20,7 @@ model User {
   assignedTasks  Task[]          @relation("TaskAssignee")
   createdTasks   Task[]          @relation("TaskCreator")
   notifications  Notification[]
+  timeEntries    TimeEntry[]
 
   @@map("users")
 }
@@ -57,6 +58,7 @@ model Task {
 
   creatorId String @map("creator_id")
   creator   User   @relation("TaskCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  timeEntries TimeEntry[]
 
   @@index([projectId])
   @@index([assigneeId])
@@ -125,4 +127,22 @@ model Notification {
   @@index([userId, read])
   @@index([createdAt])
   @@map("notifications")
+}
+
+model TimeEntry {
+  id          String    @id @default(uuid())
+  taskId      String    @map("task_id")
+  userId      String    @map("user_id")
+  startTime   DateTime  @map("start_time")
+  endTime     DateTime? @map("end_time")
+  duration    Int?      // Duration in seconds (populated after stop)
+  description String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([userId])
+  @@map("time_entries")
 }

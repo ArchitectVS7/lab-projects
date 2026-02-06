@@ -8,6 +8,8 @@ import clsx from 'clsx';
 import ToastContainer from './Toast';
 import ThemeToggle from './ThemeToggle';
 import NotificationCenter from './NotificationCenter';
+import CommandPalette from './CommandPalette';
+import { useCommandPalette } from '../hooks/useCommandPalette';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },

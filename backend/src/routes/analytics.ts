@@ -1,14 +1,14 @@
 import express from 'express';
 import { z } from 'zod';
-import { prisma } from '../lib/prisma';
-import { authenticateToken } from './auth';
+import prisma from '../lib/prisma.js';
+import { authenticate, AuthRequest } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // Get simple productivity insights
-router.get('/insights', authenticateToken, async (req, res, next) => {
+router.get('/insights', authenticate, async (req: AuthRequest, res, next) => {
     try {
-        const userId = req.user!.userId;
+        const userId = req.userId!;
         const now = new Date();
         const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);

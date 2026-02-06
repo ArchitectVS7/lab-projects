@@ -9,7 +9,8 @@ function extractAuthCookie(res: request.Response): string | undefined {
   const cookies = res.headers['set-cookie'];
   if (!cookies) return undefined;
   const arr = Array.isArray(cookies) ? cookies : [cookies];
-  return arr.find((c: string) => c.startsWith('auth_token='));
+  // Match cookie name regardless of attributes or whitespace
+  return arr.find((c: string) => c.trim().startsWith('auth_token='));
 }
 
 // Helper: parse cookie attributes
@@ -428,11 +429,14 @@ describe('Phase 1: Authentication', () => {
     let authCookie: string;
 
     beforeAll(async () => {
-      // Reset name back for clarity
-      const loginRes = await request(app)
-        .post('/api/auth/login')
-        .send({ email: 'test@example.com', password: 'Password1' });
-      authCookie = extractAuthCookie(loginRes)!;
+      // Ensure user exists and has known password
+      await prisma.user.deleteMany({ where: { email: 'test@example.com' } });
+
+      const regRes = await request(app)
+        .post('/api/auth/register')
+        .send({ email: 'test@example.com', password: 'Password1', name: 'Test User' });
+
+      authCookie = extractAuthCookie(regRes)!;
     });
 
     it('changes password with correct current → 200', async () => {
@@ -495,6 +499,10 @@ describe('Phase 1: Authentication', () => {
   // Cross-cutting concerns
   // -------------------------------------------------------
   describe('Cross-cutting auth concerns', () => {
+    beforeAll(async () => {
+      await prisma.user.deleteMany({ where: { email: 'leak-check@example.com' } });
+    });
+
     it('never leaks passwordHash in any response', async () => {
       // Register
       const regRes = await request(app)
@@ -533,6 +541,9 @@ describe('Phase 1: Authentication', () => {
         .send({ email: 'leak-check@example.com', password: 'Password1' });
 
       const user = res.body.user;
+      if (!user) {
+        console.error('DEBUG: Login failed', res.status, res.body);
+      }
       expect(user.id).toBeDefined();
       expect(typeof user.id).toBe('string');
       expect(user.email).toBeDefined();
