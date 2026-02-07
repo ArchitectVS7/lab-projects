@@ -39,10 +39,13 @@ Object.defineProperty(global, 'window', {
 describe('Theme Store', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Reset store to initial state
+    // Reset store to initial state (include all fields from updated store)
     useThemeStore.setState({
       theme: 'system',
       colorTheme: 'indigo',
+      highContrast: 'normal',
+      performanceMode: 'balanced',
+      animationIntensity: 'normal',
     });
   });
 
@@ -72,7 +75,7 @@ describe('Theme Store', () => {
       const { setTheme } = useThemeStore.getState();
       setTheme('dark');
 
-      expect(mockDocumentElement.classList.remove).toHaveBeenCalledWith('light', 'dark');
+      expect(mockDocumentElement.classList.remove).toHaveBeenCalledWith('light', 'dark', 'high-contrast');
       expect(mockDocumentElement.classList.add).toHaveBeenCalledWith('dark');
     });
 
@@ -80,8 +83,9 @@ describe('Theme Store', () => {
       const { setTheme } = useThemeStore.getState();
       setTheme('system');
 
-      expect(mockDocumentElement.classList.remove).toHaveBeenCalledWith('light', 'dark');
-      expect(mockDocumentElement.classList.add).toHaveBeenCalled();
+      expect(mockDocumentElement.classList.remove).toHaveBeenCalledWith('light', 'dark', 'high-contrast');
+      // Should add either 'light' or 'dark' based on system preference
+      expect(mockDocumentElement.classList.add).toHaveBeenCalledWith(expect.stringMatching(/^(light|dark)$/));
     });
 
     it('should detect dark mode system preference', () => {
@@ -255,19 +259,19 @@ describe('Theme Store', () => {
     it('should handle different color themes with different HSL values', () => {
       const { setColorTheme } = useThemeStore.getState();
 
-      // Test Rose theme (346 77% 60%)
+      // Test Rose theme (343 88% 46%) - WCAG AA compliant
       setColorTheme('rose');
       let calls = mockDocumentElement.style.setProperty.mock.calls;
       let primaryBaseCall = calls.find((call) => call[0] === '--primary-base');
-      expect(primaryBaseCall![1]).toBe('hsl(346 77% 60%)');
+      expect(primaryBaseCall![1]).toBe('hsl(343 88% 46%)');
 
       vi.clearAllMocks();
 
-      // Test Emerald theme (158 64% 52%)
+      // Test Emerald theme (150 96% 24%) - WCAG AA compliant
       setColorTheme('emerald');
       calls = mockDocumentElement.style.setProperty.mock.calls;
       primaryBaseCall = calls.find((call) => call[0] === '--primary-base');
-      expect(primaryBaseCall![1]).toBe('hsl(158 64% 52%)');
+      expect(primaryBaseCall![1]).toBe('hsl(150 96% 24%)');
     });
   });
 
@@ -275,8 +279,8 @@ describe('Theme Store', () => {
     it('should not exceed 95% lightness for light variant', () => {
       const { setColorTheme } = useThemeStore.getState();
 
-      // Test with a theme that has high lightness already
-      setColorTheme('amber'); // Amber has 55% lightness
+      // Test with amber theme (30% lightness)
+      setColorTheme('amber');
 
       const calls = mockDocumentElement.style.setProperty.mock.calls;
       const primaryLightCall = calls.find((call) => call[0] === '--primary-light');
@@ -290,8 +294,8 @@ describe('Theme Store', () => {
     it('should not go below 20% lightness for dark variant', () => {
       const { setColorTheme } = useThemeStore.getState();
 
-      // Test with a theme that already has low lightness
-      setColorTheme('emerald'); // Emerald has 52% lightness
+      // Test with emerald theme (24% lightness)
+      setColorTheme('emerald');
 
       const calls = mockDocumentElement.style.setProperty.mock.calls;
       const primaryDarkCall = calls.find((call) => call[0] === '--primary-dark');

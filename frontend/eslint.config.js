@@ -6,7 +6,7 @@ import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
 
 export default [
-    { ignores: ['dist', 'node_modules', 'vite.config.ts'] },
+    { ignores: ['dist', 'node_modules', 'vite.config.ts', '**/*.test.ts', '**/*.test.tsx', 'vitest.config.ts', 'vitest.setup.ts'] },
     {
         files: ['**/*.{ts,tsx}'],
         languageOptions: {

@@ -22,7 +22,7 @@ const authLimiter = rateLimit({
   message: { error: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === 'test',
+  skip: () => process.env.NODE_ENV === 'test' && !process.env.TEST_RATE_LIMITER,
 });
 
 // --- Zod Schemas ---
@@ -69,7 +69,41 @@ const userSelect = {
 
 // --- Routes ---
 
-// POST /api/auth/register
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 required: true
+ *               password:
+ *                 type: string
+ *                 required: true
+ *               name:
+ *                 type: string
+ *                 required: true
+ *     responses:
+ *       201:
+ *         description: Registration successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ */
 router.post('/register', authLimiter, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = registerSchema.parse(req.body);
@@ -95,7 +129,38 @@ router.post('/register', authLimiter, async (req: Request, res: Response, next: 
   }
 });
 
-// POST /api/auth/login
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Login user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 required: true
+ *               password:
+ *                 type: string
+ *                 required: true
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ */
 router.post('/login', authLimiter, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = loginSchema.parse(req.body);
@@ -124,13 +189,49 @@ router.post('/login', authLimiter, async (req: Request, res: Response, next: Nex
   }
 });
 
-// POST /api/auth/logout
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout user
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
 router.post('/logout', (_req: Request, res: Response) => {
   clearAuthCookie(res);
   res.json({ message: 'Logout successful' });
 });
 
-// GET /api/auth/me
+/**
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ */
 router.get('/me', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const user = await prisma.user.findUnique({
@@ -148,14 +249,61 @@ router.get('/me', authenticate, async (req: AuthRequest, res: Response, next: Ne
   }
 });
 
-// POST /api/auth/refresh
+/**
+ * @swagger
+ * /api/auth/refresh:
+ *   post:
+ *     summary: Refresh authentication token
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
 router.post('/refresh', authenticate, (req: AuthRequest, res: Response) => {
   const token = generateToken(req.userId!);
   setAuthCookie(res, token);
   res.json({ message: 'Token refreshed' });
 });
 
-// PUT /api/auth/profile
+/**
+ * @swagger
+ * /api/auth/profile:
+ *   put:
+ *     summary: Update user profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               avatarUrl:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ */
 router.put('/profile', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const data = updateProfileSchema.parse(req.body);
@@ -175,7 +323,38 @@ router.put('/profile', authenticate, async (req: AuthRequest, res: Response, nex
   }
 });
 
-// PUT /api/auth/password
+/**
+ * @swagger
+ * /api/auth/password:
+ *   put:
+ *     summary: Change user password
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 required: true
+ *               newPassword:
+ *                 type: string
+ *                 required: true
+ *     responses:
+ *       200:
+ *         description: Password updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
 router.put('/password', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const data = changePasswordSchema.parse(req.body);
@@ -208,7 +387,45 @@ const createApiKeySchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(100, 'Name must be 100 characters or less'),
 });
 
-// POST /api/auth/api-keys - Create API key
+/**
+ * @swagger
+ * /api/auth/api-keys:
+ *   post:
+ *     summary: Create a new API key
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 required: true
+ *     responses:
+ *       201:
+ *         description: API key created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 name:
+ *                   type: string
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 lastUsedAt:
+ *                   type: string
+ *                   format: date-time
+ *                 key:
+ *                   type: string
+ */
 router.post('/api-keys', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const data = createApiKeySchema.parse(req.body);
@@ -235,7 +452,24 @@ router.post('/api-keys', authenticate, async (req: AuthRequest, res: Response, n
   }
 });
 
-// GET /api/auth/api-keys - List API keys
+/**
+ * @swagger
+ * /api/auth/api-keys:
+ *   get:
+ *     summary: List user's API keys
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of user's API keys
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/ApiKey'
+ */
 router.get('/api-keys', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const keys = await prisma.apiKey.findMany({
@@ -255,7 +489,25 @@ router.get('/api-keys', authenticate, async (req: AuthRequest, res: Response, ne
   }
 });
 
-// DELETE /api/auth/api-keys/:id - Revoke API key
+/**
+ * @swagger
+ * /api/auth/api-keys/{id}:
+ *   delete:
+ *     summary: Revoke an API key
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: API key ID
+ *     responses:
+ *       204:
+ *         description: API key revoked successfully
+ */
 router.delete('/api-keys/:id', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const key = await prisma.apiKey.findUnique({

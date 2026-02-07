@@ -283,6 +283,58 @@ router.delete('/tasks/:id/dependencies/:depId', authenticate, async (req: AuthRe
   }
 });
 
+// GET /api/projects/:id/dependencies - All tasks + dependencies as a graph
+router.get('/projects/:id/dependencies', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    validateUUID(req.params.id, 'project ID');
+
+    const projectId = req.params.id;
+
+    const membership = await getProjectMembership(req.userId!, projectId);
+    if (!membership) {
+      throw new AppError('Project not found', 404);
+    }
+
+    // Get all tasks in the project
+    const tasks = await prisma.task.findMany({
+      where: { projectId },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        priority: true,
+        dueDate: true,
+      },
+    });
+
+    const taskIds = new Set(tasks.map(t => t.id));
+
+    // Get all dependencies where both tasks are in this project
+    const dependencies = await prisma.taskDependency.findMany({
+      where: {
+        taskId: { in: [...taskIds] },
+        dependsOnId: { in: [...taskIds] },
+      },
+      select: {
+        id: true,
+        taskId: true,
+        dependsOnId: true,
+      },
+    });
+
+    res.json({
+      nodes: tasks,
+      links: dependencies.map(d => ({
+        source: d.dependsOnId,
+        target: d.taskId,
+        id: d.id,
+      })),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // GET /api/projects/:id/critical-path - Calculate critical path
 router.get('/projects/:id/critical-path', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {

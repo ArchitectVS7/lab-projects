@@ -1,40 +1,117 @@
-/**
- * Phase 4: Rate Limiting Tests
- * 
- * STATUS: SKIPPED - Implementation verified via code review
- * 
- * REASON: The express-rate-limit middleware is correctly configured and attached
- * to /api/auth/register and /api/auth/login endpoints. However, testing rate
- * limiting with Jest + supertest is unreliable because:
- * 
- * 1. The in-memory rate limit store doesn't persist correctly across Jest's
- *    async test execution model
- * 2. Supertest's request handling may interfere with IP tracking
- * 3. Each test run requires 20+ sequential HTTP requests, causing timeouts
- * 
- * VERIFIED VIA CODE REVIEW:
- * - Rate limiter configured: 20 requests per 15 minutes per IP
- * - Middleware attached to: POST /api/auth/register, POST /api/auth/login
- * - Trust proxy enabled in app.ts for proper X-Forwarded-For handling
- * - Returns 429 with message: "Too many requests, please try again later"
- * 
- * MANUAL VERIFICATION:
- * To verify rate limiting manually, run the server and use:
- *   for i in {1..21}; do curl -X POST http://localhost:4000/api/auth/login \
- *     -H "Content-Type: application/json" \
- *     -d '{"email":"test@test.com","password":"test"}'; done
- * The 21st request should return HTTP 429.
- * 
- * @see backend/src/routes/auth.ts - authLimiter middleware (lines 18-24, 71, 97)
- * @see backend/src/app.ts - trust proxy setting (line 22)
- */
+import request from 'supertest';
+import app from '../src/app';
+import prisma from '../src/lib/prisma';
 
-describe.skip('Phase 4: Rate Limiting', () => {
-    it('allows first 20 requests then blocks 21st with 429', () => {
-        // Test skipped - see file header for explanation
+// Enable rate limiting for tests
+process.env.TEST_RATE_LIMITER = 'true';
+
+describe('Phase 4: Rate Limiting', () => {
+    beforeAll(async () => {
+        // Clean up any existing test users
+        await prisma.user.deleteMany({
+            where: { 
+                OR: [
+                    { email: 'ratelimit-test@example.com' },
+                    { email: { contains: 'ratelimit-register-test' } }
+                ]
+            }
+        });
     });
 
-    it('rate limits register endpoint too after limit exceeded', () => {
-        // Test skipped - see file header for explanation
+    afterAll(async () => {
+        // Clean up test users
+        await prisma.user.deleteMany({
+            where: { 
+                OR: [
+                    { email: 'ratelimit-test@example.com' },
+                    { email: { contains: 'ratelimit-register-test' } }
+                ]
+            }
+        });
+        
+        // Remove the test flag
+        delete process.env.TEST_RATE_LIMITER;
     });
+
+    it('allows first 20 requests then blocks 21st with 429', async () => {
+        // First, register a user to test login rate limiting
+        await request(app)
+            .post('/api/auth/register')
+            .send({
+                email: 'ratelimit-test@example.com',
+                password: 'TestPass123!',
+                name: 'Test User'
+            })
+            .expect(201);
+
+        // Make 20 requests that should be allowed (though they'll fail with 401 due to wrong password)
+        let rateLimitedCount = 0;
+        for (let i = 0; i < 20; i++) {
+            const response = await request(app)
+                .post('/api/auth/login')
+                .send({
+                    email: 'ratelimit-test@example.com',
+                    password: 'WrongPassword123!' // This will fail but still count towards rate limit
+                });
+            
+            // Count how many requests were rate limited
+            if (response.status === 429) {
+                rateLimitedCount++;
+            }
+        }
+
+        // The 21st request should be rate limited (429)
+        const response = await request(app)
+            .post('/api/auth/login')
+            .send({
+                email: 'ratelimit-test@example.com',
+                password: 'WrongPassword123!'
+            });
+        
+        expect(response.status).toBe(429);
+        expect(response.body).toHaveProperty('error');
+        expect(response.body.error).toMatch(/rate|limit|too many/i);
+    }, 15000); // Increase timeout for this test
+
+    it('rate limits register endpoint too', async () => {
+        // Try to register multiple times - some should be allowed initially, then rate limited
+        let successCount = 0;
+        let rateLimitedCount = 0;
+        
+        for (let i = 0; i < 25; i++) { // Try 25 registrations
+            const response = await request(app)
+                .post('/api/auth/register')
+                .send({
+                    email: `ratelimit-register-test${i}@example.com`,
+                    password: 'TestPass123!',
+                    name: 'Test User'
+                });
+            
+            if (response.status === 201) {
+                successCount++; // First registration should succeed
+            } else if (response.status === 429) {
+                rateLimitedCount++;
+            } else if (response.status === 409) {
+                // Email already exists - this is expected after first registration
+            }
+        }
+
+        // At least some requests should have been rate limited
+        expect(rateLimitedCount).toBeGreaterThan(0);
+        
+        // Final check: make one more request which should be rate limited
+        const finalResponse = await request(app)
+            .post('/api/auth/register')
+            .send({
+                email: 'ratelimit-final-test@example.com',
+                password: 'TestPass123!',
+                name: 'Test User'
+            });
+        
+        // Could be 429 (rate limited) or 201 (if we're past the window), but if it's 429 then that's expected
+        if (finalResponse.status === 429) {
+            expect(finalResponse.body).toHaveProperty('error');
+            expect(finalResponse.body.error).toMatch(/rate|limit|too many/i);
+        }
+    }, 15000); // Increase timeout for this test
 });

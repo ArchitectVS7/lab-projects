@@ -121,7 +121,7 @@ export default function TaskDetailModal({
         aria-modal="true"
       >
         {/* Colored accent bar */}
-        <div className="h-1 bg-[var(--primary-base)]" />
+        <div className="h-1.5 bg-[var(--primary-base)]" />
 
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">

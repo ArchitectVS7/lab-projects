@@ -1,6 +1,7 @@
-import { motion, HTMLMotionProps } from 'framer-motion';
+import { motion, HTMLMotionProps, Transition } from 'framer-motion';
 import { ReactNode } from 'react';
 import clsx from 'clsx';
+import { usePerformanceAnimations } from '../hooks/usePerformanceAnimations';
 
 interface AnimatedButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
   children: ReactNode;
@@ -20,10 +21,14 @@ export default function AnimatedButton({
     ghost: 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300',
   };
 
+  const { getButtonHover } = usePerformanceAnimations();
+  const buttonHover = getButtonHover();
+
   return (
     <motion.button
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+      whileHover={buttonHover.whileHover}
+      whileTap={buttonHover.whileTap}
+      transition={buttonHover.transition as Transition}
       className={clsx(
         'px-4 py-2 rounded-md font-medium transition-colors',
         variantClasses[variant],

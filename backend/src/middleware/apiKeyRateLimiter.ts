@@ -8,7 +8,8 @@ export const apiKeyRateLimiter = rateLimit({
   legacyHeaders: false,
   skip: (req: AuthRequest) => {
     // Only apply to API key auth, skip for cookie-based auth
-    if (process.env.NODE_ENV === 'test') return true;
+    // Also skip in test environment unless specifically enabled for testing
+    if (process.env.NODE_ENV === 'test' && !process.env.TEST_RATE_LIMITER) return true;
     return req.authMethod !== 'apikey';
   },
   keyGenerator: (req: AuthRequest) => {

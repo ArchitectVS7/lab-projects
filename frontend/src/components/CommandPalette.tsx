@@ -189,6 +189,7 @@ export default function CommandPalette() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          data-testid="command-palette-backdrop"
         >
           <motion.div
             role="dialog"

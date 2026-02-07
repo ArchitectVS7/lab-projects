@@ -1,5 +1,5 @@
 import { useAuthStore } from '../store/auth';
-import type { User, Task, Project, ProjectMember, TaskStatus, TaskPriority, RecurringTask, RecurrenceFrequency, TimeEntry, Comment, ActivityLog, Tag, TaskTag, CustomFieldDefinition, CustomFieldType, CustomFieldValue, Attachment, CreatorMetricsData, DependencyList, CriticalPath, ApiKey, WebhookConfig, WebhookLog } from '../types';
+import type { User, Task, Project, ProjectMember, TaskStatus, TaskPriority, RecurringTask, RecurrenceFrequency, TimeEntry, Comment, ActivityLog, Tag, TaskTag, CustomFieldDefinition, CustomFieldType, CustomFieldValue, Attachment, CreatorMetricsData, DependencyList, DependencyGraph, CriticalPath, ApiKey, WebhookConfig, WebhookLog } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
@@ -546,6 +546,9 @@ export const dependenciesApi = {
 
   getCriticalPath: (projectId: string) =>
     request<CriticalPath>(`/api/projects/${projectId}/critical-path`),
+
+  getProjectGraph: (projectId: string) =>
+    request<DependencyGraph>(`/api/projects/${projectId}/dependencies`),
 };
 
 // --- API Keys API ---

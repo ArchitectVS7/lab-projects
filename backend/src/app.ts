@@ -21,6 +21,8 @@ import attachmentRoutes from './routes/attachments.js';
 import dependencyRoutes from './routes/dependencies.js';
 import webhookRoutes from './routes/webhooks.js';
 import { apiKeyRateLimiter } from './middleware/apiKeyRateLimiter.js';
+import specs from './lib/swagger.js';
+import swaggerUi from 'swagger-ui-express';
 
 dotenv.config();
 
@@ -56,6 +58,9 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(cookieParser());
 app.use(apiKeyRateLimiter);
+
+// Swagger UI
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // Routes
 app.use('/api/auth', authRoutes);

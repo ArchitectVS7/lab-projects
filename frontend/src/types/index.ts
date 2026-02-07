@@ -221,6 +221,27 @@ export interface CriticalPath {
   length: number;
 }
 
+// --- Dependency Graph ---
+
+export interface GraphNode {
+  id: string;
+  title: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  dueDate: string | null;
+}
+
+export interface GraphLink {
+  source: string;
+  target: string;
+  id: string;
+}
+
+export interface DependencyGraph {
+  nodes: GraphNode[];
+  links: GraphLink[];
+}
+
 // --- API Key ---
 
 export interface ApiKey {

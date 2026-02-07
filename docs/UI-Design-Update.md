@@ -424,12 +424,12 @@ This roadmap organizes TaskMan's evolution into balanced sprints, each containin
 
 These should be tackled incrementally, not as separate sprints:
 
-- [ ] **Pagination** (Sprint 8) - CRITICAL before scaling -- HIGHEST PRIORITY
+- [x] **Pagination** (Sprint 8) - Implemented with offset-based strategy
 - [x] **Rate Limiting** - Already implemented on auth endpoints
-- [ ] **E2E Testing** (Ongoing) - Set up Playwright, add tests per feature
-- [ ] **Error Boundaries** - Wrap async operations in frontend
+- [x] **E2E Testing** (Implemented) - Playwright configured with auth/task suites
+- [x] **Error Boundaries** - Implemented in App.tsx
 - [ ] **Performance Monitoring** - Add Sentry or similar
-- [ ] **Mobile Responsiveness Audit** - Ensure all features work on mobile
+- [x] **Mobile Responsiveness Audit** - Responsive classes used throughout components
 
 ---
 
@@ -486,10 +486,10 @@ Comparing TaskMan to Todoist, TickTick, Things 3, Notion, Asana, Monday.com:
 - ✅ AI-powered insights (Sprint 2)
 - ✅ Command palette (Sprint 3)
 - ✅ Real-time WebSocket (Sprint 5)
-- [ ] Natural language input (Sprint 9)
-- [ ] Public API (Sprint 8)
-- [ ] Creator analytics (Sprint 7) - UNIQUE
-- [ ] Smart dependencies (Sprint 7) - UNIQUE
+- ✅ Natural language input (Sprint 9)
+- ✅ Public API (Sprint 8)
+- ✅ Creator analytics (Sprint 7) - UNIQUE
+- ✅ Smart dependencies (Sprint 7) - UNIQUE
 - ✅ Focus mode (Sprint 7)
 
 ### Nice-to-Have

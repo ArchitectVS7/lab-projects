@@ -1,10 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion, Transition } from 'framer-motion';
 import { tasksApi, projectsApi } from '../lib/api';
 import { CheckCircle2, Clock, AlertTriangle, ListTodo } from 'lucide-react';
 import InsightsWidget from '../components/InsightsWidget';
 import { DashboardSkeleton } from '../components/Skeletons';
 import EmptyState from '../components/EmptyState';
+import { usePerformanceAnimations } from '../hooks/usePerformanceAnimations';
+import { useAuthStore } from '../store/auth';
 import clsx from 'clsx';
 import type { Task, Project, TaskStatus, TaskPriority } from '../types';
 
@@ -48,6 +51,8 @@ function StatCard({ title, value, icon: Icon, color }: { title: string; value: n
 
 function TaskCard({ task }: { task: Task }) {
   const navigate = useNavigate();
+  const { getTaskCardHover } = usePerformanceAnimations();
+  const taskCardHover = getTaskCardHover();
 
   const handleAssigneeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -64,7 +69,11 @@ function TaskCard({ task }: { task: Task }) {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow">
+    <motion.div
+      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow"
+      whileHover={taskCardHover.whileHover}
+      transition={taskCardHover.transition as Transition}
+    >
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-medium text-gray-900 dark:text-gray-100 line-clamp-1">{task.title}</h3>
         <span className={clsx('text-xs px-2 py-0.5 rounded font-medium', PRIORITY_COLORS[task.priority])}>
@@ -127,7 +136,7 @@ function TaskCard({ task }: { task: Task }) {
           </>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -144,6 +153,7 @@ function ProjectCard({ project }: { project: Project }) {
 }
 
 export default function DashboardPage() {
+  const { user } = useAuthStore();
   const { data: tasks = [], isLoading: tasksLoading } = useQuery({
     queryKey: ['tasks'],
     queryFn: () => tasksApi.getAll(),
@@ -165,6 +175,7 @@ export default function DashboardPage() {
 
   const recentTasks = [...tasks].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
   const recentProjects = [...projects].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
+  const myContributions = tasks.filter(t => t.creatorId === user?.id).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
 
   if (isLoading) {
     return <DashboardSkeleton />;
@@ -207,6 +218,31 @@ export default function DashboardPage() {
                 title="No tasks yet"
                 description="Create your first task to start tracking your work."
                 actionLabel="Go to Tasks"
+                actionTo="/tasks"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Your Contributions */}
+        <div className="lg:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Your Contributions</h2>
+            <Link to={`/tasks?creator=${user?.id}`} className="text-sm text-[var(--primary-base)] hover:opacity-80 transition-opacity">View all →</Link>
+          </div>
+          {myContributions.length > 0 ? (
+            <div className="grid gap-3">
+              {myContributions.map((task) => (
+                <TaskCard key={task.id} task={task} />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <EmptyState
+                type="tasks"
+                title="No contributions yet"
+                description="Tasks you create will appear here."
+                actionLabel="Create Task"
                 actionTo="/tasks"
               />
             </div>

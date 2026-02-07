@@ -566,8 +566,8 @@ model Task {
   - Task detail shows blockers and dependent tasks
   - Hook `useTaskDependencies.ts` manages dependency state
 
-##### Auto-adjust Due Dates
-- **Trigger**: When blocker's due date changes
+##### Auto-adjust Due Dates (Deferred)
+- **Trigger**: When blocker's due date changes (Deferred to future implementation)
 - **Behavior**:
   1. Calculate slack time between blocker and dependent
   2. If blocker's new date pushes into slack, suggest adjustment
@@ -580,9 +580,9 @@ model Task {
 - **View dependencies**: Anyone with project access can view dependency graph
 
 ##### Critical Path Calculation
-- **Status**: Basic dependency tracking implemented, critical path algorithm not yet implemented
-- **Current Implementation**: Circular dependency detection using depth-first search
-- **Future Enhancement**: Full critical path calculation as described above
+- **Status**: Fully implemented.
+- **Current Implementation**: Topological sort + longest path calculation available at `GET /api/projects/:id/critical-path`.
+- **Future Enhancement**: Visual Gantt chart integration.
 
 ---
 
@@ -1493,6 +1493,21 @@ Full-screen, distraction-free task focus interface that helps users concentrate 
   - `--transition-base: 200ms ease-in-out`
   - Consistent easing curves across components
 
+#### 2.22.7 Accessibility & Performance Controls
+- **Component**: `AccessibilityControls`
+- **Features**:
+  - **High Contrast Mode**: Increases contrast ratios for text and borders
+  - **Performance Mode**: Disables blur effects in glassmorphism
+  - **Animation Intensity**:
+    - `normal`: Standard standard motion
+    - `reduced`: Minimal motion (respects `prefers-reduced-motion`)
+    - `performance`: Optimized for lower-end devices
+- **Implementation**:
+  - `usePerformanceAnimations` hook for adaptive animation variants
+  - `animationUtils.ts` providing `PERFORMANCE_ANIMATIONS`, `REDUCED_ANIMATIONS`, `NORMAL_ANIMATIONS` constants
+  - Auto-detection of system `prefers-reduced-motion` setting on store rehydration
+  - Persistent storage in `theme-store`
+
 ---
 
 ### 2.23 Data Export
@@ -1709,6 +1724,14 @@ model User {
   projectMembers ProjectMember[]
   assignedTasks  Task[]          @relation("TaskAssignee")
   createdTasks   Task[]          @relation("TaskCreator")
+  notifications  Notification[]
+  timeEntries    TimeEntry[]
+  recurringTasks RecurringTask[]
+  comments       Comment[]
+  activityLogs   ActivityLog[]
+  attachments    Attachment[]
+  apiKeys        ApiKey[]
+  webhooks       Webhook[]
 
   @@map("users")
 }
@@ -1721,37 +1744,68 @@ model Project {
   ownerId     String   @map("owner_id")
   createdAt   DateTime @default(now()) @map("created_at")
 
-  owner   User            @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  members ProjectMember[]
-  tasks   Task[]
+  owner          User            @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members        ProjectMember[]
+  tasks          Task[]
+  recurringTasks RecurringTask[]
+  tags           Tag[]
+  customFields   CustomFieldDefinition[]
 
   @@map("projects")
 }
 
 model Task {
-  id          String     @id @default(uuid())
-  title       String
-  description String?
-  status      TaskStatus @default(TODO)
-  priority    Priority   @default(MEDIUM)
-  dueDate     DateTime?  @map("due_date")
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
+  id              String     @id @default(uuid())
+  title           String
+  description     String?
+  status          TaskStatus @default(TODO)
+  priority        Priority   @default(MEDIUM)
+  dueDate         DateTime?  @map("due_date")
+  recurringTaskId String?    @map("recurring_task_id")
+  isRecurring     Boolean    @default(false) @map("is_recurring")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
 
-  projectId  String  @map("project_id")
-  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String  @map("project_id")
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   assigneeId String? @map("assignee_id")
   assignee   User?   @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
 
-  creatorId String @map("creator_id")
-  creator   User   @relation("TaskCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  creatorId      String         @map("creator_id")
+  creator        User           @relation("TaskCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  recurringTask     RecurringTask?  @relation("GeneratedTasks", fields: [recurringTaskId], references: [id], onDelete: SetNull)
+  baseForRecurring  RecurringTask[] @relation("BaseTask")
+  timeEntries       TimeEntry[]
+  comments          Comment[]
+  activityLogs      ActivityLog[]
+  tags              TaskTag[]
+  customFieldValues CustomFieldValue[]
+  attachments       Attachment[]
+  dependsOn         TaskDependency[] @relation("DependentOn")
+  dependedOnBy      TaskDependency[] @relation("DependsOnTask")
 
   @@index([projectId])
   @@index([assigneeId])
   @@index([status])
   @@index([creatorId])
+  @@index([recurringTaskId])
   @@map("tasks")
+}
+
+model TaskDependency {
+  id          String   @id @default(uuid())
+  taskId      String   @map("task_id")
+  dependsOnId String   @map("depends_on_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  task      Task @relation("DependentOn", fields: [taskId], references: [id], onDelete: Cascade)
+  dependsOn Task @relation("DependsOnTask", fields: [dependsOnId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, dependsOnId])
+  @@index([taskId])
+  @@index([dependsOnId])
+  @@map("task_dependencies")
 }
 
 model ProjectMember {
@@ -1786,6 +1840,270 @@ enum ProjectRole {
   ADMIN
   MEMBER
   VIEWER
+}
+
+enum NotificationType {
+  TASK_ASSIGNED
+  TASK_DUE_SOON
+  TASK_OVERDUE
+  PROJECT_INVITE
+  TASK_COMMENT
+  TASK_STATUS_CHANGED
+  MENTION
+}
+
+enum ActivityAction {
+  CREATED
+  UPDATED
+  DELETED
+  COMMENT_ADDED
+  COMMENT_EDITED
+  COMMENT_DELETED
+  DEPENDENCY_ADDED
+  DEPENDENCY_REMOVED
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  taskId    String? @map("task_id")
+  projectId String? @map("project_id")
+
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model TimeEntry {
+  id          String    @id @default(uuid())
+  taskId      String    @map("task_id")
+  userId      String    @map("user_id")
+  startTime   DateTime  @map("start_time")
+  endTime     DateTime? @map("end_time")
+  duration    Int?      // Duration in seconds (populated after stop)
+  description String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([userId])
+  @@map("time_entries")
+}
+
+model RecurringTask {
+  id            String              @id @default(uuid())
+  baseTaskId    String              @map("base_task_id")
+  frequency     RecurrenceFrequency
+  interval      Int                 @default(1)
+  daysOfWeek    String?             @map("days_of_week") // "0,1,2" = Sun,Mon,Tue
+  dayOfMonth    Int?                @map("day_of_month")
+  startDate     DateTime            @map("start_date")
+  endDate       DateTime?           @map("end_date")
+  lastGenerated DateTime?           @map("last_generated")
+  createdAt     DateTime            @default(now()) @map("created_at")
+
+  baseTask  Task    @relation("BaseTask", fields: [baseTaskId], references: [id], onDelete: Cascade)
+  projectId String  @map("project_id")
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  creatorId      String @map("creator_id")
+  creator        User   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  generatedTasks Task[] @relation("GeneratedTasks")
+
+  @@index([baseTaskId])
+  @@index([projectId])
+  @@index([creatorId])
+  @@map("recurring_tasks")
+}
+
+enum RecurrenceFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  CUSTOM
+}
+
+model Comment {
+  id        String    @id @default(uuid())
+  content   String    @db.Text
+  editedAt  DateTime? @map("edited_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  taskId   String  @map("task_id")
+  task     Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  authorId String  @map("author_id")
+  author   User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  parentId String?   @map("parent_id")
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
+
+  @@index([taskId])
+  @@index([authorId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+model ActivityLog {
+  id        String         @id @default(uuid())
+  action    ActivityAction
+  field     String?
+  oldValue  String?        @map("old_value")
+  newValue  String?        @map("new_value")
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  taskId String @map("task_id")
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
+
+model Tag {
+  id        String   @id @default(uuid())
+  name      String
+  color     String   @default("#6366f1")
+  projectId String   @map("project_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks   TaskTag[]
+
+  @@unique([projectId, name])
+  @@index([projectId])
+  @@map("tags")
+}
+
+model TaskTag {
+  taskId String @map("task_id")
+  tagId  String @map("tag_id")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, tagId])
+  @@map("task_tags")
+}
+
+model CustomFieldDefinition {
+  id        String   @id @default(uuid())
+  name      String
+  type      CustomFieldType
+  options   String?  // JSON array for dropdown options
+  required  Boolean  @default(false)
+  projectId String   @map("project_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  values  CustomFieldValue[]
+
+  @@unique([projectId, name])
+  @@index([projectId])
+  @@map("custom_field_definitions")
+}
+
+model CustomFieldValue {
+  id         String @id @default(uuid())
+  value      String
+  taskId     String @map("task_id")
+  fieldId    String @map("field_id")
+
+  task  Task                  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  field CustomFieldDefinition @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, fieldId])
+  @@index([taskId])
+  @@index([fieldId])
+  @@map("custom_field_values")
+}
+
+model Attachment {
+  id           String   @id @default(uuid())
+  filename     String
+  originalName String   @map("original_name")
+  mimeType     String   @map("mime_type")
+  size         Int      // in bytes
+  path         String   // storage path
+  taskId       String   @map("task_id")
+  uploadedById String   @map("uploaded_by_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  task       Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploadedBy User @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([uploadedById])
+  @@map("attachments")
+}
+
+enum CustomFieldType {
+  TEXT
+  NUMBER
+  DATE
+  DROPDOWN
+}
+
+model ApiKey {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  name       String
+  keyHash    String    @unique @map("key_hash")
+  lastUsedAt DateTime? @map("last_used_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("api_keys")
+}
+
+model Webhook {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  url          String
+  events       String[]
+  secret       String
+  active       Boolean  @default(true)
+  failureCount Int      @default(0) @map("failure_count")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs WebhookLog[]
+
+  @@index([userId])
+  @@map("webhooks")
+}
+
+model WebhookLog {
+  id         String   @id @default(uuid())
+  webhookId  String   @map("webhook_id")
+  event      String
+  statusCode Int?     @map("status_code")
+  error      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([createdAt])
+  @@map("webhook_logs")
 }
 ```
 
@@ -1830,7 +2148,9 @@ enum ProjectRole {
 | GET | /api/custom-fields | Yes | ✅ Live | Sprint 6 |
 | POST | /api/custom-fields | Yes | ✅ Live | Sprint 6 |
 | DELETE | /api/custom-fields/:id | Yes | ✅ Live | Sprint 6 |
+| PUT | /api/custom-fields/:id | Yes | ✅ Live | Sprint 6 |
 | GET | /api/projects/:id/critical-path | Yes | 🔄 Future | Sprint 10+ |
+| GET | /api/projects/:id/dependencies | Yes | ✅ Live | Sprint 7 |
 | **Tasks** |||||
 | GET | /api/tasks | Yes | ✅ Live | Phase 3 |
 | GET | /api/tasks/:id | Yes | ✅ Live | Phase 3 |
@@ -1850,8 +2170,15 @@ enum ProjectRole {
 | POST | /api/tasks/:id/comments | Yes | ✅ Live | Sprint 5 |
 | GET | /api/time-entries | Yes | ✅ Live | Sprint 4 |
 | POST | /api/time-entries | Yes | ✅ Live | Sprint 4 |
+| PUT | /api/time-entries/:id | Yes | ✅ Live | Sprint 4 |
+| GET | /api/time-entries/:id | Yes | ✅ Live | Sprint 4 |
+| POST | /api/time-entries/start | Yes | ✅ Live | Sprint 4 |
+| POST | /api/time-entries/:id/stop | Yes | ✅ Live | Sprint 4 |
+| GET | /api/time-entries/active | Yes | ✅ Live | Sprint 4 |
+| GET | /api/attachments/task/:taskId | Yes | ✅ Live | Sprint 6 |
 | POST | /api/attachments/task/:taskId | Yes | ✅ Live | Sprint 6 |
 | PUT | /api/custom-fields/task/:taskId | Yes | ✅ Live | Sprint 6 |
+| GET | /api/custom-fields/task/:taskId | Yes | ✅ Live | Sprint 6 |
 | POST | /api/tags/task/:taskId | Yes | ✅ Live | Sprint 6 |
 | **Comments** |||||
 | PUT | /api/comments/:id | Yes | ✅ Live | Sprint 5 |
@@ -1865,10 +2192,14 @@ enum ProjectRole {
 | **Tags** |||||
 | GET | /api/tags | Yes | ✅ Live | Sprint 6 |
 | POST | /api/tags | Yes | ✅ Live | Sprint 6 |
+| PUT | /api/tags/:id | Yes | ✅ Live | Sprint 6 |
+| DELETE | /api/tags/task/:taskId/:tagId | Yes | ✅ Live | Sprint 6 |
 | **Notifications** |||||
 | GET | /api/notifications | Yes | ✅ Live | Sprint 1 |
 | PATCH | /api/notifications/mark-read | Yes | ✅ Live | Sprint 1 |
 | DELETE | /api/notifications/:id | Yes | ✅ Live | Sprint 1 |
+| GET | /api/notifications/unread-count | Yes | ✅ Live | Sprint 1 |
+| PATCH | /api/notifications/mark-all-read | Yes | ✅ Live | Sprint 1 |
 | **Analytics** |||||
 | GET | /api/analytics/insights | Yes | ✅ Live | Sprint 2 |
 | GET | /api/analytics/creator-metrics | Yes | ✅ Live | Sprint 2 |
@@ -1960,9 +2291,15 @@ enum ProjectRole {
 | `/register` | Register | No (redirects to `/` if authenticated) |
 | `/` | Dashboard | Yes |
 | `/tasks` | Tasks (Table/Kanban toggle) | Yes |
+| `/focus` | Focus Mode | Yes |
 | `/projects` | Projects list | Yes |
 | `/projects/:id` | Project detail (Kanban + members) | Yes |
+| `/calendar` | Calendar View | Yes |
 | `/profile` | User profile settings | Yes |
+| `/creator-dashboard` | Creator Analytics | Yes |
+| `/dependencies` | Dependency Graph | Yes |
+| `/api-keys` | API Key Management | Yes |
+| `/webhooks` | Webhook Configuration | Yes |
 
 ---
 

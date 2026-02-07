@@ -17,7 +17,8 @@ import { EmptyTasksState } from '../components/EmptyStates';
 import CalendarView from '../components/CalendarView';
 import TaskDetailModal from '../components/TaskDetailModal';
 import type { TaskFormData } from '../components/TaskDetailModal';
-import { modalOverlay, modalContent, taskCardHover } from '../lib/animations';
+import { modalOverlay, modalContent } from '../lib/animations';
+import { usePerformanceAnimations } from '../hooks/usePerformanceAnimations';
 import SmartTaskInput from '../components/SmartTaskInput';
 
 // --- Constants ---
@@ -310,6 +311,7 @@ function KanbanColumn({ status, tasks, children }: { status: TaskStatus; tasks: 
 function DraggableTaskCard({ task, onEdit, canEdit }: { task: Task; onEdit: (task: Task) => void; canEdit: boolean }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
+  const { performanceMode } = usePerformanceAnimations();
 
   return (
     <motion.div
@@ -317,7 +319,8 @@ function DraggableTaskCard({ task, onEdit, canEdit }: { task: Task; onEdit: (tas
       style={style}
       {...listeners}
       {...attributes}
-      {...taskCardHover}
+      whileHover={performanceMode !== 'performance' ? { y: -6, boxShadow: '0 20px 25px rgba(0, 0, 0, 0.15)' } : {}}
+      transition={performanceMode !== 'performance' ? { duration: 0.3, type: 'spring', stiffness: 300 } : { duration: 0 }}
       className={clsx(
         'bg-white dark:bg-gray-800 p-3 rounded-md shadow-sm border border-gray-200 dark:border-gray-700 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow',
         isDragging && 'opacity-50 shadow-lg'
@@ -374,6 +377,16 @@ function DraggableTaskCard({ task, onEdit, canEdit }: { task: Task; onEdit: (tas
         {task.assignee && (
           <span className="ml-auto w-5 h-5 rounded-full bg-[var(--primary-light)] dark:bg-[var(--primary-dark)] flex items-center justify-center text-[10px] font-medium text-[var(--primary-base)]">
             {task.assignee.name.charAt(0).toUpperCase()}
+          </span>
+        )}
+        {task.creator && !task.assignee && (
+          <span className="ml-auto w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-[10px] font-medium text-gray-600 dark:text-gray-400" title={`Created by ${task.creator.name}`}>
+            {task.creator.name.charAt(0).toUpperCase()}
+          </span>
+        )}
+        {task.creator && task.assignee && (
+          <span className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-[10px] font-medium text-gray-600 dark:text-gray-400 -ml-1 border border-white dark:border-gray-800" title={`Created by ${task.creator.name}`}>
+            {task.creator.name.charAt(0).toUpperCase()}
           </span>
         )}
       </div>

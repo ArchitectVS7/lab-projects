@@ -98,7 +98,41 @@ function validateUUID(id: string, label: string): void {
 // IMPORTANT: PATCH /bulk-status must be registered BEFORE GET /:id
 // Otherwise Express will try to match 'bulk-status' as an :id parameter
 
-// PATCH /api/tasks/bulk-status - Bulk status update
+/**
+ * @swagger
+ * /api/tasks/bulk-status:
+ *   patch:
+ *     summary: Bulk update task statuses
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               taskIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 required: true
+ *               status:
+ *                 type: string
+ *                 enum: [TODO, IN_PROGRESS, IN_REVIEW, DONE]
+ *                 required: true
+ *     responses:
+ *       200:
+ *         description: Tasks updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 updated:
+ *                   type: integer
+ */
 router.patch('/bulk-status', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const data = bulkStatusSchema.parse(req.body);
@@ -165,7 +199,110 @@ router.patch('/bulk-status', async (req: AuthRequest, res: Response, next: NextF
   }
 });
 
-// GET /api/tasks - List tasks
+/**
+ * @swagger
+ * /api/tasks:
+ *   get:
+ *     summary: List user's tasks
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *         description: Search query for task title or description
+ *       - in: query
+ *         name: projectId
+ *         schema:
+ *           type: string
+ *         description: Filter tasks by project ID
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [TODO, IN_PROGRESS, IN_REVIEW, DONE]
+ *         description: Filter tasks by status
+ *       - in: query
+ *         name: priority
+ *         schema:
+ *           type: string
+ *           enum: [LOW, MEDIUM, HIGH, URGENT]
+ *         description: Filter tasks by priority
+ *       - in: query
+ *         name: assigneeId
+ *         schema:
+ *           type: string
+ *         description: Filter tasks by assignee ID
+ *       - in: query
+ *         name: creatorId
+ *         schema:
+ *           type: string
+ *         description: Filter tasks by creator ID
+ *       - in: query
+ *         name: dueDateFrom
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter tasks with due date after this date
+ *       - in: query
+ *         name: dueDateTo
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter tasks with due date before this date
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [createdAt, updatedAt, title, status, priority, dueDate]
+ *         description: Field to sort by
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *         description: Sort order
+ *       - in: query
+ *         name: cursor
+ *         schema:
+ *           type: string
+ *         description: Cursor for pagination
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number for offset-based pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: List of tasks
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Task'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     nextCursor:
+ *                       type: string
+ *                     hasMore:
+ *                       type: boolean
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ */
 router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     // Get all projects where user is a member
@@ -315,7 +452,31 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
   }
 });
 
-// GET /api/tasks/:id - Get task detail
+/**
+ * @swagger
+ * /api/tasks/{id}:
+ *   get:
+ *     summary: Get task by ID
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Task ID
+ *     responses:
+ *       200:
+ *         description: Task details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Task'
+ *       404:
+ *         description: Task not found
+ */
 router.get('/:id', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     validateUUID(req.params.id, 'task ID');
@@ -341,7 +502,52 @@ router.get('/:id', async (req: AuthRequest, res: Response, next: NextFunction) =
   }
 });
 
-// POST /api/tasks - Create task
+/**
+ * @swagger
+ * /api/tasks:
+ *   post:
+ *     summary: Create a new task
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 required: true
+ *               description:
+ *                 type: string
+ *               projectId:
+ *                 type: string
+ *                 required: true
+ *               assigneeId:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *                 enum: [TODO, IN_PROGRESS, IN_REVIEW, DONE]
+ *               priority:
+ *                 type: string
+ *                 enum: [LOW, MEDIUM, HIGH, URGENT]
+ *               dueDate:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       201:
+ *         description: Task created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Task'
+ *       400:
+ *         description: Invalid request data
+ *       403:
+ *         description: Unauthorized to create task in this project
+ */
 router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const data = createTaskSchema.parse(req.body);
@@ -396,7 +602,57 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
   }
 });
 
-// PUT /api/tasks/:id - Update task
+/**
+ * @swagger
+ * /api/tasks/{id}:
+ *   put:
+ *     summary: Update a task
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Task ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               assigneeId:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *                 enum: [TODO, IN_PROGRESS, IN_REVIEW, DONE]
+ *               priority:
+ *                 type: string
+ *                 enum: [LOW, MEDIUM, HIGH, URGENT]
+ *               dueDate:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       200:
+ *         description: Task updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Task'
+ *       400:
+ *         description: Invalid request data
+ *       403:
+ *         description: Unauthorized to update this task
+ *       404:
+ *         description: Task not found
+ */
 router.put('/:id', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     validateUUID(req.params.id, 'task ID');
@@ -480,7 +736,29 @@ router.put('/:id', async (req: AuthRequest, res: Response, next: NextFunction) =
   }
 });
 
-// DELETE /api/tasks/:id - Delete task
+/**
+ * @swagger
+ * /api/tasks/{id}:
+ *   delete:
+ *     summary: Delete a task
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Task ID
+ *     responses:
+ *       204:
+ *         description: Task deleted successfully
+ *       403:
+ *         description: Unauthorized to delete this task
+ *       404:
+ *         description: Task not found
+ */
 router.delete('/:id', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     validateUUID(req.params.id, 'task ID');

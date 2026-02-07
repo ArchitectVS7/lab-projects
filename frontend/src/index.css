@@ -132,4 +132,157 @@
     height: 0.25rem;
     background-color: var(--primary-base);
   }
+  
+  /* High contrast mode styles */
+  .high-contrast :where(.bg-gray-100) {
+    background-color: #ffffff !important;
+    border: 1px solid #000000 !important;
+  }
+  
+  .high-contrast :where(.bg-gray-200) {
+    background-color: #ffffff !important;
+    border: 1px solid #000000 !important;
+  }
+  
+  .high-contrast :where(.bg-gray-300) {
+    background-color: #ffffff !important;
+    border: 1px solid #000000 !important;
+  }
+  
+  .high-contrast :where(.dark\:bg-gray-700\/50) {
+    background-color: #ffffff !important;
+    border: 1px solid #000000 !important;
+  }
+  
+  .high-contrast :where(.dark\:bg-gray-800) {
+    background-color: #ffffff !important;
+    border: 1px solid #000000 !important;
+  }
+  
+  .high-contrast :where(.dark\:bg-gray-900\/50) {
+    background-color: #ffffff !important;
+    border: 1px solid #000000 !important;
+  }
+  
+  .high-contrast :where(.text-gray-500) {
+    color: #000000 !important;
+  }
+  
+  .high-contrast :where(.text-gray-600) {
+    color: #000000 !important;
+  }
+  
+  .high-contrast :where(.text-gray-700) {
+    color: #000000 !important;
+  }
+  
+  .high-contrast :where(.dark\:text-gray-300) {
+    color: #000000 !important;
+  }
+  
+  .high-contrast :where(.dark\:text-gray-400) {
+    color: #000000 !important;
+  }
+  
+  .high-contrast :where(.dark\:text-gray-500) {
+    color: #000000 !important;
+  }
+  
+  .high-contrast :where(.bg-red-100) {
+    background-color: #ffffff !important;
+    border: 2px solid #dc2626 !important;
+  }
+  
+  .high-contrast :where(.dark\:bg-red-900\/50) {
+    background-color: #ffffff !important;
+    border: 2px solid #dc2626 !important;
+  }
+  
+  .high-contrast :where(.text-red-600) {
+    color: #dc2626 !important;
+    font-weight: bold !important;
+  }
+  
+  .high-contrast :where(.dark\:text-red-300) {
+    color: #dc2626 !important;
+    font-weight: bold !important;
+  }
+  
+  .high-contrast :where(.bg-purple-100) {
+    background-color: #ffffff !important;
+    border: 2px solid #7e22ce !important;
+  }
+  
+  .high-contrast :where(.dark\:bg-purple-900\/50) {
+    background-color: #ffffff !important;
+    border: 2px solid #7e22ce !important;
+  }
+  
+  .high-contrast :where(.text-purple-600) {
+    color: #7e22ce !important;
+    font-weight: bold !important;
+  }
+  
+  .high-contrast :where(.dark\:text-purple-300) {
+    color: #7e22ce !important;
+    font-weight: bold !important;
+  }
+  
+  .high-contrast :where(.bg-amber-100) {
+    background-color: #ffffff !important;
+    border: 2px solid #d97706 !important;
+  }
+  
+  .high-contrast :where(.dark\:bg-amber-900\/50) {
+    background-color: #ffffff !important;
+    border: 2px solid #d97706 !important;
+  }
+  
+  .high-contrast :where(.text-amber-600) {
+    color: #d97706 !important;
+    font-weight: bold !important;
+  }
+  
+  .high-contrast :where(.dark\:text-amber-300) {
+    color: #d97706 !important;
+    font-weight: bold !important;
+  }
+  
+  /* Performance mode adjustments */
+  .performance-mode .glass,
+  .performance-mode .glass-dark,
+  .performance-mode .glass-card,
+  .performance-mode .glass-card-dark,
+  .performance-mode .glass-primary,
+  .performance-mode .glass-primary-dark,
+  .performance-mode .glass-success,
+  .performance-mode .glass-warning {
+    backdrop-filter: blur(8px) !important; /* Reduced blur for performance */
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+  
+  .performance-mode .hover\:shadow-md:hover {
+    box-shadow: none !important;
+  }
+  
+  .performance-mode .hover\:-translate-y-1:hover {
+    transform: none !important;
+  }
+  
+  .performance-mode .hover\:shadow-2xl:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  }
+  
+  /* Quality mode adjustments */
+  .quality-mode .glass,
+  .quality-mode .glass-dark,
+  .quality-mode .glass-card,
+  .quality-mode .glass-card-dark,
+  .quality-mode .glass-primary,
+  .quality-mode .glass-primary-dark,
+  .quality-mode .glass-success,
+  .quality-mode .glass-warning {
+    backdrop-filter: blur(24px) !important; /* Enhanced blur for quality */
+    -webkit-backdrop-filter: blur(24px) !important;
+  }
 }

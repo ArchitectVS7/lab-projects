@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { tasksApi } from '../lib/api';
 import { ArrowLeft, CheckCircle2, Clock, AlertTriangle, Flame } from 'lucide-react';
+import { usePerformanceAnimations } from '../hooks/usePerformanceAnimations';
 import clsx from 'clsx';
 import type { Task, TaskStatus, TaskPriority } from '../types';
 import TaskCompletionCelebration from '../components/TaskCompletionCelebration';
@@ -35,14 +36,32 @@ function FocusTaskCard({
 }) {
   const config = PRIORITY_CONFIG[task.priority];
   const PriorityIcon = config.icon;
+  const { performanceMode } = usePerformanceAnimations();
+
+  // Determine animation properties based on performance mode
+  const shouldAnimate = performanceMode !== 'performance';
+  const animationProps = shouldAnimate 
+    ? { 
+        initial: { opacity: 0, y: 30 },
+        animate: { opacity: 1, y: 0 },
+        exit: { opacity: 0, x: 100, scale: 0.9 },
+        transition: { delay: index * 0.1, duration: 0.4 }
+      }
+    : {
+        initial: false,
+        animate: {},
+        exit: {},
+        transition: { duration: 0 }
+      };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, x: 100, scale: 0.9 }}
-      transition={{ delay: index * 0.1, duration: 0.4 }}
-      className="bg-white/10 dark:bg-gray-800/40 backdrop-blur-xl rounded-2xl border border-white/20 p-10 shadow-xl hover:shadow-2xl hover:bg-white/15 transition-all hover:-translate-y-1"
+      {...animationProps}
+      className={`bg-white/10 dark:bg-gray-800/40 backdrop-blur-xl rounded-2xl border border-white/20 p-10 shadow-xl ${
+        performanceMode === 'performance' 
+          ? 'hover:shadow-md'  // Simpler shadow in performance mode
+          : 'hover:shadow-2xl hover:bg-white/15 transition-all hover:-translate-y-1'  // Richer effects in other modes
+      }`}
       style={{
         borderColor: 'rgba(255, 255, 255, 0.2)'
       }}
@@ -87,8 +106,8 @@ function FocusTaskCard({
         <motion.button
           onClick={() => onComplete(task.id)}
           disabled={isCompleting}
-          whileHover={!isCompleting ? { scale: 1.1 } : undefined}
-          whileTap={!isCompleting ? { scale: 0.95 } : undefined}
+          whileHover={performanceMode !== 'performance' && !isCompleting ? { scale: 1.1 } : undefined}
+          whileTap={performanceMode !== 'performance' && !isCompleting ? { scale: 0.95 } : undefined}
           className={clsx(
             'flex-shrink-0 w-16 h-16 rounded-full border-2 flex items-center justify-center transition-all font-bold text-lg',
             isCompleting

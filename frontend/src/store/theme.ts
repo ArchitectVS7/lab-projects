@@ -3,12 +3,21 @@ import { persist } from 'zustand/middleware';
 import { COLOR_THEMES, ColorThemeId } from '../lib/themes';
 
 type Theme = 'light' | 'dark' | 'system';
+type HighContrastMode = 'normal' | 'high-contrast';
+type PerformanceMode = 'balanced' | 'performance' | 'quality';
+export type AnimationIntensity = 'normal' | 'reduced' | 'none';
 
 interface ThemeState {
   theme: Theme;
   colorTheme: ColorThemeId;
+  highContrast: HighContrastMode;
+  performanceMode: PerformanceMode;
+  animationIntensity: AnimationIntensity;
   setTheme: (theme: Theme) => void;
   setColorTheme: (colorTheme: ColorThemeId) => void;
+  setHighContrast: (mode: HighContrastMode) => void;
+  setPerformanceMode: (mode: PerformanceMode) => void;
+  setAnimationIntensity: (intensity: AnimationIntensity) => void;
 }
 
 export const useThemeStore = create<ThemeState>()(
@@ -16,6 +25,9 @@ export const useThemeStore = create<ThemeState>()(
     (set) => ({
       theme: 'system',
       colorTheme: 'indigo',
+      highContrast: 'normal',
+      performanceMode: 'balanced',
+      animationIntensity: 'normal',
       setTheme: (theme) => {
         set({ theme });
         applyTheme(theme);
@@ -24,6 +36,18 @@ export const useThemeStore = create<ThemeState>()(
         set({ colorTheme });
         applyColorTheme(colorTheme);
       },
+      setHighContrast: (mode) => {
+        set({ highContrast: mode });
+        applyHighContrast(mode);
+      },
+      setPerformanceMode: (mode) => {
+        set({ performanceMode: mode });
+        applyPerformanceMode(mode);
+      },
+      setAnimationIntensity: (intensity) => {
+        set({ animationIntensity: intensity });
+        applyAnimationIntensity(intensity);
+      },
     }),
     {
       name: 'theme-storage',
@@ -31,6 +55,19 @@ export const useThemeStore = create<ThemeState>()(
         if (state) {
           applyTheme(state.theme);
           applyColorTheme(state.colorTheme);
+          applyHighContrast(state.highContrast);
+          applyPerformanceMode(state.performanceMode);
+
+          // If user hasn't explicitly set animationIntensity and OS prefers reduced motion, default to 'none'
+          if (
+            state.animationIntensity === 'normal' &&
+            typeof window !== 'undefined' &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          ) {
+            state.setAnimationIntensity('none');
+          } else {
+            applyAnimationIntensity(state.animationIntensity);
+          }
         }
       },
     }
@@ -39,7 +76,7 @@ export const useThemeStore = create<ThemeState>()(
 
 function applyTheme(theme: Theme) {
   const root = window.document.documentElement;
-  root.classList.remove('light', 'dark');
+  root.classList.remove('light', 'dark', 'high-contrast');
 
   if (theme === 'system') {
     const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -48,6 +85,12 @@ function applyTheme(theme: Theme) {
     root.classList.add(systemTheme);
   } else {
     root.classList.add(theme);
+  }
+
+  // Apply high contrast if enabled
+  const store = useThemeStore.getState();
+  if (store.highContrast === 'high-contrast') {
+    root.classList.add('high-contrast');
   }
 }
 
@@ -79,12 +122,46 @@ function applyColorTheme(themeId: ColorThemeId) {
   root.style.setProperty('--primary-base', `hsl(${primaryHSL})`);
 }
 
+function applyHighContrast(mode: HighContrastMode) {
+  const root = window.document.documentElement;
+  if (mode === 'high-contrast') {
+    root.classList.add('high-contrast');
+  } else {
+    root.classList.remove('high-contrast');
+  }
+}
+
+function applyPerformanceMode(mode: PerformanceMode) {
+  const root = window.document.documentElement;
+  root.classList.remove('performance-mode', 'quality-mode');
+
+  if (mode === 'performance') {
+    root.classList.add('performance-mode');
+  } else if (mode === 'quality') {
+    root.classList.add('quality-mode');
+  }
+}
+
+function applyAnimationIntensity(intensity: AnimationIntensity) {
+  const root = window.document.documentElement;
+  root.classList.remove('anim-normal', 'anim-reduced', 'anim-none');
+  root.classList.add(`anim-${intensity}`);
+}
+
 // Listen for system theme changes
 if (typeof window !== 'undefined') {
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
     const store = useThemeStore.getState();
     if (store.theme === 'system') {
       applyTheme('system');
+    }
+  });
+
+  // Listen for prefers-reduced-motion changes
+  window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (e) => {
+    const store = useThemeStore.getState();
+    if (e.matches) {
+      store.setAnimationIntensity('none');
     }
   });
 }

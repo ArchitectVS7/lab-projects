@@ -1,4 +1,18 @@
+import { useThemeStore } from '../store/theme';
+
 // Shared Framer Motion animation variants
+
+// No-op variants for when animations are disabled
+const instant = {
+  initial: { opacity: 1 },
+  animate: { opacity: 1 },
+  exit: { opacity: 1 },
+};
+
+function shouldDisableAnimations(): boolean {
+  const { performanceMode, animationIntensity } = useThemeStore.getState();
+  return performanceMode === 'performance' || animationIntensity === 'none';
+}
 
 export const fadeIn = {
   initial: { opacity: 0 },
@@ -26,18 +40,6 @@ export const staggerContainer = {
   },
 };
 
-export const hoverScale = {
-  whileHover: { scale: 1.08 },
-  whileTap: { scale: 0.92 },
-  transition: { duration: 0.2 }
-};
-
-export const buttonHover = {
-  whileHover: { scale: 1.12 },
-  whileTap: { scale: 0.92 },
-  transition: { type: 'spring', stiffness: 400, damping: 17 }
-};
-
 // Page transition variants
 export const pageTransition = {
   initial: { opacity: 0, y: 8 },
@@ -57,12 +59,6 @@ export const modalContent = {
   initial: { opacity: 0, scale: 0.95, y: 10 },
   animate: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
   exit: { opacity: 0, scale: 0.97, y: 5, transition: { duration: 0.15, ease: 'easeIn' as const } },
-};
-
-// Task card hover effect
-export const taskCardHover = {
-  whileHover: { y: -6, boxShadow: '0 20px 25px rgba(0, 0, 0, 0.15)' },
-  transition: { duration: 0.3, type: 'spring' as const, stiffness: 300 }
 };
 
 // Drag indicator pulse
@@ -92,3 +88,22 @@ export const insightFadeIn = {
   initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeInOutQuart' } }
 };
+
+/**
+ * Returns the appropriate page transition variant, respecting animation intensity.
+ * Use this instead of `pageTransition` directly when you need runtime intensity awareness.
+ */
+export function getPageTransition() {
+  if (shouldDisableAnimations()) return instant;
+  return pageTransition;
+}
+
+export function getModalOverlay() {
+  if (shouldDisableAnimations()) return instant;
+  return modalOverlay;
+}
+
+export function getModalContent() {
+  if (shouldDisableAnimations()) return instant;
+  return modalContent;
+}
