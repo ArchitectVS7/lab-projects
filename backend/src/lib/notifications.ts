@@ -1,6 +1,7 @@
 import prisma from './prisma.js';
+import { getIO } from './socket.js';
 
-type NotificationType = 'TASK_ASSIGNED' | 'TASK_DUE_SOON' | 'TASK_OVERDUE' | 'PROJECT_INVITE' | 'TASK_COMMENT' | 'TASK_STATUS_CHANGED';
+type NotificationType = 'TASK_ASSIGNED' | 'TASK_DUE_SOON' | 'TASK_OVERDUE' | 'PROJECT_INVITE' | 'TASK_COMMENT' | 'TASK_STATUS_CHANGED' | 'MENTION';
 
 interface CreateNotificationParams {
   userId: string;
@@ -23,6 +24,13 @@ export async function createNotification(params: CreateNotificationParams) {
         projectId: params.projectId,
       },
     });
+
+    // Real-time delivery via WebSocket
+    const io = getIO();
+    if (io) {
+      io.to(`user:${params.userId}`).emit('notification:new', notification);
+    }
+
     return notification;
   } catch (error) {
     console.error('Failed to create notification:', error);

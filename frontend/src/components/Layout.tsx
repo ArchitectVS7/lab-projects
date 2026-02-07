@@ -9,6 +9,8 @@ import clsx from 'clsx';
 import ToastContainer from './Toast';
 import ThemeToggle from './ThemeToggle';
 import NotificationCenter from './NotificationCenter';
+import ConnectionStatus from './ConnectionStatus';
+import { useSocket } from '../hooks/useSocket';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -22,6 +24,7 @@ export default function Layout() {
   const { user, clearUser } = useAuthStore();
   const { layout } = useLayoutStore();
   useCommandPalette();
+  useSocket();
 
   const handleLogout = async () => {
     try { await authApi.logout(); } catch { /* server unreachable is fine */ }
@@ -82,6 +85,8 @@ export default function Layout() {
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{user?.name}</span>
             </div>
           )}
+
+          <ConnectionStatus />
 
           <div className="space-y-1">
             <Link

@@ -3,6 +3,8 @@ import { z } from 'zod';
 import prisma from '../lib/prisma.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
+import { logTaskCreated, logTaskChanges, logTaskDeleted } from '../lib/activityLog.js';
+import { getIO } from '../lib/socket.js';
 
 const router = Router();
 router.use(authenticate);
@@ -132,6 +134,18 @@ router.patch('/bulk-status', async (req: AuthRequest, res: Response, next: NextF
         status: data.status,
       },
     });
+
+    // Log status changes for each affected task
+    for (const task of tasks) {
+      if (task.status !== data.status) {
+        await logTaskChanges({
+          taskId: task.id,
+          userId: req.userId!,
+          oldTask: { status: task.status },
+          newTask: { status: data.status },
+        });
+      }
+    }
 
     res.json({ updated: result.count });
   } catch (error) {
@@ -290,6 +304,8 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
       include: taskInclude,
     });
 
+    await logTaskCreated(task.id, req.userId!);
+
     res.status(201).json(task);
   } catch (error) {
     next(error);
@@ -325,6 +341,16 @@ router.put('/:id', async (req: AuthRequest, res: Response, next: NextFunction) =
       }
     }
 
+    // Capture old values for activity logging
+    const oldTask = {
+      title: task.title,
+      description: task.description,
+      status: task.status,
+      priority: task.priority,
+      assigneeId: task.assigneeId,
+      dueDate: task.dueDate ? task.dueDate.toISOString() : null,
+    };
+
     const updatedTask = await prisma.task.update({
       where: { id: req.params.id },
       data: {
@@ -337,6 +363,27 @@ router.put('/:id', async (req: AuthRequest, res: Response, next: NextFunction) =
       },
       include: taskInclude,
     });
+
+    await logTaskChanges({
+      taskId: req.params.id,
+      userId: req.userId!,
+      oldTask,
+      newTask: {
+        title: updatedTask.title,
+        description: updatedTask.description,
+        status: updatedTask.status,
+        priority: updatedTask.priority,
+        assigneeId: updatedTask.assigneeId,
+        dueDate: updatedTask.dueDate ? updatedTask.dueDate.toISOString() : null,
+      },
+    });
+
+    // Emit socket event
+    const io = getIO();
+    if (io) {
+      io.to(`task:${req.params.id}`).emit('task:updated', updatedTask);
+      io.to(`task:${req.params.id}`).emit('activity:new', { taskId: req.params.id });
+    }
 
     res.json(updatedTask);
   } catch (error) {
@@ -364,11 +411,58 @@ router.delete('/:id', async (req: AuthRequest, res: Response, next: NextFunction
       throw new AppError('You cannot delete this task', 403);
     }
 
+    // Log deletion before the task is removed (cascade will delete the log too,
+    // so we log with the task title for audit purposes)
+    await logTaskDeleted(req.params.id, req.userId!, task.title);
+
     await prisma.task.delete({
       where: { id: req.params.id },
     });
 
     res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/tasks/:id/activity - Get activity logs for a task
+router.get('/:id/activity', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    validateUUID(req.params.id, 'task ID');
+
+    const task = await prisma.task.findUnique({
+      where: { id: req.params.id },
+      select: { projectId: true },
+    });
+
+    if (!task) {
+      throw new AppError('Task not found', 404);
+    }
+
+    // Verify user is member of task's project
+    const membership = await getProjectMembership(req.userId!, task.projectId);
+    if (!membership) {
+      throw new AppError('Task not found', 404);
+    }
+
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
+
+    const activityLogs = await prisma.activityLog.findMany({
+      where: { taskId: req.params.id },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    });
+
+    res.json(activityLogs);
   } catch (error) {
     next(error);
   }

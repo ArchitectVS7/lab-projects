@@ -1,5 +1,5 @@
 import { useAuthStore } from '../store/auth';
-import type { User, Task, Project, ProjectMember, TaskStatus, TaskPriority, RecurringTask, RecurrenceFrequency, TimeEntry } from '../types';
+import type { User, Task, Project, ProjectMember, TaskStatus, TaskPriority, RecurringTask, RecurrenceFrequency, TimeEntry, Comment, ActivityLog } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
@@ -276,4 +276,35 @@ export const timeEntriesApi = {
 
   stop: (id: string) =>
     request<TimeEntry>(`/api/time-entries/${id}/stop`, { method: 'POST' }),
+};
+
+// --- Comments API ---
+
+export const commentsApi = {
+  getByTask: (taskId: string) =>
+    request<Comment[]>(`/api/tasks/${taskId}/comments`),
+
+  create: (taskId: string, data: { content: string; parentId?: string }) =>
+    request<Comment>(`/api/tasks/${taskId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: string, data: { content: string }) =>
+    request<Comment>(`/api/comments/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    request<void>(`/api/comments/${id}`, { method: 'DELETE' }),
+};
+
+// --- Activity Logs API ---
+
+export const activityLogsApi = {
+  getByTask: (taskId: string, limit?: number) => {
+    const qs = limit ? `?limit=${limit}` : '';
+    return request<ActivityLog[]>(`/api/tasks/${taskId}/activity${qs}`);
+  },
 };

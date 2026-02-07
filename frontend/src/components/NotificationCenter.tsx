@@ -66,14 +66,14 @@ export default function NotificationCenter() {
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['notifications'],
     queryFn: fetchNotifications,
-    refetchInterval: 30000, // Poll every 30 seconds
+    refetchInterval: 60000, // Poll every 60 seconds (WebSocket is primary)
   });
 
   // Fetch unread count
   const { data: unreadData } = useQuery({
     queryKey: ['notifications', 'unread-count'],
     queryFn: fetchUnreadCount,
-    refetchInterval: 30000, // Poll every 30 seconds
+    refetchInterval: 60000, // Poll every 60 seconds (WebSocket is primary)
   });
 
   const unreadCount = unreadData?.count || 0;

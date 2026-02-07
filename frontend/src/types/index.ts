@@ -91,3 +91,34 @@ export interface RecurringTask {
   project: Pick<Project, 'id' | 'name' | 'color'>;
   creator: Pick<User, 'id' | 'name' | 'avatarUrl'>;
 }
+
+// --- Comment ---
+
+export interface Comment {
+  id: string;
+  content: string;
+  taskId: string;
+  authorId: string;
+  parentId: string | null;
+  editedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  author: Pick<User, 'id' | 'name' | 'avatarUrl'>;
+  replies?: Comment[];
+}
+
+// --- Activity Log ---
+
+export type ActivityAction = 'CREATED' | 'UPDATED' | 'DELETED' | 'COMMENT_ADDED' | 'COMMENT_EDITED' | 'COMMENT_DELETED';
+
+export interface ActivityLog {
+  id: string;
+  action: ActivityAction;
+  field: string | null;
+  oldValue: string | null;
+  newValue: string | null;
+  taskId: string;
+  userId: string;
+  createdAt: string;
+  user: Pick<User, 'id' | 'name' | 'avatarUrl'>;
+}

@@ -13,6 +13,7 @@ import notificationRoutes from './routes/notifications.js';
 import analyticsRoutes from './routes/analytics.js';
 import recurringTasksRoutes from './routes/recurring-tasks.js';
 import timeEntriesRoutes from './routes/time-entries.js';
+import commentRoutes from './routes/comments.js';
 
 dotenv.config();
 
@@ -56,6 +57,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/recurring-tasks', recurringTasksRoutes);
 app.use('/api/time-entries', timeEntriesRoutes);
+app.use('/api', commentRoutes);
 
 // Health check -- verifies database connectivity
 app.get('/health', async (_req, res) => {
