@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { tasksApi, projectsApi } from '../lib/api';
 import { CheckCircle2, Clock, AlertTriangle, ListTodo } from 'lucide-react';
 import InsightsWidget from '../components/InsightsWidget';
@@ -47,6 +47,22 @@ function StatCard({ title, value, icon: Icon, color }: { title: string; value: n
 }
 
 function TaskCard({ task }: { task: Task }) {
+  const navigate = useNavigate();
+
+  const handleAssigneeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (task.assignee) {
+      navigate(`/tasks?assignee=${task.assignee.id}`);
+    }
+  };
+
+  const handleCreatorClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (task.creator) {
+      navigate(`/tasks?creator=${task.creator.id}`);
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between gap-2">
@@ -79,21 +95,31 @@ function TaskCard({ task }: { task: Task }) {
       </div>
       <div className="flex items-center gap-3 mt-2 flex-wrap">
         {task.assignee && (
-          <div className="flex items-center gap-1">
+          <button
+            onClick={handleAssigneeClick}
+            className="flex items-center gap-1 hover:opacity-80 transition-opacity cursor-pointer"
+            title={`Filter tasks assigned to ${task.assignee.name}`}
+          >
             <div className="w-5 h-5 rounded-full bg-[var(--primary-base)] text-white flex items-center justify-center text-xs font-semibold">
               {task.assignee.name.charAt(0).toUpperCase()}
             </div>
             <span className="text-xs text-gray-600 dark:text-gray-400">{task.assignee.name}</span>
-          </div>
+          </button>
         )}
         {task.creator && (
-          <div className="flex items-center gap-1">
+          <>
             <span className="text-xs text-gray-400">→</span>
-            <div className="w-5 h-5 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-gray-100 flex items-center justify-center text-xs font-semibold">
-              {task.creator.name.charAt(0).toUpperCase()}
-            </div>
-            <span className="text-xs text-gray-600 dark:text-gray-400">{task.creator.name}</span>
-          </div>
+            <button
+              onClick={handleCreatorClick}
+              className="flex items-center gap-1 hover:opacity-80 transition-opacity cursor-pointer"
+              title={`Filter tasks created by ${task.creator.name}`}
+            >
+              <div className="w-5 h-5 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-gray-100 flex items-center justify-center text-xs font-semibold">
+                {task.creator.name.charAt(0).toUpperCase()}
+              </div>
+              <span className="text-xs text-gray-600 dark:text-gray-400">{task.creator.name}</span>
+            </button>
+          </>
         )}
       </div>
     </div>

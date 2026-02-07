@@ -2,9 +2,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCorners, useDroppable, useDraggable } from '@dnd-kit/core';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
 import { tasksApi, projectsApi, recurringTasksApi, exportApi } from '../lib/api';
 import { useAuthStore } from '../store/auth';
-import { Plus, Table, Columns3, Calendar as CalendarIcon, Pencil, Trash2, Repeat, Download, Zap, Loader2, Shield, ShieldAlert } from 'lucide-react';
+import { Plus, Table, Columns3, Calendar as CalendarIcon, Pencil, Trash2, Repeat, Download, Zap, Loader2, Shield, ShieldAlert, X } from 'lucide-react';
 import { format } from 'date-fns';
 import clsx from 'clsx';
 import type { Task, Project, TaskStatus, TaskPriority } from '../types';
@@ -110,6 +111,8 @@ function TableView({
   onStatusChange,
   onEdit,
   onDelete,
+  onFilterByAssignee,
+  onFilterByCreator,
 }: {
   tasks: Task[];
   projects: Project[];
@@ -117,6 +120,8 @@ function TableView({
   onStatusChange: (id: string, status: TaskStatus) => void;
   onEdit: (task: Task) => void;
   onDelete: (task: Task) => void;
+  onFilterByAssignee?: (userId: string) => void;
+  onFilterByCreator?: (userId: string) => void;
 }) {
   if (tasks.length === 0) {
     return <p className="text-center py-8 text-gray-400 dark:text-gray-500">No tasks match the current filters.</p>;
@@ -194,24 +199,32 @@ function TableView({
               </td>
               <td className="px-4 py-3">
                 {task.assignee ? (
-                  <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => onFilterByAssignee?.(task.assignee!.id)}
+                    className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
+                    title={`Filter tasks assigned to ${task.assignee.name}`}
+                  >
                     <div className="w-5 h-5 rounded-full bg-[var(--primary-base)] flex items-center justify-center text-[10px] font-medium text-white">
                       {task.assignee.name.charAt(0).toUpperCase()}
                     </div>
                     <span className="text-xs text-gray-600 dark:text-gray-400">{task.assignee.name}</span>
-                  </div>
+                  </button>
                 ) : (
                   <span className="text-xs text-gray-400 dark:text-gray-500">--</span>
                 )}
               </td>
               <td className="px-4 py-3">
                 {task.creator ? (
-                  <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => onFilterByCreator?.(task.creator!.id)}
+                    className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
+                    title={`Filter tasks created by ${task.creator.name}`}
+                  >
                     <div className="w-5 h-5 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-[10px] font-medium text-gray-900 dark:text-gray-100">
                       {task.creator.name.charAt(0).toUpperCase()}
                     </div>
                     <span className="text-xs text-gray-600 dark:text-gray-400">{task.creator.name}</span>
-                  </div>
+                  </button>
                 ) : (
                   <span className="text-xs text-gray-400 dark:text-gray-500">--</span>
                 )}
@@ -450,6 +463,7 @@ function KanbanView({
 export default function TasksPage() {
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((s) => s.user);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [viewMode, setViewMode] = useState<'table' | 'kanban' | 'calendar'>(
     () => (localStorage.getItem('task-view-mode') as 'table' | 'kanban' | 'calendar') || 'table'
@@ -463,6 +477,22 @@ export default function TasksPage() {
   const [taskForRecurrence, setTaskForRecurrence] = useState<Task | null>(null);
   const [exporting, setExporting] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+
+  // Read URL parameters on mount
+  useEffect(() => {
+    const assigneeId = searchParams.get('assignee');
+    const creatorId = searchParams.get('creator');
+    const showBlocked = searchParams.get('blocked');
+    const showBlocking = searchParams.get('blocking');
+
+    const newFilters: TaskFilters = {};
+    if (assigneeId) newFilters.assigneeId = assigneeId;
+    if (creatorId) newFilters.creatorId = creatorId;
+    if (showBlocked === 'true') newFilters.hasBlockers = true;
+    if (showBlocking === 'true') newFilters.isBlocking = true;
+
+    setFilters(newFilters);
+  }, [searchParams]);
 
   useEffect(() => {
     localStorage.setItem('task-view-mode', viewMode);
@@ -644,10 +674,56 @@ export default function TasksPage() {
     );
   }
 
+  const clearFilter = (key: keyof TaskFilters) => {
+    const newFilters = { ...filters };
+    delete newFilters[key];
+    setFilters(newFilters);
+
+    // Update URL params
+    const newParams = new URLSearchParams(searchParams);
+    if (key === 'assigneeId') newParams.delete('assignee');
+    if (key === 'creatorId') newParams.delete('creator');
+    if (key === 'hasBlockers') newParams.delete('blocked');
+    if (key === 'isBlocking') newParams.delete('blocking');
+    setSearchParams(newParams);
+  };
+
+  const getUserNameById = (userId: string): string => {
+    // Find user name from tasks
+    const task = tasks.find(t => t.assignee?.id === userId || t.creator?.id === userId);
+    return task?.assignee?.id === userId ? task.assignee.name : (task?.creator?.id === userId ? task.creator.name : 'Unknown');
+  };
+
+  const toggleDependencyFilter = (filterType: 'blocked' | 'blocking') => {
+    const newFilters = { ...filters };
+    const newParams = new URLSearchParams(searchParams);
+
+    if (filterType === 'blocked') {
+      if (newFilters.hasBlockers) {
+        delete newFilters.hasBlockers;
+        newParams.delete('blocked');
+      } else {
+        newFilters.hasBlockers = true;
+        newParams.set('blocked', 'true');
+      }
+    } else {
+      if (newFilters.isBlocking) {
+        delete newFilters.isBlocking;
+        newParams.delete('blocking');
+      } else {
+        newFilters.isBlocking = true;
+        newParams.set('blocking', 'true');
+      }
+    }
+
+    setFilters(newFilters);
+    setSearchParams(newParams);
+  };
+
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tasks</h1>
         <div className="flex items-center gap-3">
           {/* View Toggle */}
@@ -770,15 +846,76 @@ export default function TasksPage() {
             <option value="URGENT">Urgent</option>
           </select>
         </div>
-        {(filters.projectId || filters.status || filters.priority) && (
+
+        {/* Dependency Filters */}
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Dependencies</label>
+          <div className="flex gap-2">
+            <button
+              onClick={() => toggleDependencyFilter('blocked')}
+              className={clsx(
+                'px-3 py-1.5 text-sm rounded-md border transition-colors',
+                filters.hasBlockers
+                  ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              )}
+            >
+              ⚠️ Blocked
+            </button>
+            <button
+              onClick={() => toggleDependencyFilter('blocking')}
+              className={clsx(
+                'px-3 py-1.5 text-sm rounded-md border transition-colors',
+                filters.isBlocking
+                  ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              )}
+            >
+              🔗 Blocking
+            </button>
+          </div>
+        </div>
+
+        {(filters.projectId || filters.status || filters.priority || filters.hasBlockers || filters.isBlocking) && (
           <button
-            onClick={() => setFilters({})}
+            onClick={() => {
+              setFilters({});
+              setSearchParams(new URLSearchParams());
+            }}
             className="px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md border border-red-200 dark:border-red-800 transition-colors"
           >
             Clear All Filters
           </button>
         )}
       </div>
+
+      {/* Active Filter Badges */}
+      {(filters.assigneeId || filters.creatorId) && (
+        <div className="flex gap-2 mb-4 flex-wrap">
+          {filters.assigneeId && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--primary-light)] dark:bg-[var(--primary-dark)] text-[var(--primary-base)] rounded-md text-sm">
+              <span>Assignee: {getUserNameById(filters.assigneeId)}</span>
+              <button
+                onClick={() => clearFilter('assigneeId')}
+                className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+          {filters.creatorId && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md text-sm">
+              <span>Creator: {getUserNameById(filters.creatorId)}</span>
+              <button
+                onClick={() => clearFilter('creatorId')}
+                className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Quick Add Bar */}
       <AnimatePresence>
@@ -798,7 +935,7 @@ export default function TasksPage() {
       </AnimatePresence>
 
       {/* Views */}
-      {tasks.length === 0 && !filters.projectId && !filters.status && !filters.priority ? (
+      {tasks.length === 0 && !filters.projectId && !filters.status && !filters.priority && !filters.assigneeId && !filters.creatorId && !filters.hasBlockers && !filters.isBlocking ? (
         <EmptyTasksState onCreateTask={() => { setEditingTask(null); setModalOpen(true); }} />
       ) : viewMode === 'table' ? (
         <TableView
@@ -808,6 +945,18 @@ export default function TasksPage() {
           onStatusChange={handleStatusChange}
           onEdit={handleEdit}
           onDelete={(task) => setDeletingTask(task)}
+          onFilterByAssignee={(userId) => {
+            setFilters((f) => ({ ...f, assigneeId: userId }));
+            const newParams = new URLSearchParams(searchParams);
+            newParams.set('assignee', userId);
+            setSearchParams(newParams);
+          }}
+          onFilterByCreator={(userId) => {
+            setFilters((f) => ({ ...f, creatorId: userId }));
+            const newParams = new URLSearchParams(searchParams);
+            newParams.set('creator', userId);
+            setSearchParams(newParams);
+          }}
         />
       ) : viewMode === 'kanban' ? (
         <KanbanView
