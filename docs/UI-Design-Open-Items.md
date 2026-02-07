@@ -138,15 +138,23 @@ COMPLETED:
 
 REMAINING:
   Next:    [P1: Task Dependencies] (7-10 days, no blockers)
-           │
-  Then:    [P2: Public API + Keys] (10 days, pagination unblocked)
+
+  P2 Developer Platform (parallel streams -- see P2-DEVELOPMENT-ROADMAP.md):
+           [Phase 0: Shared Foundation] (2 days, no blockers)
                     │
-           [P2: Webhooks] (5 days) ◄──────┘
-                    │
-           [P2: CLI Tool] (4 days) ◄──────┘
+           ┌────────┼────────────────┐
+           ▼        ▼                ▼
+  [Stream A: API Keys]  [Stream B: Webhooks]  [Stream C: CLI]
+     (8 days)              (5 days)              (4 days)
+           │                │                │
+           └────────┬───────┘────────────────┘
+                    ▼
+           [Integration Tests] (1 day)
 ```
 
-**Next up:** Task Dependencies can start immediately. Public API can also start in parallel (pagination dependency is satisfied).
+**Next up:** Task Dependencies can start immediately. P2 Phase 0 can also start in parallel (pagination dependency is satisfied). All three P2 streams can then run concurrently, compressing 19 days of serial work into ~12 days.
+
+**Full P2 roadmap:** See [`P2-DEVELOPMENT-ROADMAP.md`](./P2-DEVELOPMENT-ROADMAP.md) for detailed per-stream task breakdowns, file ownership matrix, migration strategy, and merge order.
 
 ---
 
@@ -193,9 +201,9 @@ The previous audit (2026-02-06 original) was written before Sprints 4, 5, and pa
 ### Estimated Remaining Effort
 - **~~P0 (Critical):~~ COMPLETED**
 - **P1 (Differentiators):** 7-10 days (Dependencies only -- Creator Dashboard done)
-- **P2 (Developer Platform):** 19 days
+- **P2 (Developer Platform):** 19 days serial / ~12 days with parallel streams (see [P2-DEVELOPMENT-ROADMAP.md](./P2-DEVELOPMENT-ROADMAP.md))
 - **~~P3 (Polish):~~ COMPLETED**
-- **Total remaining:** ~26-29 days for all open items (P1 partial + P2)
+- **Total remaining:** ~19-22 days with parallelism (P1 + P2 concurrent)
 
 ---
 
