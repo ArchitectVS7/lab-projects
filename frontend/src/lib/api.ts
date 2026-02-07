@@ -111,6 +111,8 @@ export interface TaskFilters {
   creatorId?: string;
   dueDateFrom?: string; // ISO date string
   dueDateTo?: string; // ISO date string
+  hasBlockers?: boolean; // Filter tasks with dependencies blocking them
+  isBlocking?: boolean; // Filter tasks that are blocking other tasks
   sortBy?: string;
   order?: 'asc' | 'desc';
 }

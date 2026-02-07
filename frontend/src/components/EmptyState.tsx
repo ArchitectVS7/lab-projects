@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import clsx from 'clsx';
 
 // Simple inline SVG illustrations - no external dependencies needed
@@ -82,30 +83,42 @@ export default function EmptyState({
   const Illustration = illustrations[type];
 
   return (
-    <div className={clsx('text-center py-12', className)}>
-      <Illustration className="w-28 h-28 mx-auto mb-4" />
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className={clsx('text-center py-16', className)}
+    >
+      <motion.div
+        initial={{ rotate: -10, opacity: 0 }}
+        animate={{ rotate: 0, opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="mb-6"
+      >
+        <Illustration className="w-40 h-40 mx-auto" />
+      </motion.div>
+      <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
         {title}
       </h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-5 max-w-xs mx-auto">
+      <p className="text-base text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto leading-relaxed">
         {description}
       </p>
       {actionLabel && actionTo && (
         <Link
           to={actionTo}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 rounded-md transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-[var(--primary-base)] hover:opacity-90 rounded-lg transition-all hover:shadow-lg"
         >
-          {actionLabel}
+          + {actionLabel}
         </Link>
       )}
       {actionLabel && onAction && !actionTo && (
         <button
           onClick={onAction}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 rounded-md transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-[var(--primary-base)] hover:opacity-90 rounded-lg transition-all hover:shadow-lg"
         >
-          {actionLabel}
+          + {actionLabel}
         </button>
       )}
-    </div>
+    </motion.div>
   );
 }

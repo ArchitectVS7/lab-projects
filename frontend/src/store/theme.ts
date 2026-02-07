@@ -61,6 +61,22 @@ function applyColorTheme(themeId: ColorThemeId) {
     const cssVar = `--${key.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}`;
     root.style.setProperty(cssVar, value);
   });
+
+  // Extract HSL values and generate color variants
+  const primaryHSL = theme.colors.primary;
+  const [h, s, l] = primaryHSL.split(' ');
+  const lightness = parseInt(l);
+
+  // Generate lighter variant (lighter by 15%)
+  const lightVariant = `${h} ${s} ${Math.min(lightness + 15, 95)}%`;
+  root.style.setProperty('--primary-light', `hsl(${lightVariant})`);
+
+  // Generate darker variant (darker by 15%)
+  const darkVariant = `${h} ${s} ${Math.max(lightness - 15, 20)}%`;
+  root.style.setProperty('--primary-dark', `hsl(${darkVariant})`);
+
+  // Set base as full HSL
+  root.style.setProperty('--primary-base', `hsl(${primaryHSL})`);
 }
 
 // Listen for system theme changes

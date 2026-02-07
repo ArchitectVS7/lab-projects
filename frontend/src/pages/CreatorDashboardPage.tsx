@@ -89,7 +89,7 @@ function CreatorRow({ creator, rank, maxVelocity }: { creator: CreatorMetric; ra
 
       {/* Avatar + Name */}
       <div className="flex items-center gap-3 min-w-0 w-40">
-        <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-sm font-medium text-indigo-700 dark:text-indigo-300 flex-shrink-0">
+        <div className="w-8 h-8 rounded-full bg-[var(--primary-light)] dark:bg-[var(--primary-dark)] flex items-center justify-center text-sm font-medium text-[var(--primary-base)] flex-shrink-0">
           {creator.user.name?.charAt(0).toUpperCase() || '?'}
         </div>
         <div className="min-w-0">
@@ -236,7 +236,7 @@ export default function CreatorDashboardPage() {
         <select
           value={projectId}
           onChange={(e) => setSelectedProjectId(e.target.value)}
-          className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[var(--primary-base)] focus:border-[var(--primary-base)]"
         >
           {projects.map((p) => (
             <option key={p.id} value={p.id}>{p.name}</option>
@@ -260,7 +260,7 @@ export default function CreatorDashboardPage() {
         <motion.div {...slideUp}>
           {/* Summary Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-            <SummaryCard label="Total Tasks" value={metrics.summary.totalTasks} icon={BarChart3} color="bg-indigo-500" />
+            <SummaryCard label="Total Tasks" value={metrics.summary.totalTasks} icon={BarChart3} color="bg-[var(--primary-base)]" />
             <SummaryCard label="Completed" value={metrics.summary.totalDone} icon={CheckCircle2} color="bg-green-500" />
             <SummaryCard label="Open" value={metrics.summary.totalOpen} icon={Clock} color="bg-blue-500" />
             <SummaryCard label="Stale (7d+)" value={metrics.summary.totalStale} icon={AlertTriangle} color="bg-amber-500" />

@@ -9,6 +9,11 @@
     --primary-foreground: 0 0% 100%;
     --ring: 243 75% 59%;
 
+    /* Primary color variants (for enhanced theming) */
+    --primary-light: hsl(243 75% 75%);
+    --primary-dark: hsl(243 75% 45%);
+    --primary-base: hsl(243 75% 59%);
+
     /* Density Settings - comfortable (default) */
     --density-padding-xs: 0.25rem;
     --density-padding-sm: 0.5rem;
@@ -46,32 +51,85 @@
 }
 
 @layer utilities {
-  /* Glassmorphism utilities */
+  /* Glassmorphism utilities - enhanced with stronger blur and opacity */
   .glass {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
   }
 
   .glass-dark {
-    background: rgba(17, 24, 39, 0.7);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   .glass-card {
     background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
     border: 1px solid rgba(255, 255, 255, 0.3);
   }
 
   .glass-card-dark {
     background: rgba(31, 41, 55, 0.8);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Color-tinted glass variants */
+  .glass-primary {
+    background: rgba(99, 102, 241, 0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+  }
+
+  .glass-primary-dark {
+    background: rgba(67, 56, 202, 0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(67, 56, 202, 0.2);
+  }
+
+  .glass-success {
+    background: rgba(16, 185, 129, 0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+  }
+
+  .glass-warning {
+    background: rgba(245, 158, 11, 0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+  }
+
+  /* Primary color accent utilities for components */
+  .border-primary {
+    border-color: var(--primary-base);
+  }
+
+  .bg-primary {
+    background-color: var(--primary-base);
+  }
+
+  .bg-primary-light {
+    background-color: var(--primary-light);
+  }
+
+  .text-primary {
+    color: var(--primary-base);
+  }
+
+  .accent-bar-primary {
+    height: 0.25rem;
+    background-color: var(--primary-base);
   }
 }

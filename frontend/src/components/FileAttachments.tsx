@@ -54,9 +54,9 @@ export default function FileAttachments({ taskId, canEdit }: FileAttachmentsProp
   };
 
   return (
-    <div className="space-y-3">
-      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-        Attachments {attachments.length > 0 && `(${attachments.length})`}
+    <div className="space-y-4 p-4 rounded-lg border-2" style={{ borderColor: 'var(--primary-base)', backgroundColor: 'color-mix(in srgb, var(--primary-base) 5%, transparent)' }}>
+      <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
+        <span>📎</span> Attachments {attachments.length > 0 && <span className="ml-auto bg-[var(--primary-base)] text-white text-xs px-2 py-0.5 rounded-full">{attachments.length}</span>}
       </h4>
 
       {canEdit && (
@@ -65,15 +65,15 @@ export default function FileAttachments({ taskId, canEdit }: FileAttachmentsProp
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          className={`flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors
-            ${dragOver
-              ? 'border-primary bg-primary/5'
-              : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
-            }`}
+          className="flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg cursor-pointer transition-all"
+          style={{
+            borderColor: dragOver ? 'var(--primary-base)' : '#d1d5db',
+            backgroundColor: dragOver ? 'color-mix(in srgb, var(--primary-base) 10%, transparent)' : 'transparent'
+          }}
         >
-          <Upload size={16} className="text-gray-400" />
-          <span className="text-sm text-gray-500">
-            {uploadMutation.isPending ? 'Uploading...' : 'Drop files here or click to upload'}
+          <Upload size={16} style={{ color: dragOver ? 'var(--primary-base)' : '#9ca3af' }} />
+          <span className="text-sm" style={{ color: dragOver ? 'var(--primary-base)' : '#6b7280' }}>
+            {uploadMutation.isPending ? '⏳ Uploading...' : '📤 Drop files here or click to upload'}
           </span>
           <input
             ref={fileInputRef}
@@ -86,35 +86,35 @@ export default function FileAttachments({ taskId, canEdit }: FileAttachmentsProp
       )}
 
       {attachments.length > 0 && (
-        <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+        <div className="space-y-2 bg-white/50 dark:bg-gray-700/30 p-3 rounded-lg">
           {attachments.map((att: Attachment) => (
-            <li key={att.id} className="flex items-center gap-3 py-2">
+            <div key={att.id} className="flex items-center gap-3 p-2 rounded hover:bg-white/50 dark:hover:bg-gray-700/50 transition-colors">
               <FileIcon mimeType={att.mimeType} />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{att.originalName}</p>
-                <p className="text-xs text-gray-400">{formatFileSize(att.size)}</p>
+                <p className="text-xs text-gray-500">{formatFileSize(att.size)}</p>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   onClick={() => attachmentsApi.download(att.id)}
-                  className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="p-1.5 text-gray-400 hover:text-[var(--primary-base)] hover:bg-white/50 dark:hover:bg-gray-700/50 rounded transition-colors"
                   title="Download"
                 >
-                  <Download size={14} />
+                  <Download size={16} />
                 </button>
                 {canEdit && (
                   <button
                     onClick={() => deleteMutation.mutate(att.id)}
-                    className="p-1 text-gray-400 hover:text-red-500"
+                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded transition-colors"
                     title="Delete"
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={16} />
                   </button>
                 )}
               </div>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

@@ -120,6 +120,9 @@ export default function TaskDetailModal({
         role="dialog"
         aria-modal="true"
       >
+        {/* Colored accent bar */}
+        <div className="h-1 bg-[var(--primary-base)]" />
+
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -145,7 +148,7 @@ export default function TaskDetailModal({
                 maxLength={200}
                 value={form.title}
                 onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-base)] focus:border-transparent"
                 placeholder="Task title"
               />
             </div>
@@ -156,7 +159,7 @@ export default function TaskDetailModal({
                 maxLength={2000}
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-base)] focus:border-transparent resize-none"
                 placeholder="Optional description"
               />
             </div>
@@ -167,7 +170,7 @@ export default function TaskDetailModal({
                   required
                   value={form.projectId}
                   onChange={(e) => setForm((f) => ({ ...f, projectId: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-base)]"
                 >
                   <option value="">Select a project</option>
                   {writableProjects.map((p) => (
@@ -240,7 +243,7 @@ export default function TaskDetailModal({
               <button
                 type="submit"
                 disabled={isSubmitting || !form.title.trim() || (isNewTask && !form.projectId)}
-                className="px-4 py-2 text-sm text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 rounded-md disabled:opacity-50"
+                className="px-4 py-2 text-sm text-white bg-[var(--primary-base)] hover:opacity-90 rounded-md disabled:opacity-50 transition-opacity"
               >
                 {isSubmitting ? 'Saving...' : task ? 'Update' : 'Create'}
               </button>
@@ -255,7 +258,7 @@ export default function TaskDetailModal({
                 <button
                   onClick={() => setActiveTab('comments')}
                   className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'comments'
-                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                    ? 'border-[var(--primary-base)] text-[var(--primary-base)]'
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                     }`}
                 >
@@ -265,7 +268,7 @@ export default function TaskDetailModal({
                 <button
                   onClick={() => setActiveTab('activity')}
                   className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'activity'
-                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                    ? 'border-[var(--primary-base)] text-[var(--primary-base)]'
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                     }`}
                 >
@@ -275,7 +278,7 @@ export default function TaskDetailModal({
                 <button
                   onClick={() => setActiveTab('attachments')}
                   className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'attachments'
-                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                    ? 'border-[var(--primary-base)] text-[var(--primary-base)]'
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                     }`}
                 >

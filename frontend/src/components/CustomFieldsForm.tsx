@@ -18,19 +18,22 @@ export default function CustomFieldsForm({ projectId, values, onChange }: Custom
   if (fields.length === 0) return null;
 
   return (
-    <div className="space-y-3">
-      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Custom Fields</h4>
+    <div className="space-y-4 p-4 rounded-lg border-2" style={{ borderColor: 'var(--primary-base)', backgroundColor: 'color-mix(in srgb, var(--primary-base) 5%, transparent)' }}>
+      <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
+        <span>🔧</span> Custom Fields
+      </h4>
       {fields.map((field: CustomFieldDefinition) => (
-        <div key={field.id}>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            {field.name} {field.required && <span className="text-red-500">*</span>}
+        <div key={field.id} className="space-y-1.5">
+          <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+            {field.name}
+            {field.required && <span className="text-red-500 ml-1">*</span>}
           </label>
           {field.type === 'TEXT' && (
             <input
               type="text"
               value={values[field.id] || ''}
               onChange={(e) => onChange(field.id, e.target.value)}
-              className="w-full px-3 py-1.5 text-sm border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:ring-2 focus:ring-[var(--primary-base)] focus:border-transparent transition-colors"
             />
           )}
           {field.type === 'NUMBER' && (
@@ -38,7 +41,7 @@ export default function CustomFieldsForm({ projectId, values, onChange }: Custom
               type="number"
               value={values[field.id] || ''}
               onChange={(e) => onChange(field.id, e.target.value)}
-              className="w-full px-3 py-1.5 text-sm border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:ring-2 focus:ring-[var(--primary-base)] focus:border-transparent transition-colors"
             />
           )}
           {field.type === 'DATE' && (
@@ -46,14 +49,14 @@ export default function CustomFieldsForm({ projectId, values, onChange }: Custom
               type="date"
               value={values[field.id] || ''}
               onChange={(e) => onChange(field.id, e.target.value)}
-              className="w-full px-3 py-1.5 text-sm border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:ring-2 focus:ring-[var(--primary-base)] focus:border-transparent transition-colors"
             />
           )}
           {field.type === 'DROPDOWN' && (
             <select
               value={values[field.id] || ''}
               onChange={(e) => onChange(field.id, e.target.value)}
-              className="w-full px-3 py-1.5 text-sm border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:ring-2 focus:ring-[var(--primary-base)] focus:border-transparent transition-colors"
             >
               <option value="">Select...</option>
               {(() => {

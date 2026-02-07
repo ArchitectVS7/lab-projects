@@ -59,9 +59,9 @@ export default function Layout() {
       )}>
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-center items-center h-16">
           {layout === 'minimal' ? (
-            <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">T</span>
+            <span className="text-xl font-bold text-[var(--primary-base)]">T</span>
           ) : (
-            <h1 className="text-xl font-bold text-indigo-600 dark:text-indigo-400">TaskApp</h1>
+            <h1 className="text-xl font-bold text-[var(--primary-base)]">TaskApp</h1>
           )}
         </div>
         <nav className="flex-1 p-2" style={{ gap: `var(--density-gap)` }}>
@@ -73,7 +73,7 @@ export default function Layout() {
               className={clsx(
                 'flex items-center gap-3 rounded-md font-medium transition-colors',
                 isActive(to)
-                  ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'
+                  ? 'bg-[var(--primary-light)] dark:bg-[var(--primary-dark)] text-[var(--primary-base)]'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700',
                 layout === 'minimal' ? 'justify-center' : ''
               )}
@@ -97,7 +97,7 @@ export default function Layout() {
 
           {layout !== 'minimal' && (
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-sm font-medium text-indigo-700 dark:text-indigo-300">
+              <div className="w-8 h-8 rounded-full bg-[var(--primary-light)] dark:bg-[var(--primary-dark)] flex items-center justify-center text-sm font-medium text-[var(--primary-base)]">
                 {user?.name?.charAt(0).toUpperCase()}
               </div>
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{user?.name}</span>

@@ -193,12 +193,18 @@ export default function CommandPalette() {
           <motion.div
             role="dialog"
             aria-modal="true"
-            className="glass-card dark:glass-card-dark rounded-lg shadow-xl w-full max-w-2xl mx-4"
+            className="glass-card dark:glass-card-dark rounded-lg shadow-xl w-full max-w-2xl mx-4 border-2"
+            style={{ borderColor: 'var(--primary-base)' }}
             onClick={(e) => e.stopPropagation()}
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
           >
+            {/* Header */}
+            <div className="px-4 pt-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">⌘ Command Palette</h3>
+            </div>
+
             {/* Search Input */}
             <div className="flex items-center gap-3 p-4 border-b border-gray-200 dark:border-gray-700">
               <Search size={20} className="text-gray-400" />
@@ -213,6 +219,7 @@ export default function CommandPalette() {
               <button
                 onClick={close}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                title="Close (Esc)"
               >
                 <X size={20} />
               </button>
@@ -252,7 +259,7 @@ export default function CommandPalette() {
                         onClick={item.action}
                         onMouseEnter={() => setSelectedIndex(index)}
                         className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${isSelected
-                          ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'
+                          ? 'bg-[var(--primary-light)] dark:bg-[var(--primary-dark)] text-[var(--primary-base)]'
                           : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                           }`}
                       >
@@ -272,12 +279,19 @@ export default function CommandPalette() {
             </div>
 
             {/* Footer hint */}
-            <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-              <div className="flex items-center gap-4">
-                <span><kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">↑↓</kbd> Navigate</span>
-                <span><kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">Enter</kbd> Select</span>
-                <span><kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">Esc</kbd> Close</span>
-              </div>
+            <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-center gap-6 text-xs text-gray-600 dark:text-gray-400 bg-gray-50/50 dark:bg-gray-900/50">
+              <span className="flex items-center gap-1.5">
+                <kbd className="px-2 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs shadow-sm">↑↓</kbd>
+                <span>Navigate</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <kbd className="px-2 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs shadow-sm">Enter</kbd>
+                <span>Select</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <kbd className="px-2 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs shadow-sm">Esc</kbd>
+                <span>Close</span>
+              </span>
             </div>
           </motion.div>
         </motion.div>

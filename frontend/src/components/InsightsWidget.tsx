@@ -28,10 +28,13 @@ export default function InsightsWidget() {
     if (!data) return null;
 
     return (
-        <div className="bg-gradient-to-br from-indigo-50 to-white dark:from-gray-800 dark:to-gray-800 p-6 rounded-lg border border-indigo-100 dark:border-gray-700 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border-2 shadow-sm" style={{
+          borderColor: 'var(--primary-base)',
+          background: `linear-gradient(135deg, color-mix(in srgb, var(--primary-base) 8%, white), white)`
+        }}>
             <div className="flex items-center gap-2 mb-4">
-                <Lightbulb className="w-5 h-5 text-indigo-500" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Productivity Insights</h3>
+                <Lightbulb className="w-5 h-5" style={{ color: 'var(--primary-base)' }} />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">💡 Your Productivity Insight</h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -64,7 +67,7 @@ export default function InsightsWidget() {
                 </div>
 
                 {/* AI Insight */}
-                <div className="bg-white/60 dark:bg-gray-700/50 p-3 rounded-md border border-indigo-50 dark:border-gray-600">
+                <div className="bg-white/60 dark:bg-gray-700/50 p-3 rounded-md border-l-4" style={{ borderLeftColor: 'var(--primary-base)' }}>
                     <p className="text-sm text-gray-700 dark:text-gray-300 italic">
                         "{data.insight}"
                     </p>

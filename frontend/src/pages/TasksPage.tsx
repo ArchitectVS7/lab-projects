@@ -2,9 +2,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCorners, useDroppable, useDraggable } from '@dnd-kit/core';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
 import { tasksApi, projectsApi, recurringTasksApi, exportApi } from '../lib/api';
 import { useAuthStore } from '../store/auth';
-import { Plus, Table, Columns3, Calendar as CalendarIcon, Pencil, Trash2, Repeat, Download, Zap, Loader2, Shield, ShieldAlert } from 'lucide-react';
+import { Plus, Table, Columns3, Calendar as CalendarIcon, Pencil, Trash2, Repeat, Download, Zap, Loader2, Shield, ShieldAlert, X } from 'lucide-react';
 import { format } from 'date-fns';
 import clsx from 'clsx';
 import type { Task, Project, TaskStatus, TaskPriority } from '../types';
@@ -110,6 +111,8 @@ function TableView({
   onStatusChange,
   onEdit,
   onDelete,
+  onFilterByAssignee,
+  onFilterByCreator,
 }: {
   tasks: Task[];
   projects: Project[];
@@ -117,6 +120,8 @@ function TableView({
   onStatusChange: (id: string, status: TaskStatus) => void;
   onEdit: (task: Task) => void;
   onDelete: (task: Task) => void;
+  onFilterByAssignee?: (userId: string) => void;
+  onFilterByCreator?: (userId: string) => void;
 }) {
   if (tasks.length === 0) {
     return <p className="text-center py-8 text-gray-400 dark:text-gray-500">No tasks match the current filters.</p>;
@@ -132,18 +137,27 @@ function TableView({
             <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Priority</th>
             <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Project</th>
             <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Assignee</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Creator</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Dependencies</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Recurrence</th>
             <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Due</th>
             <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-400">Actions</th>
           </tr>
         </thead>
         <tbody>
-          {tasks.map((task) => (
+          {tasks.map((task, index) => (
             <motion.tr
               key={task.id}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.2 }}
-              className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+              className={clsx(
+                'border-b border-gray-100 dark:border-gray-700 transition-colors',
+                index % 2 === 0
+                  ? 'bg-gray-50/50 dark:bg-gray-900/30'
+                  : 'bg-white dark:bg-gray-800/50',
+                'hover:bg-gray-100 dark:hover:bg-gray-700'
+              )}
             >
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2">
@@ -192,15 +206,60 @@ function TableView({
               </td>
               <td className="px-4 py-3">
                 {task.assignee ? (
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-[10px] font-medium text-indigo-700 dark:text-indigo-300">
+                  <button
+                    onClick={() => onFilterByAssignee?.(task.assignee!.id)}
+                    className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
+                    title={`Filter tasks assigned to ${task.assignee.name}`}
+                  >
+                    <div className="w-5 h-5 rounded-full bg-[var(--primary-base)] flex items-center justify-center text-[10px] font-medium text-white">
                       {task.assignee.name.charAt(0).toUpperCase()}
                     </div>
                     <span className="text-xs text-gray-600 dark:text-gray-400">{task.assignee.name}</span>
-                  </div>
+                  </button>
                 ) : (
                   <span className="text-xs text-gray-400 dark:text-gray-500">--</span>
                 )}
+              </td>
+              <td className="px-4 py-3">
+                {task.creator ? (
+                  <button
+                    onClick={() => onFilterByCreator?.(task.creator!.id)}
+                    className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
+                    title={`Filter tasks created by ${task.creator.name}`}
+                  >
+                    <div className="w-5 h-5 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-[10px] font-medium text-gray-900 dark:text-gray-100">
+                      {task.creator.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">{task.creator.name}</span>
+                  </button>
+                ) : (
+                  <span className="text-xs text-gray-400 dark:text-gray-500">--</span>
+                )}
+              </td>
+              <td className="px-4 py-3">
+                <div className="flex items-center gap-2">
+                  {(task._count?.dependsOn ?? 0) > 0 && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 font-medium">
+                      ⚠️ {task._count!.dependsOn}
+                    </span>
+                  )}
+                  {(task._count?.dependedOnBy ?? 0) > 0 && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-medium">
+                      🔗 {task._count!.dependedOnBy}
+                    </span>
+                  )}
+                  {(task._count?.dependsOn ?? 0) === 0 && (task._count?.dependedOnBy ?? 0) === 0 && (
+                    <span className="text-xs text-gray-400 dark:text-gray-500">--</span>
+                  )}
+                </div>
+              </td>
+              <td className="px-4 py-3">
+                {task.isRecurring && (
+                  <span className="text-[10px] px-2 py-1 rounded font-medium text-purple-700 dark:text-purple-300" style={{ backgroundColor: 'color-mix(in srgb, #a855f7 20%, transparent)' }}>
+                    🔄 Repeats
+                  </span>
+                )}
+                {!task.isRecurring && <span className="text-xs text-gray-400 dark:text-gray-500">--</span>}
               </td>
               <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
                 {task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : '--'}
@@ -208,7 +267,7 @@ function TableView({
               <td className="px-4 py-3 text-right">
                 {canEditTask(task, currentUserId, projects) && (
                   <div className="flex items-center justify-end gap-1">
-                    <button onClick={() => onEdit(task)} className="p-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" title="Edit">
+                    <button onClick={() => onEdit(task)} className="p-1 text-gray-400 hover:text-[var(--primary-base)]" title="Edit">
                       <Pencil size={14} />
                     </button>
                     <button onClick={() => onDelete(task)} className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400" title="Delete">
@@ -270,7 +329,7 @@ function DraggableTaskCard({ task, onEdit, canEdit }: { task: Task; onEdit: (tas
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(task); }}
             onPointerDown={(e) => e.stopPropagation()}
-            className="text-gray-300 dark:text-gray-600 hover:text-indigo-600 dark:hover:text-indigo-400 flex-shrink-0 mt-0.5"
+            className="text-gray-300 dark:text-gray-600 hover:text-[var(--primary-base)] flex-shrink-0 mt-0.5 transition-colors"
             title="Edit"
           >
             <Pencil size={12} />
@@ -313,7 +372,7 @@ function DraggableTaskCard({ task, onEdit, canEdit }: { task: Task; onEdit: (tas
           </span>
         )}
         {task.assignee && (
-          <span className="ml-auto w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-[10px] font-medium text-indigo-700 dark:text-indigo-300">
+          <span className="ml-auto w-5 h-5 rounded-full bg-[var(--primary-light)] dark:bg-[var(--primary-dark)] flex items-center justify-center text-[10px] font-medium text-[var(--primary-base)]">
             {task.assignee.name.charAt(0).toUpperCase()}
           </span>
         )}
@@ -324,7 +383,7 @@ function DraggableTaskCard({ task, onEdit, canEdit }: { task: Task; onEdit: (tas
 
 function TaskCardOverlay({ task }: { task: Task }) {
   return (
-    <div className="bg-white dark:bg-gray-800 p-3 rounded-md shadow-xl border border-indigo-300 dark:border-indigo-600 opacity-90 w-[260px]">
+    <div className="bg-white dark:bg-gray-800 p-3 rounded-md shadow-xl border-2 opacity-90 w-[260px]" style={{ borderColor: 'var(--primary-base)' }}>
       <p className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">{task.title}</p>
       <div className="flex items-center gap-2 mt-2">
         <span className={clsx('text-[10px] px-1.5 py-0.5 rounded font-medium', PRIORITY_COLORS[task.priority])}>
@@ -419,6 +478,7 @@ function KanbanView({
 export default function TasksPage() {
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((s) => s.user);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [viewMode, setViewMode] = useState<'table' | 'kanban' | 'calendar'>(
     () => (localStorage.getItem('task-view-mode') as 'table' | 'kanban' | 'calendar') || 'table'
@@ -432,6 +492,22 @@ export default function TasksPage() {
   const [taskForRecurrence, setTaskForRecurrence] = useState<Task | null>(null);
   const [exporting, setExporting] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+
+  // Read URL parameters on mount
+  useEffect(() => {
+    const assigneeId = searchParams.get('assignee');
+    const creatorId = searchParams.get('creator');
+    const showBlocked = searchParams.get('blocked');
+    const showBlocking = searchParams.get('blocking');
+
+    const newFilters: TaskFilters = {};
+    if (assigneeId) newFilters.assigneeId = assigneeId;
+    if (creatorId) newFilters.creatorId = creatorId;
+    if (showBlocked === 'true') newFilters.hasBlockers = true;
+    if (showBlocking === 'true') newFilters.isBlocking = true;
+
+    setFilters(newFilters);
+  }, [searchParams]);
 
   useEffect(() => {
     localStorage.setItem('task-view-mode', viewMode);
@@ -613,10 +689,56 @@ export default function TasksPage() {
     );
   }
 
+  const clearFilter = (key: keyof TaskFilters) => {
+    const newFilters = { ...filters };
+    delete newFilters[key];
+    setFilters(newFilters);
+
+    // Update URL params
+    const newParams = new URLSearchParams(searchParams);
+    if (key === 'assigneeId') newParams.delete('assignee');
+    if (key === 'creatorId') newParams.delete('creator');
+    if (key === 'hasBlockers') newParams.delete('blocked');
+    if (key === 'isBlocking') newParams.delete('blocking');
+    setSearchParams(newParams);
+  };
+
+  const getUserNameById = (userId: string): string => {
+    // Find user name from tasks
+    const task = tasks.find(t => t.assignee?.id === userId || t.creator?.id === userId);
+    return task?.assignee?.id === userId ? task.assignee.name : (task?.creator?.id === userId ? task.creator.name : 'Unknown');
+  };
+
+  const toggleDependencyFilter = (filterType: 'blocked' | 'blocking') => {
+    const newFilters = { ...filters };
+    const newParams = new URLSearchParams(searchParams);
+
+    if (filterType === 'blocked') {
+      if (newFilters.hasBlockers) {
+        delete newFilters.hasBlockers;
+        newParams.delete('blocked');
+      } else {
+        newFilters.hasBlockers = true;
+        newParams.set('blocked', 'true');
+      }
+    } else {
+      if (newFilters.isBlocking) {
+        delete newFilters.isBlocking;
+        newParams.delete('blocking');
+      } else {
+        newFilters.isBlocking = true;
+        newParams.set('blocking', 'true');
+      }
+    }
+
+    setFilters(newFilters);
+    setSearchParams(newParams);
+  };
+
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tasks</h1>
         <div className="flex items-center gap-3">
           {/* View Toggle */}
@@ -739,15 +861,76 @@ export default function TasksPage() {
             <option value="URGENT">Urgent</option>
           </select>
         </div>
-        {(filters.projectId || filters.status || filters.priority) && (
+
+        {/* Dependency Filters */}
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Dependencies</label>
+          <div className="flex gap-2">
+            <button
+              onClick={() => toggleDependencyFilter('blocked')}
+              className={clsx(
+                'px-3 py-1.5 text-sm rounded-md border transition-colors',
+                filters.hasBlockers
+                  ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              )}
+            >
+              ⚠️ Blocked
+            </button>
+            <button
+              onClick={() => toggleDependencyFilter('blocking')}
+              className={clsx(
+                'px-3 py-1.5 text-sm rounded-md border transition-colors',
+                filters.isBlocking
+                  ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              )}
+            >
+              🔗 Blocking
+            </button>
+          </div>
+        </div>
+
+        {(filters.projectId || filters.status || filters.priority || filters.hasBlockers || filters.isBlocking) && (
           <button
-            onClick={() => setFilters({})}
+            onClick={() => {
+              setFilters({});
+              setSearchParams(new URLSearchParams());
+            }}
             className="px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md border border-red-200 dark:border-red-800 transition-colors"
           >
             Clear All Filters
           </button>
         )}
       </div>
+
+      {/* Active Filter Badges */}
+      {(filters.assigneeId || filters.creatorId) && (
+        <div className="flex gap-2 mb-4 flex-wrap">
+          {filters.assigneeId && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--primary-light)] dark:bg-[var(--primary-dark)] text-[var(--primary-base)] rounded-md text-sm">
+              <span>Assignee: {getUserNameById(filters.assigneeId)}</span>
+              <button
+                onClick={() => clearFilter('assigneeId')}
+                className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+          {filters.creatorId && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md text-sm">
+              <span>Creator: {getUserNameById(filters.creatorId)}</span>
+              <button
+                onClick={() => clearFilter('creatorId')}
+                className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Quick Add Bar */}
       <AnimatePresence>
@@ -767,7 +950,7 @@ export default function TasksPage() {
       </AnimatePresence>
 
       {/* Views */}
-      {tasks.length === 0 && !filters.projectId && !filters.status && !filters.priority ? (
+      {tasks.length === 0 && !filters.projectId && !filters.status && !filters.priority && !filters.assigneeId && !filters.creatorId && !filters.hasBlockers && !filters.isBlocking ? (
         <EmptyTasksState onCreateTask={() => { setEditingTask(null); setModalOpen(true); }} />
       ) : viewMode === 'table' ? (
         <TableView
@@ -777,6 +960,18 @@ export default function TasksPage() {
           onStatusChange={handleStatusChange}
           onEdit={handleEdit}
           onDelete={(task) => setDeletingTask(task)}
+          onFilterByAssignee={(userId) => {
+            setFilters((f) => ({ ...f, assigneeId: userId }));
+            const newParams = new URLSearchParams(searchParams);
+            newParams.set('assignee', userId);
+            setSearchParams(newParams);
+          }}
+          onFilterByCreator={(userId) => {
+            setFilters((f) => ({ ...f, creatorId: userId }));
+            const newParams = new URLSearchParams(searchParams);
+            newParams.set('creator', userId);
+            setSearchParams(newParams);
+          }}
         />
       ) : viewMode === 'kanban' ? (
         <KanbanView

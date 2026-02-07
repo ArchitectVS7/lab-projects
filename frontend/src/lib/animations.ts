@@ -27,13 +27,15 @@ export const staggerContainer = {
 };
 
 export const hoverScale = {
-  whileHover: { scale: 1.02 },
-  whileTap: { scale: 0.98 },
+  whileHover: { scale: 1.08 },
+  whileTap: { scale: 0.92 },
+  transition: { duration: 0.2 }
 };
 
 export const buttonHover = {
-  whileHover: { scale: 1.05 },
-  whileTap: { scale: 0.95 },
+  whileHover: { scale: 1.12 },
+  whileTap: { scale: 0.92 },
+  transition: { type: 'spring', stiffness: 400, damping: 17 }
 };
 
 // Page transition variants
@@ -59,8 +61,8 @@ export const modalContent = {
 
 // Task card hover effect
 export const taskCardHover = {
-  whileHover: { y: -2, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' },
-  transition: { duration: 0.2 },
+  whileHover: { y: -6, boxShadow: '0 20px 25px rgba(0, 0, 0, 0.15)' },
+  transition: { duration: 0.3, type: 'spring' as const, stiffness: 300 }
 };
 
 // Drag indicator pulse
@@ -71,6 +73,22 @@ export const dragIndicator = {
 // List item stagger
 export const listItemVariant = {
   initial: { opacity: 0, x: -10 },
-  animate: { opacity: 1, x: 0 },
+  animate: { opacity: 1, x: 0, transition: { duration: 0.4 } },
   exit: { opacity: 0, x: 10 },
+};
+
+// Celebratory animation
+export const celebration = {
+  hidden: { scale: 0.8, opacity: 0 },
+  visible: {
+    scale: 1,
+    opacity: 1,
+    transition: { duration: 0.6, type: 'spring', stiffness: 200 }
+  }
+};
+
+// Insight fade in animation (staggered)
+export const insightFadeIn = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeInOutQuart' } }
 };
