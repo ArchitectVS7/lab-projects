@@ -1,6 +1,9 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useAuthStore } from '../store/auth';
 import { useLayoutStore } from '../store/layout';
+import { useDensityStore } from '../store/density';
+import { pageTransition } from '../lib/animations';
 
 import { authApi } from '../lib/api';
 import { LayoutDashboard, CheckSquare, FolderKanban, LogOut, User, Crosshair } from 'lucide-react';
@@ -23,6 +26,7 @@ export default function Layout() {
   const location = useLocation();
   const { user, clearUser } = useAuthStore();
   const { layout } = useLayoutStore();
+  const { density } = useDensityStore();
   useCommandPalette();
 
   const handleLogout = async () => {
@@ -39,7 +43,7 @@ export default function Layout() {
   const mainPadding = layout === 'compact' ? 'p-3' : layout === 'spacious' ? 'p-10' : 'p-6';
 
   return (
-    <div className={clsx("flex h-screen bg-gray-50 dark:bg-gray-900", layout === 'compact' && 'text-sm')}>
+    <div className={clsx("flex h-screen bg-gray-50 dark:bg-gray-900", layout === 'compact' && 'text-sm', `density-${density}`)}>
       <aside className={clsx(
         "bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300",
         sidebarWidth
@@ -51,19 +55,25 @@ export default function Layout() {
             <h1 className="text-xl font-bold text-indigo-600 dark:text-indigo-400">TaskApp</h1>
           )}
         </div>
-        <nav className="flex-1 p-2 space-y-1">
+        <nav className="flex-1 p-2" style={{ gap: `var(--density-gap)` }}>
           {navItems.map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
               to={to}
               title={label}
               className={clsx(
-                'flex items-center gap-3 px-3 py-2 rounded-md font-medium transition-colors',
+                'flex items-center gap-3 rounded-md font-medium transition-colors',
                 isActive(to)
                   ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700',
                 layout === 'minimal' ? 'justify-center' : ''
               )}
+              style={{
+                padding: `var(--density-padding-sm) var(--density-padding-md)`,
+                fontSize: `var(--density-font-sm)`,
+                minHeight: `var(--density-row-height)`,
+                marginBottom: `var(--density-padding-xs)`,
+              }}
             >
               <Icon size={layout === 'compact' ? 16 : 18} />
               {layout !== 'minimal' && label}
@@ -111,8 +121,23 @@ export default function Layout() {
           </div>
         </div>
       </aside>
-      <main className={clsx("flex-1 overflow-auto", mainPadding)}>
-        <Outlet />
+      <main
+        className={clsx("flex-1 overflow-auto", mainPadding)}
+        style={{
+          padding: `var(--density-padding-lg)`,
+          fontSize: `var(--density-font-base)`,
+          gap: `var(--density-gap)`,
+        }}
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            {...pageTransition}
+            className="h-full"
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
       </main>
       <ToastContainer />
       <CommandPalette />

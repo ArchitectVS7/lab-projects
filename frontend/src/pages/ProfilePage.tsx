@@ -6,6 +6,7 @@ import { useToastStore } from '../components/Toast';
 import { User, Lock, Palette } from 'lucide-react';
 import ThemePicker from '../components/ThemePicker';
 import LayoutSwitcher from '../components/LayoutSwitcher';
+import DensityPicker from '../components/DensityPicker';
 
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
@@ -74,8 +75,12 @@ export default function ProfilePage() {
             <ThemePicker />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Interface Density</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Interface Layout</label>
             <LayoutSwitcher />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Display Density</label>
+            <DensityPicker />
           </div>
         </div>
       </div>

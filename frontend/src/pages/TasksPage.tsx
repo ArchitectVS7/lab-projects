@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCorners, useDroppable, useDraggable } from '@dnd-kit/core';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { tasksApi, projectsApi, recurringTasksApi, exportApi } from '../lib/api';
 import { useAuthStore } from '../store/auth';
 import { Plus, Table, Columns3, X, Calendar, Pencil, Trash2, Repeat, Download } from 'lucide-react';
@@ -11,7 +11,7 @@ import type { Task, Project, TaskStatus, TaskPriority } from '../types';
 import type { TaskFilters } from '../lib/api';
 import TaskCompletionCelebration from '../components/TaskCompletionCelebration';
 import RecurrencePickerModal, { RecurrenceConfig } from '../components/RecurrencePickerModal';
-import { slideUp } from '../lib/animations';
+import { modalOverlay, modalContent, taskCardHover } from '../lib/animations';
 
 // --- Constants ---
 
@@ -135,13 +135,15 @@ function TaskModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
+    <motion.div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      onClick={onClose}
+      {...modalOverlay}
+    >
       <motion.div
         className="glass-card dark:glass-card-dark rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
+        {...modalContent}
       >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{task ? 'Edit Task' : 'New Task'}</h2>
@@ -226,7 +228,7 @@ function TaskModal({
           </div>
         </form>
       </motion.div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -244,13 +246,15 @@ function DeleteConfirmDialog({
   isDeleting: boolean;
 }) {
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
+    <motion.div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      onClick={onClose}
+      {...modalOverlay}
+    >
       <motion.div
         className="glass-card dark:glass-card-dark rounded-lg shadow-xl w-full max-w-sm mx-4 p-6"
         onClick={(e) => e.stopPropagation()}
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
+        {...modalContent}
       >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Delete Task</h3>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
@@ -264,7 +268,7 @@ function DeleteConfirmDialog({
           </button>
         </div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -305,7 +309,13 @@ function TableView({
         </thead>
         <tbody>
           {tasks.map((task) => (
-            <tr key={task.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+            <motion.tr
+              key={task.id}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2 }}
+              className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2">
                   <div className="font-medium text-gray-900 dark:text-gray-100">{task.title}</div>
@@ -368,7 +378,7 @@ function TableView({
                   </div>
                 )}
               </td>
-            </tr>
+            </motion.tr>
           ))}
         </tbody>
       </table>
@@ -404,11 +414,12 @@ function DraggableTaskCard({ task, onEdit, canEdit }: { task: Task; onEdit: (tas
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
 
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
       style={style}
       {...listeners}
       {...attributes}
+      {...taskCardHover}
       className={clsx(
         'bg-white dark:bg-gray-800 p-3 rounded-md shadow-sm border border-gray-200 dark:border-gray-700 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow',
         isDragging && 'opacity-50 shadow-lg'
@@ -456,7 +467,7 @@ function DraggableTaskCard({ task, onEdit, canEdit }: { task: Task; onEdit: (tas
           </span>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -867,26 +878,30 @@ export default function TasksPage() {
       )}
 
       {/* Task Modal */}
-      {modalOpen && (
-        <TaskModal
-          task={editingTask}
-          projects={projects}
-          currentUserId={currentUser!.id}
-          onClose={() => { setModalOpen(false); setEditingTask(null); }}
-          onSubmit={handleSave}
-          isSubmitting={createMutation.isPending || updateMutation.isPending}
-        />
-      )}
+      <AnimatePresence>
+        {modalOpen && (
+          <TaskModal
+            task={editingTask}
+            projects={projects}
+            currentUserId={currentUser!.id}
+            onClose={() => { setModalOpen(false); setEditingTask(null); }}
+            onSubmit={handleSave}
+            isSubmitting={createMutation.isPending || updateMutation.isPending}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Delete Confirmation */}
-      {deletingTask && (
-        <DeleteConfirmDialog
-          taskTitle={deletingTask.title}
-          onClose={() => setDeletingTask(null)}
-          onConfirm={handleDelete}
-          isDeleting={deleteMutation.isPending}
-        />
-      )}
+      <AnimatePresence>
+        {deletingTask && (
+          <DeleteConfirmDialog
+            taskTitle={deletingTask.title}
+            onClose={() => setDeletingTask(null)}
+            onConfirm={handleDelete}
+            isDeleting={deleteMutation.isPending}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Recurrence Picker Modal */}
       {recurrenceModalOpen && taskForRecurrence && (
