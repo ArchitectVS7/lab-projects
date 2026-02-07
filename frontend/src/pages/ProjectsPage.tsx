@@ -5,6 +5,7 @@ import { projectsApi } from '../lib/api';
 import { useAuthStore } from '../store/auth';
 import { Plus, Trash2, Users, CheckSquare, X } from 'lucide-react';
 import clsx from 'clsx';
+import { ProjectsPageSkeleton } from '../components/Skeletons';
 import type { Project } from '../types';
 
 const PRESET_COLORS = [
@@ -230,11 +231,7 @@ export default function ProjectsPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400" />
-      </div>
-    );
+    return <ProjectsPageSkeleton />;
   }
 
   if (isError) {

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { tasksApi, projectsApi } from '../lib/api';
 import { CheckCircle2, Clock, AlertTriangle, ListTodo } from 'lucide-react';
 import InsightsWidget from '../components/InsightsWidget';
+import { DashboardSkeleton } from '../components/Skeletons';
 import clsx from 'clsx';
 import type { Task, Project, TaskStatus, TaskPriority } from '../types';
 
@@ -101,11 +102,7 @@ export default function DashboardPage() {
   const recentProjects = [...projects].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400" />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (

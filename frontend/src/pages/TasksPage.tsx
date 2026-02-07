@@ -12,6 +12,7 @@ import type { TaskFilters } from '../lib/api';
 import TaskCompletionCelebration from '../components/TaskCompletionCelebration';
 import RecurrencePickerModal, { RecurrenceConfig } from '../components/RecurrencePickerModal';
 import { modalOverlay, modalContent, taskCardHover } from '../lib/animations';
+import { TasksTableSkeleton } from '../components/Skeletons';
 
 // --- Constants ---
 
@@ -727,11 +728,7 @@ export default function TasksPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400" />
-      </div>
-    );
+    return <TasksTableSkeleton />;
   }
 
   if (isError) {
