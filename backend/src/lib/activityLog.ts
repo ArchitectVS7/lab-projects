@@ -73,6 +73,36 @@ export async function logTaskDeleted(taskId: string, userId: string, taskTitle: 
   }
 }
 
+export async function logDependencyAdded(taskId: string, userId: string, dependsOnTitle: string) {
+  try {
+    await prisma.activityLog.create({
+      data: {
+        action: 'DEPENDENCY_ADDED',
+        taskId,
+        userId,
+        newValue: dependsOnTitle,
+      },
+    });
+  } catch (error) {
+    console.error('Failed to log dependency added:', error);
+  }
+}
+
+export async function logDependencyRemoved(taskId: string, userId: string, dependsOnTitle: string) {
+  try {
+    await prisma.activityLog.create({
+      data: {
+        action: 'DEPENDENCY_REMOVED',
+        taskId,
+        userId,
+        oldValue: dependsOnTitle,
+      },
+    });
+  } catch (error) {
+    console.error('Failed to log dependency removed:', error);
+  }
+}
+
 export async function logCommentAction(
   action: 'COMMENT_ADDED' | 'COMMENT_EDITED' | 'COMMENT_DELETED',
   taskId: string,

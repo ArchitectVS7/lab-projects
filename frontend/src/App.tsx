@@ -16,6 +16,8 @@ import ProfilePage from './pages/ProfilePage';
 import CalendarPage from './pages/CalendarPage';
 import FocusPage from './pages/FocusPage';
 import CreatorDashboardPage from './pages/CreatorDashboardPage';
+import ApiKeysPage from './pages/ApiKeysPage';
+import WebhooksPage from './pages/WebhooksPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user);
@@ -71,6 +73,8 @@ export default function App() {
           <Route path="projects/:id" element={<ProjectDetailPage />} />
           <Route path="calendar" element={<CalendarPage />} />
           <Route path="creator-dashboard" element={<CreatorDashboardPage />} />
+          <Route path="api-keys" element={<ApiKeysPage />} />
+          <Route path="webhooks" element={<WebhooksPage />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
       </Routes>

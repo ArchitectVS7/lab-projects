@@ -8,6 +8,7 @@ import {
   authenticate,
   AuthRequest,
   generateToken,
+  generateApiKey,
   setAuthCookie,
   clearAuthCookie,
 } from '../middleware/auth.js';
@@ -196,6 +197,84 @@ router.put('/password', authenticate, async (req: AuthRequest, res: Response, ne
     });
 
     res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// --- API Key Management ---
+
+const createApiKeySchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(100, 'Name must be 100 characters or less'),
+});
+
+// POST /api/auth/api-keys - Create API key
+router.post('/api-keys', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const data = createApiKeySchema.parse(req.body);
+    const { plainKey, keyHash } = await generateApiKey(req.userId!);
+
+    const apiKey = await prisma.apiKey.create({
+      data: {
+        userId: req.userId!,
+        name: data.name,
+        keyHash,
+      },
+      select: {
+        id: true,
+        name: true,
+        createdAt: true,
+        lastUsedAt: true,
+      },
+    });
+
+    // Return the plaintext key only on creation
+    res.status(201).json({ ...apiKey, key: plainKey });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/auth/api-keys - List API keys
+router.get('/api-keys', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const keys = await prisma.apiKey.findMany({
+      where: { userId: req.userId },
+      select: {
+        id: true,
+        name: true,
+        createdAt: true,
+        lastUsedAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json(keys);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /api/auth/api-keys/:id - Revoke API key
+router.delete('/api-keys/:id', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const key = await prisma.apiKey.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!key) {
+      throw new AppError('API key not found', 404);
+    }
+
+    if (key.userId !== req.userId) {
+      throw new AppError('You can only revoke your own API keys', 403);
+    }
+
+    await prisma.apiKey.delete({
+      where: { id: req.params.id },
+    });
+
+    res.status(204).send();
   } catch (error) {
     next(error);
   }

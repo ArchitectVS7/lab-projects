@@ -110,7 +110,7 @@ export interface Comment {
 
 // --- Activity Log ---
 
-export type ActivityAction = 'CREATED' | 'UPDATED' | 'DELETED' | 'COMMENT_ADDED' | 'COMMENT_EDITED' | 'COMMENT_DELETED';
+export type ActivityAction = 'CREATED' | 'UPDATED' | 'DELETED' | 'COMMENT_ADDED' | 'COMMENT_EDITED' | 'COMMENT_DELETED' | 'DEPENDENCY_ADDED' | 'DEPENDENCY_REMOVED';
 
 export interface ActivityLog {
   id: string;
@@ -197,6 +197,55 @@ export interface CreatorMetricsData {
   };
   creators: CreatorMetric[];
   bottlenecks: CreatorBottleneck[];
+}
+
+// --- Task Dependency ---
+
+export interface TaskDependency {
+  id: string;
+  task: Pick<Task, 'id' | 'title' | 'status' | 'priority' | 'dueDate'>;
+  createdAt: string;
+}
+
+export interface DependencyList {
+  dependsOn: TaskDependency[];
+  blocks: TaskDependency[];
+}
+
+export interface CriticalPath {
+  path: Task[];
+  length: number;
+}
+
+// --- API Key ---
+
+export interface ApiKey {
+  id: string;
+  name: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  key?: string; // Only present on creation
+}
+
+// --- Webhook ---
+
+export interface WebhookConfig {
+  id: string;
+  url: string;
+  events: string[];
+  active: boolean;
+  failureCount: number;
+  createdAt: string;
+  secret?: string; // Only present on creation
+}
+
+export interface WebhookLog {
+  id: string;
+  webhookId: string;
+  event: string;
+  statusCode: number | null;
+  error: string | null;
+  createdAt: string;
 }
 
 // --- Attachment ---

@@ -6,6 +6,7 @@ import TaskTimePanel from './TaskTimePanel';
 import CommentList from './CommentList';
 import ActivityTimeline from './ActivityTimeline';
 import { useTaskSocket } from '../hooks/useTaskSocket';
+import DependencyPicker from './DependencyPicker';
 
 export interface TaskFormData {
   title: string;
@@ -212,6 +213,7 @@ export default function TaskDetailModal({
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm"
               />
             </div>
+            {task && <DependencyPicker task={task} projectId={task.projectId} />}
             {task && <TaskTimePanel taskId={task.id} />}
             <div className="flex justify-end gap-2 pt-2">
               <button

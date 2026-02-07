@@ -3,6 +3,7 @@ import { z } from 'zod';
 import prisma from '../lib/prisma.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
+import { dispatchWebhooks } from '../lib/webhookDispatcher.js';
 
 const router = Router();
 router.use(authenticate);
@@ -173,6 +174,8 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
       include: projectInclude,
     });
 
+    await dispatchWebhooks('project.created', project, req.userId!);
+
     res.status(201).json(project);
   } catch (error) {
     next(error);
@@ -199,6 +202,8 @@ router.put('/:id', async (req: AuthRequest, res: Response, next: NextFunction) =
       },
       include: projectInclude,
     });
+
+    await dispatchWebhooks('project.updated', project, req.userId!);
 
     res.json(project);
   } catch (error) {

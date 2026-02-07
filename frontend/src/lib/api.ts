@@ -1,5 +1,5 @@
 import { useAuthStore } from '../store/auth';
-import type { User, Task, Project, ProjectMember, TaskStatus, TaskPriority, RecurringTask, RecurrenceFrequency, TimeEntry, Comment, ActivityLog, Tag, TaskTag, CustomFieldDefinition, CustomFieldType, CustomFieldValue, Attachment, CreatorMetricsData } from '../types';
+import type { User, Task, Project, ProjectMember, TaskStatus, TaskPriority, RecurringTask, RecurrenceFrequency, TimeEntry, Comment, ActivityLog, Tag, TaskTag, CustomFieldDefinition, CustomFieldType, CustomFieldValue, Attachment, CreatorMetricsData, DependencyList, CriticalPath, ApiKey, WebhookConfig, WebhookLog } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
@@ -525,4 +525,64 @@ export const attachmentsApi = {
 
   delete: (id: string) =>
     request<void>(`/api/attachments/${id}`, { method: 'DELETE' }),
+};
+
+// --- Dependencies API ---
+
+export const dependenciesApi = {
+  add: (taskId: string, dependsOnId: string) =>
+    request<any>(`/api/tasks/${taskId}/dependencies`, {
+      method: 'POST',
+      body: JSON.stringify({ dependsOnId }),
+    }),
+
+  list: (taskId: string) =>
+    request<DependencyList>(`/api/tasks/${taskId}/dependencies`),
+
+  remove: (taskId: string, depId: string) =>
+    request<void>(`/api/tasks/${taskId}/dependencies/${depId}`, { method: 'DELETE' }),
+
+  getCriticalPath: (projectId: string) =>
+    request<CriticalPath>(`/api/projects/${projectId}/critical-path`),
+};
+
+// --- API Keys API ---
+
+export const apiKeysApi = {
+  create: (data: { name: string }) =>
+    request<ApiKey>('/api/auth/api-keys', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  list: () =>
+    request<ApiKey[]>('/api/auth/api-keys'),
+
+  revoke: (id: string) =>
+    request<void>(`/api/auth/api-keys/${id}`, { method: 'DELETE' }),
+};
+
+// --- Webhooks API ---
+
+export const webhooksApi = {
+  create: (data: { url: string; events: string[] }) =>
+    request<WebhookConfig>('/api/webhooks', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  list: () =>
+    request<WebhookConfig[]>('/api/webhooks'),
+
+  update: (id: string, data: { url?: string; events?: string[]; active?: boolean }) =>
+    request<WebhookConfig>(`/api/webhooks/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    request<void>(`/api/webhooks/${id}`, { method: 'DELETE' }),
+
+  getLogs: (id: string) =>
+    request<WebhookLog[]>(`/api/webhooks/${id}/logs`),
 };

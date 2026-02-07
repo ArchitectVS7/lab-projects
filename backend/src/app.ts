@@ -18,6 +18,9 @@ import exportRoutes from './routes/export.js';
 import tagRoutes from './routes/tags.js';
 import customFieldRoutes from './routes/custom-fields.js';
 import attachmentRoutes from './routes/attachments.js';
+import dependencyRoutes from './routes/dependencies.js';
+import webhookRoutes from './routes/webhooks.js';
+import { apiKeyRateLimiter } from './middleware/apiKeyRateLimiter.js';
 
 dotenv.config();
 
@@ -52,6 +55,7 @@ console.log('CORS allowed origins:', allowedOrigins);
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(cookieParser());
+app.use(apiKeyRateLimiter);
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -66,6 +70,8 @@ app.use('/api/export', exportRoutes);
 app.use('/api/tags', tagRoutes);
 app.use('/api/custom-fields', customFieldRoutes);
 app.use('/api/attachments', attachmentRoutes);
+app.use('/api', dependencyRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 // Health check -- verifies database connectivity
 app.get('/health', async (_req, res) => {

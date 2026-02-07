@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
-import { Plus, Pencil, Trash2, MessageSquare, History, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, MessageSquare, History, Loader2, Link2 } from 'lucide-react';
 import { activityLogsApi } from '../lib/api';
 import type { ActivityLog, ActivityAction } from '../types';
 
@@ -12,6 +12,8 @@ const ACTION_CONFIG: Record<ActivityAction, { icon: typeof Plus; color: string; 
   COMMENT_ADDED: { icon: MessageSquare, color: 'text-indigo-500', label: 'added a comment' },
   COMMENT_EDITED: { icon: MessageSquare, color: 'text-yellow-500', label: 'edited a comment' },
   COMMENT_DELETED: { icon: MessageSquare, color: 'text-red-400', label: 'deleted a comment' },
+  DEPENDENCY_ADDED: { icon: Link2, color: 'text-purple-500', label: 'added a dependency' },
+  DEPENDENCY_REMOVED: { icon: Link2, color: 'text-orange-500', label: 'removed a dependency' },
 };
 
 const FIELD_LABELS: Record<string, string> = {

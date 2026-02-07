@@ -5,6 +5,7 @@ import { AppError } from '../middleware/errorHandler.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
 import { logTaskCreated, logTaskChanges, logTaskDeleted } from '../lib/activityLog.js';
 import { getIO } from '../lib/socket.js';
+import { dispatchWebhooks } from '../lib/webhookDispatcher.js';
 
 const router = Router();
 router.use(authenticate);
@@ -379,6 +380,7 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
     });
 
     await logTaskCreated(task.id, req.userId!);
+    await dispatchWebhooks('task.created', task, req.userId!);
 
     res.status(201).json(task);
   } catch (error) {
@@ -459,6 +461,11 @@ router.put('/:id', async (req: AuthRequest, res: Response, next: NextFunction) =
       io.to(`task:${req.params.id}`).emit('activity:new', { taskId: req.params.id });
     }
 
+    await dispatchWebhooks('task.updated', updatedTask, req.userId!);
+    if (updatedTask.status === 'DONE' && oldTask.status !== 'DONE') {
+      await dispatchWebhooks('task.completed', updatedTask, req.userId!);
+    }
+
     res.json(updatedTask);
   } catch (error) {
     next(error);
@@ -492,6 +499,8 @@ router.delete('/:id', async (req: AuthRequest, res: Response, next: NextFunction
     await prisma.task.delete({
       where: { id: req.params.id },
     });
+
+    await dispatchWebhooks('task.deleted', { id: req.params.id, title: task.title }, req.userId!);
 
     res.status(204).send();
   } catch (error) {

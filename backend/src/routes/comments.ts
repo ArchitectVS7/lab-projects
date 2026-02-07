@@ -6,6 +6,7 @@ import { authenticate, AuthRequest } from '../middleware/auth.js';
 import { logCommentAction } from '../lib/activityLog.js';
 import { parseMentions, resolveMentions, notifyMentions } from '../lib/mentions.js';
 import { getIO } from '../lib/socket.js';
+import { dispatchWebhooks } from '../lib/webhookDispatcher.js';
 
 const router = Router();
 
@@ -163,6 +164,8 @@ router.post('/tasks/:taskId/comments', authenticate, async (req: AuthRequest, re
       io.to(`task:${req.params.taskId}`).emit('comment:new', comment);
       io.to(`task:${req.params.taskId}`).emit('activity:new', { taskId: req.params.taskId });
     }
+
+    await dispatchWebhooks('comment.added', { comment, taskId: req.params.taskId }, req.userId!);
 
     res.status(201).json(comment);
   } catch (error) {

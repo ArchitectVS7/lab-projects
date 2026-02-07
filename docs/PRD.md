@@ -1,4 +1,4 @@
-# Product Requirements Document: Unified Task Management Platform
+# Product Requirements Document (PRD): Unified Task Management Platform
 
 ## Status: Living Document (Updated with Sprint 2-10 Features)
 ## Date: 2026-02-06 (Last Updated)
@@ -47,7 +47,81 @@ TaskMan differentiates itself as **"The task manager for developers"** with uniq
 - **Public API + Webhooks**: Full automation and integration capabilities
 - **AI-Powered Insights**: Productivity pattern analysis and recommendations
 
-The result is a single deployable system with enterprise-grade auth, efficient client-side state, flexible task visualization, full team collaboration, and developer-first tooling -- deployed to Railway as the target platform.
+
+---
+
+## 1.1 Strategic Positioning
+
+### Product Identity
+
+TaskMan positions itself as **"The task manager for developers"** with five core principles:
+
+1. **Fast, Focused, No-Nonsense**
+   - Anti-bloatware: No feature creep like Notion or Monday.com
+   - Keyboard-first workflows for speed
+   - Instant loading with aggressive caching strategies
+   - Minimal clicks to complete common actions
+
+2. **Developer-First Tooling**
+   - Full REST API with API key authentication
+   - Webhooks for automation and integrations
+   - CLI tool for terminal-native task management
+   - TypeScript end-to-end (frontend + backend)
+   - Self-hostable via Docker
+
+3. **Privacy-First, Self-Hostable**
+   - Data ownership: users control their data
+   - Docker deployment option for on-premise hosting
+   - No third-party analytics tracking
+   - Open-source roadmap consideration
+
+4. **Beautiful AND Functional**
+   - Design and engineering balance (not design-first or engineering-only)
+   - Glassmorphism UI with micro-interactions
+   - Smooth animations without sacrificing performance
+   - Accessibility baked in (keyboard navigation, ARIA labels)
+
+5. **Unique Accountability Features**
+   - Creator analytics (no competitor has this)
+   - Burnout prevention dashboard
+   - Smart dependency management with critical path
+   - AI-powered productivity insights
+
+### Unique Selling Points
+
+| Feature | Competitive Advantage |
+|---------|----------------------|
+| **Creator Accountability Dashboard** | Identify bottlenecks and delegation imbalances. Unique to TaskMan. Positioned as "anti-busywork" feature. |
+| **Smart Task Dependencies** | Critical path visualization for project planning. Auto-adjust due dates when blockers shift. |
+| **CLI Tool** | Terminal-native management for developers. Quick capture from command line. |
+| **Public API + Webhooks** | Full automation capabilities. Position as "task manager for developers". |
+| **AI-Powered Insights** | Productivity pattern analysis ("You're most productive on Tuesdays"). Task duration predictions. |
+| **Focus Mode** | Deep work built-in. Distraction-free full-screen interface. |
+| **Burnout Prevention** | Warn when team members are over-assigned. Workload balancing suggestions. Industry-first feature. |
+
+### Competitive Differentiation
+
+**vs. Todoist**: More developer-friendly (API, CLI), better team collaboration (real-time updates, comments)
+
+**vs. TickTick**: Stronger project management (dependencies, critical path), more customizable UI
+
+**vs. Notion**: Faster, more focused (no bloat), better task-specific features (recurring tasks, time tracking)
+
+**vs. Asana/Monday.com**: Simpler to use, self-hostable, privacy-first, lower cost of ownership
+
+**vs. Things 3**: Cross-platform (not Mac-only), team collaboration, public API
+
+### Target Audience
+
+- **Primary**: Software developers, engineering teams, technical project managers
+- **Secondary**: Knowledge workers who value keyboard shortcuts and automation
+- **Tertiary**: Privacy-conscious users seeking self-hosted alternatives to SaaS tools
+
+### Marketing Messaging
+
+- **Headline**: "The task manager built for developers who hate context-switching"
+- **Subhead**: "CLI, API, webhooks, and a beautiful UI. Self-host or use our cloud."
+- **CTA**: "Start for free. No credit card required. Deploy in 60 seconds."
 
 ---
 
@@ -669,81 +743,125 @@ model Task {
 
 ### 2.11 User Preferences
 
-**Status**: 🔄 Planned (Sprint 2)
+**Status**: ✅ Implemented (Sprint 2)
 
 #### 2.11.1 Color Themes
 - **Endpoint**: `PUT /api/auth/profile` (extend existing)
-- **Supported themes**: Indigo (default), Purple, Rose, Emerald, Amber
-- **Storage**: User model `theme` field
-- **Frontend**: Theme picker in settings, CSS variables for theming
+- **Supported Themes**:
+  - **Indigo** (default): Primary blue-indigo (#6366f1)
+  - **Purple**: Primary purple (#a855f7)
+  - **Rose**: Primary pink-rose (#f43f5e)
+  - **Emerald**: Primary green-emerald (#10b981)
+  - **Amber**: Primary orange-amber (#f59e0b)
+- **Implementation**:
+  - CSS Variables: Each theme defines `--color-primary`, `--color-primary-dark`, `--color-primary-light`
+  - Theme File: `frontend/src/lib/themes.ts` with theme definitions
+  - Applied globally via CSS variable overrides on `:root`
+- **Storage**: User model `theme` field (backend), localStorage (frontend fallback)
+- **Frontend**: Theme picker dropdown in Profile settings page
+- **Customization Power**: 5 themes × 5 layouts = 25 UI combinations
 - **Validation (Zod)**:
   ```typescript
   theme: z.enum(['indigo', 'purple', 'rose', 'emerald', 'amber']).optional()
   ```
 
 #### 2.11.2 Layout Preferences
-- **Storage**: Frontend only (localStorage via Zustand)
-- **Supported layouts**:
-  - **Compact**: Minimal padding, dense task list
-  - **Spacious**: Generous whitespace, comfortable reading
-  - **Minimal**: Collapsed sidebar, focus mode
-  - **Split**: Side-by-side task list and detail view
-  - **Dashboard-First**: Dashboard as landing page
-- **Frontend**: Layout switcher in user settings
-- **Persistence**: `layout-preferences` localStorage key
+- **Storage**: Frontend only (localStorage via Zustand store with persist middleware)
+- **Supported Layouts**:
+  1. **Compact**: Minimal padding, higher information density, more tasks visible per screen
+  2. **Spacious**: Generous whitespace, comfortable reading, reduced cognitive load
+  3. **Minimal**: Collapsed sidebar by default, focus on content, distraction-free
+  4. **Split**: Side-by-side task list and detail pane (no modal for task editing)
+  5. **Dashboard-First**: Dashboard as default landing page instead of tasks
+- **Implementation**:
+  - Zustand Store: `layout.ts` with `persist` middleware
+  - CSS Classes: Applied to root element, affects all components
+  - Layout Switcher: Dropdown in Profile settings page
+- **Persistence Key**: `layout-preferences`
+- **State**: `{ layout: 'compact' | 'spacious' | 'minimal' | 'split' | 'dashboard-first' }`
 
 #### 2.11.3 Density Settings
-- **Comfortable**: Standard padding (default)
-- **Compact**: Reduced padding, more items visible
-- **Spacious**: Increased padding, easier reading
-- **Affects**: Global spacing, font sizes, task card heights
-- **Gmail-style setting**: Single dropdown in settings
+- **Modes**:
+  - **Comfortable**: Standard padding (default), `--spacing-scale: 1.0`
+  - **Compact**: Reduced padding, `--spacing-scale: 0.75`, more items visible
+  - **Spacious**: Increased padding, `--spacing-scale: 1.25`, easier reading
+- **Implementation**:
+  - CSS Custom Properties: `--spacing-scale`, `--font-size-base`, `--row-height`
+  - Applied to document root, affects all components globally
+  - Zustand Store: `density.ts` with localStorage persistence
+- **Affects**: Global spacing, font sizes, task card heights, table row height, gap between elements
+- **UI Component**: Gmail-style `DensityPicker` dropdown in Profile settings
+- **Storage**: Frontend only (localStorage key: `density-setting`)
 
 ---
 
 ### 2.12 Quick Actions
 
-**Status**: 🔄 Planned (Sprint 3)
+**Status**: ✅ Implemented (Sprint 3)
 
 #### 2.12.1 Command Palette
-- **Keyboard shortcut**: `Cmd+K` (Mac) / `Ctrl+K` (Windows)
-- **Features**:
-  - Search tasks by title/description
-  - Navigate pages (Dashboard, Tasks, Projects, Profile)
-  - Quick-create task
-  - Recent actions history
-  - Keyboard-first navigation (arrow keys, Enter)
-- **Frontend**: Uses `cmdk` (shadcn/ui Command component)
-- **No backend changes**: Purely frontend feature
+
+##### Overview
+Keyboard-first command interface inspired by Linear, Notion, and VS Code for rapid navigation and actions.
+
+##### Keyboard Shortcut
+- **Mac**: `Cmd + K`
+- **Windows/Linux**: `Ctrl + K`
+- **Accessibility**: Focus trap when open, Escape to close
+
+##### Features
+- **Search Tasks**: Real-time fuzzy search across all user's tasks by title/description
+- **Navigate Pages**: Dashboard, Tasks, Projects, Profile, Focus Mode
+- **Quick Actions**: Create task, Create project, Open settings
+- **Recent History**: Last 5 accessed tasks/projects
+- **Keyboard Navigation**: Arrow keys, Enter to select, Tab between groups
+
+##### Visual Design
+- **Glassmorphism**: Frosted glass effect with backdrop blur
+- **Framer Motion**: Smooth scale-in animation on open (0.95 → 1.0)
+- **Command Groups**: Visual separation (Navigation | Tasks | Actions | Recent)
+- **Highlighted Selection**: Active item highlighted with primary color
+
+##### Search Behavior
+- **Fuzzy Matching**: Tolerates typos (e.g., "tsk" matches "task")
+- **Real-time Filtering**: Updates as user types with 150ms debounce
+- **Auto-focus**: Input field auto-focused on palette open
+- **Empty State**: Shows helpful message when no results found
+
+##### Implementation
+- **Component**: `CommandPalette.tsx`
+- **Hook**: `useCommandPalette.ts` (global keyboard listener)
+- **State**: Zustand store for open/close state and recent history
+- **Library**: Custom implementation (no external `cmdk` dependency)
+- **No backend changes**: Purely frontend feature using existing React Query cache
 
 #### 2.12.2 Command Groups
-- **Navigation**: Dashboard, Tasks, Projects, Profile
-- **Tasks**: Search all user's tasks, click to open
-- **Actions**: Create task, Create project, Settings
-- **Recent**: Last 5 accessed tasks/projects
-
-#### 2.12.3 Search Behavior
-- **Real-time filtering**: As user types
-- **Fuzzy matching**: Tolerates typos
-- **Keyboard navigation**: Up/Down arrows, Enter to select, Escape to close
-- **Auto-focus**: Search input focused on open
+- **Navigation**: Dashboard, Tasks, Projects, Profile, Focus Mode
+- **Tasks**: Search all user's tasks, click to navigate to task detail
+- **Actions**: Create task, Create project, Open settings, Open shortcuts guide
+- **Recent**: Last 5 accessed tasks/projects (persisted in localStorage)
 
 ---
 
 ### 2.13 Time Tracking
 
-**Status**: 🔄 Planned (Sprint 4)
+**Status**: ✅ Implemented (Sprint 4)
 
-#### 2.13.1 Time Entries
+#### 2.13.1 Manual Entry
 - **Endpoints**:
-  - `POST /api/tasks/:id/time-entries` - Start/stop timer or add manual entry
-  - `GET /api/tasks/:id/time-entries` - List entries for task
-  - `DELETE /api/time-entries/:id` - Delete entry (creator only)
-- **Entry types**:
-  - **TIMER**: Start/stop timer on task
-  - **MANUAL**: Manually logged time range
-- **Database fields**: `startTime`, `endTime`, `durationSeconds`, `entryType`
-- **Authorization**: Project members can track time on tasks
+  - `POST /api/time-entries` - Create entry (duration or start/end)
+  - `PUT /api/time-entries/:id` - Update entry
+  - `DELETE /api/time-entries/:id` - Delete entry
+  - `GET /api/time-entries` - List entries (filters: task, date range)
+  - `GET /api/time-entries/stats` - Aggregate stats
+- **Fields**: `startTime`, `endTime`, `duration` (seconds), `description`
+
+#### 2.13.2 Start/Stop Timer
+- **Endpoints**:
+  - `POST /api/time-entries/start` - Start timer for task
+  - `GET /api/time-entries/active` - Get running timer
+  - `POST /api/time-entries/:id/stop` - Stop timer
+- **Constraints**: Only one active timer per user at a time on tasks
 
 #### 2.13.2 Timer Workflow
 1. User clicks "Start Timer" on task
@@ -781,30 +899,26 @@ model Task {
 
 ### 2.14 Activity Logs
 
-**Status**: 🔄 Planned (Sprint 5)
+**Status**: ✅ Implemented (Sprint 5)
 
-#### 2.14.1 Activity Tracking
-- **Endpoint**: `GET /api/tasks/:id/activity`
-- **Requires**: Authentication + task access
-- **Returns**: Activity entries with user, action, timestamp
-- **Tracked events**:
-  - Status changes: "changed status from TODO to IN_PROGRESS"
-  - Assignee changes: "assigned to Alice"
-  - Description edits: "updated description"
-  - Comment additions: "added a comment"
-  - File attachments: "attached budget.pdf"
+#### 2.14.1 Endpoints
+- `GET /api/tasks/:id/activity` - List activity history
+  - Supports pagination via `cursor` or `limit`
 
-#### 2.14.2 Database Schema
+#### 2.14.2 Tracked Events
+- **Task**: Created, Status change, Priority change, Assignee change, Due date change
+- **Comments**: Added, Edited, Deleted
+- **Dependencies**: Added, Removed
+- **Schema**:
 ```prisma
-model Activity {
+model ActivityLog {
   id        String   @id @default(uuid())
   taskId    String
   task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   userId    String
   user      User     @relation(fields: [userId], references: [id])
-  action    String   // "status_changed", "assignee_changed"
-  oldValue  String?
-  newValue  String?
+  action    String   // "TASK_CREATED", "STATUS_CHANGED", etc.
+  meta      Json?    // Store old/new values { old: "TODO", new: "DONE" }
   createdAt DateTime @default(now())
 }
 ```
@@ -825,7 +939,32 @@ model Activity {
 
 ### 2.15 Comments & Real-time Collaboration
 
-**Status**: 🔄 Planned (Sprint 5)
+**Status**: ✅ Implemented (Sprint 5)
+
+#### 2.5.11 Recurring Tasks
+- **Status**: ✅ Implemented (Sprint 3)
+- **Endpoints**:
+  - `POST /api/recurring-tasks` - Create recurring task
+  - `GET /api/recurring-tasks` - List recurring tasks
+  - `GET /api/recurring-tasks/:id` - Get details
+  - `DELETE /api/recurring-tasks/:id` - Delete recurring task
+  - `POST /api/recurring-tasks/:id/generate` - Manually trigger generation
+- **Logic**:
+  - `cron` job (or external trigger) calls generic logic to create tasks based on schedule
+  - Supports: Daily, Weekly, Monthly, Custom intervals
+  - Copies: Title, description, project, priority from base task
+
+#### 2.5.12 Task Dependencies
+- **Status**: ✅ Implemented (Sprint 7)
+- **Endpoints**:
+  - `POST /api/tasks/:id/dependencies` - Add dependency
+  - `GET /api/tasks/:id/dependencies` - List dependencies
+  - `DELETE /api/tasks/:id/dependencies/:depId` - Remove dependency
+- **Logic**:
+  - **Blocking**: Task A blocks Task B (B cannot be started until A is done)
+  - **Cycle Detection**: Prevent A -> B -> A loops
+  - **Visuals**: Show blockers in task detail
+  - **Graph**: Critical path calculation (future)
 
 #### 2.15.1 Comments System
 - **Endpoints**:
@@ -835,9 +974,8 @@ model Activity {
   - `DELETE /api/comments/:id` - Delete own comment (creator only)
 - **Authorization**: Anyone with task access can comment
 - **Features**:
-  - Markdown support (optional)
   - @mentions (notify mentioned user)
-  - Threaded replies (optional)
+  - Threaded replies (via `parentId`)
   - Edit/delete own comments only
 
 #### 2.15.2 Comment Database Schema
@@ -896,22 +1034,23 @@ model Comment {
 
 ### 2.16 Custom Fields & Attachments
 
-**Status**: 🔄 Planned (Sprint 6)
+**Status**: ✅ Implemented (Sprint 6)
 
 #### 2.16.1 Custom Fields
 - **Admin/Owner only**: Define custom fields per project
 - **Endpoints**:
-  - `POST /api/projects/:id/fields` - Create field definition
-  - `GET /api/projects/:id/fields` - List project fields
-  - `DELETE /api/projects/:id/fields/:fieldId` - Delete field
-  - `PUT /api/tasks/:id/field-values` - Set values for task
+  - `POST /api/custom-fields` - Create field definition
+  - `GET /api/custom-fields` - List project fields
+  - `PUT /api/custom-fields/:id` - Update field
+  - `DELETE /api/custom-fields/:id` - Delete field
+  - `GET /api/custom-fields/task/:taskId` - Get values for task
+  - `PUT /api/custom-fields/task/:taskId` - Set values for task
 - **Field types**:
   - **TEXT**: Single-line text input
   - **NUMBER**: Numeric input
   - **DATE**: Date picker
   - **DROPDOWN**: Single-select from options
-  - **CHECKBOX**: Boolean toggle
-- **Required fields**: Can be marked as required on task creation
+- **Required fields**: Can be marked as required
 
 #### 2.16.2 Custom Field Database Schema
 ```prisma
@@ -937,20 +1076,23 @@ model FieldValue {
 ```
 
 #### 2.16.3 Tags System
-- **Global tags**: System-wide tag taxonomy
+- **Global tags**: Project-scoped tags
 - **Endpoints**:
-  - `GET /api/tags` - List all tags
+  - `GET /api/tags?projectId=xxx` - List project tags
   - `POST /api/tags` - Create tag (name, color)
-  - `PUT /api/tasks/:id/tags` - Set tags on task (multi-select)
+  - `PUT /api/tags/:id` - Update tag
+  - `DELETE /api/tags/:id` - Delete tag
+  - `POST /api/tags/task/:taskId` - Add tag to task
+  - `DELETE /api/tags/task/:taskId/:tagId` - Remove tag from task
 - **Multi-select**: Tasks can have multiple tags
 - **Color-coded**: Each tag has a hex color
-- **Filtering**: `GET /api/tasks?tags=frontend,urgent`
 
 #### 2.16.4 File Attachments
 - **Endpoints**:
-  - `POST /api/tasks/:id/attachments` - Upload file (multipart/form-data)
-  - `GET /api/attachments/:id` - Download file
-  - `DELETE /api/attachments/:id` - Delete file (uploader only)
+  - `POST /api/attachments/task/:taskId` - Upload file (multipart/form-data)
+  - `GET /api/attachments/task/:taskId` - List attachments
+  - `GET /api/attachments/:id/download` - Download file
+  - `DELETE /api/attachments/:id` - Delete file (uploader or admin only)
 - **Storage**: AWS S3, Cloudinary, or local filesystem
 - **Limits**:
   - Max file size: 10MB per file
@@ -984,61 +1126,67 @@ model Attachment {
 
 ### 2.17 CLI Tool
 
-**Status**: 🔄 Planned (Sprint 8)
+**Status**: ✅ Implemented (Sprint 8)
 
 #### 2.17.1 Installation
-```bash
-npm install -g taskman-cli
-taskman --version
-```
+- **Package**: `taskman-cli` in `cli/` directory
+- **Global install**: `cd cli && npm install && npm run build && npm link`
+- **Requirements**: Node.js 20+, TaskMan backend running, valid API key
 
 #### 2.17.2 Authentication
-- **API key-based**: Store API key in `~/.taskman/config`
-- **Login command**: `taskman login` (opens browser for OAuth)
-- **Manual setup**: `taskman config set apiKey <key>`
+- **Storage**: Config file at `~/.config/taskman-cli/config.json`
+- **Login**: `taskman login` prompts for API URL and API key
+- **Validation**: Tests credentials with `GET /api/auth/me`
 
-#### 2.17.3 Commands
-| Command | Description |
-|---------|-------------|
-| `taskman create <title>` | Create task with options |
-| `taskman list` | List tasks with filters |
-| `taskman update <id>` | Update task fields |
-| `taskman complete <id>` | Mark task as DONE |
-| `taskman show <id>` | Show task detail |
-| `taskman projects` | List projects |
+#### 2.17.3 Commands Implemented
+| Command | Description | Example |
+|---------|-------------|---------|
+| `taskman login` | Configure API credentials | `taskman login` |
+| `taskman create <title>` | Create new task | `taskman create "Fix bug" --priority HIGH` |
+| `taskman list` | List tasks with filters | `taskman list --status TODO` |
+| `taskman show <id>` | Show task details | `taskman show abc12345` |
+| `taskman update <id>` | Update task fields | `taskman update abc12345 --status DONE` |
+| `taskman complete <id>` | Mark task as done | `taskman complete abc12345` |
+| `taskman projects` | List all projects | `taskman projects` |
 
-#### 2.17.4 Create Task Options
+#### 2.17.4 Create Options
 ```bash
-taskman create "Buy milk" \
-  --project="Personal" \
-  --priority=HIGH \
-  --description="Get oat milk from Whole Foods" \
-  --due="tomorrow 3pm"
+taskman create "Task title"
+  -p, --project <id>          Project ID
+  -d, --description <text>    Task description
+  --priority <level>          LOW, MEDIUM, HIGH, URGENT (default: MEDIUM)
+  --due <date>                Due date (YYYY-MM-DD, "tomorrow", "next week")
+  -a, --assignee <id>         Assignee user ID
 ```
 
-#### 2.17.5 List Task Filters
+#### 2.17.5 List Filters
 ```bash
-taskman list --status=TODO --priority=URGENT
-taskman list --project="TaskMan" --assignee=me
-taskman list --due=today
+taskman list
+  -p, --project <name>        Filter by project name
+  -s, --status <status>       TODO, IN_PROGRESS, IN_REVIEW, DONE
+  -a, --assignee <email>      Filter by assignee email
+  --priority <priority>       LOW, MEDIUM, HIGH, URGENT
+  --limit <number>            Limit results (default: 20)
 ```
 
 #### 2.17.6 Output Formatting
-- **Table format** (default): ASCII table with columns
-- **JSON format**: `--json` flag for scripting
-- **Colors**: Color-coded priority (red=URGENT, gray=LOW)
-- **Compact mode**: `--compact` for minimal output
+- **Table format**: ASCII table using `cli-table3`
+- **Color-coded**:
+  - Status: ✓ DONE (green), ◐ IN_PROGRESS (cyan), ○ TODO (white)
+  - Priority: URGENT (red), HIGH (yellow), MEDIUM (blue), LOW (gray)
+- **Short IDs**: Display first 8 characters of UUID
+- **Relative dates**: "2 days ago" using `date-fns`
 
 #### 2.17.7 Shell Completion
-- **Bash**: `taskman completion bash > /etc/bash_completion.d/taskman`
-- **Zsh**: `taskman completion zsh > ~/.zsh/completions/_taskman`
-- **Fish**: `taskman completion fish > ~/.config/fish/completions/taskman.fish`
+- **Bash**: Source `cli/completions/taskman.bash` in `~/.bashrc`
+- **Zsh**: Copy `cli/completions/taskman.zsh` to `~/.zsh/completions/_taskman`
+- **Features**: Command completion, option completion, status/priority value completion
 
 ---
 
 ### 2.18 Public API
 
-**Status**: 🔄 Planned (Sprint 8)
+**Status**: ✅ Implemented (Sprint 8)
 
 #### 2.18.1 API Key Authentication
 - **Generate key**: `POST /api/auth/api-keys` (requires auth)
@@ -1084,7 +1232,7 @@ model ApiKey {
 
 ### 2.19 Webhooks
 
-**Status**: 🔄 Planned (Sprint 8)
+**Status**: ✅ Implemented (Sprint 8)
 
 #### 2.19.1 Webhook Configuration
 - **Endpoints**:
@@ -1095,7 +1243,6 @@ model ApiKey {
 - **Configuration**:
   - `url`: Target URL to POST events
   - `events`: Array of event types to subscribe
-  - `secret`: HMAC secret for signature verification
   - `active`: Boolean to enable/disable
 
 #### 2.19.2 Webhook Events
@@ -1206,6 +1353,324 @@ const priority = doc.match('(urgent|high|low|medium)').text();
 - **Visual feedback**: Highlight parsed entities (dates in blue, projects in green)
 - **Edit before create**: Preview modal with parsed fields, allow editing
 - **Keyboard shortcuts**: `Cmd+Enter` to create immediately
+
+---
+
+### 2.21 Focus Mode
+
+**Status**: ✅ Implemented (Sprint 7)
+
+#### 2.21.1 Overview
+Full-screen, distraction-free task focus interface that helps users concentrate on high-priority work. Positioned as a "deep work" feature for single-task focus sessions.
+
+#### 2.21.2 Frontend Implementation
+- **Route**: `/focus`
+- **Component**: `FocusPage.tsx`
+- **Data Source**: Top 3 tasks sorted by priority (URGENT → HIGH → MEDIUM → LOW)
+- **Filtering**: Excludes DONE tasks
+
+#### 2.21.3 Behavior
+- Displays top 3 tasks in large card format
+- Mark-as-done with animation and confetti celebration
+- Completion counter ("2 of 3 tasks completed")
+- Back to dashboard navigation
+- Empty state when all focus tasks completed ("Great job! All priority tasks done.")
+
+#### 2.21.4 Visual Design
+- Full-screen layout with minimal chrome (no sidebar)
+- Large task cards showing title, description, priority badge, due date
+- Framer Motion slide-in animations for card entrance
+- Confetti animation on task completion via `canvas-confetti`
+- Progress indicator at top
+
+#### 2.21.5 Use Cases
+- Deep work sessions without distractions
+- Focus on critical tasks only
+- Alternative view for overwhelmed users
+- Morning ritual: tackle top 3 priorities
+
+---
+
+### 2.22 UI/UX Design System
+
+**Status**: ✅ Implemented (Sprints 2-6)
+
+#### 2.22.1 Glassmorphism
+- **Description**: Frosted glass visual effect on modals, cards, and panels
+- **Implementation**: 
+  - CSS utility classes: `glass-card`, `glass-card-dark`
+  - `backdrop-filter: blur(10px)` for blur effect
+  - Semi-transparent backgrounds (`bg-white/80`, `bg-gray-900/80`)
+  - Subtle borders with low opacity
+- **Components Using Glass**: Modals, Command Palette, Notification Center, Task detail panels
+
+#### 2.22.2 Micro-interactions
+- **Button Hover**: 
+  - Scale transform (`scale-105`) on hover
+  - Shadow increase for depth perception
+  - Smooth transition (200ms)
+- **Task Completion**: 
+  - Confetti animation via `canvas-confetti` library
+  - Celebration trigger on status change to DONE
+  - Optional sound effect (future enhancement)
+- **Modal Animations**: 
+  - Scale and fade-in on open (0.95 → 1.0 scale)
+  - Fade-out on close
+  - Backdrop fade (0 → 0.5 opacity)
+- **Drag Indicators**: 
+  - Pulse animation on draggable items
+  - Visual feedback during drag (elevation, opacity)
+
+#### 2.22.3 Framer Motion Integration
+- **Library**: `framer-motion` for declarative animations
+- **Page Transitions**: 
+  - Fade + slide animations between routes
+  - `AnimatePresence` component wrapping route changes
+  - Exit animations before unmount
+- **Modal Variants**:
+  ```typescript
+  modalOverlay: { hidden: { opacity: 0 }, visible: { opacity: 1 } }
+  modalContent: { hidden: { scale: 0.95, opacity: 0 }, visible: { scale: 1, opacity: 1 } }
+  ```
+- **Task Card Hover**: 
+  - Translate Y (-4px) on hover
+  - Shadow expansion
+  - Smooth spring animation
+- **Table Rows**: 
+  - Fade-in with stagger effect
+  - Each row delays by 50ms for cascading appearance
+
+#### 2.22.4 Skeleton Loading States
+- **Purpose**: Content placeholders while data loads, reducing perceived loading time
+- **Components**: 
+  - `DashboardSkeleton`: Grid of stat cards and task placeholders
+  - `TableSkeleton`: Table structure with shimmer rows
+  - `KanbanSkeleton`: Column structure with card placeholders
+  - `ProjectCardSkeleton`: Project grid placeholders
+- **Pattern**: 
+  - Gray rectangles matching content dimensions
+  - `animate-pulse` CSS animation for shimmer effect
+  - Dark mode support (different gray shades)
+- **View-Aware Loading**: Renders appropriate skeleton based on active view (table vs kanban)
+- **Implementation**: `Skeletons.tsx` component library
+
+#### 2.22.5 Empty States
+- **Purpose**: Encourage first-time actions with friendly messaging and visuals
+- **Components**: 
+  - `EmptyTasksState`: No tasks illustration
+  - `EmptyProjectsState`: No projects illustration
+  - `EmptyCalendarState`: Empty calendar illustration
+  - `EmptyTimeEntriesState`: No time entries illustration
+- **Pattern**: 
+  - Custom SVG illustration (simple, on-brand)
+  - Encouraging message ("No tasks yet. Create your first one!")
+  - Primary CTA button (e.g., "Create Task")
+  - Framer Motion slide-up entrance animation
+- **Tone**: Positive and action-oriented, not punishing
+- **Implementation**: `EmptyStates.tsx` (specific states) + `EmptyState.tsx` (generic wrapper)
+
+#### 2.22.6 Design Tokens (CSS Variables)
+- **Spacing Scale**: Controlled via density settings
+  - Comfortable: `--spacing-scale: 1.0` (default)
+  - Compact: `--spacing-scale: 0.75`
+  - Spacious: `--spacing-scale: 1.25`
+- **Color Palette**: 5 themes with CSS variable overrides
+  - `--color-primary`, `--color-primary-dark`, `--color-primary-light`
+  - `--color-secondary`, `--color-accent`
+- **Typography**: 
+  - Font sizes: `--font-size-base` (adjusted per density)
+  - Font families: System font stack for performance
+- **Transitions**: 
+  - `--transition-base: 200ms ease-in-out`
+  - Consistent easing curves across components
+
+---
+
+### 2.23 Data Export
+
+**Status**: ✅ Implemented (Sprint 9)
+
+#### 2.23.1 Export Tasks Endpoint
+- **Endpoint**: `GET /api/export/tasks`
+- **Requires**: Authentication
+- **Query Parameters**:
+  - `format`: `csv` or `json` (required)
+  - `projectId`: Filter by project UUID (optional)
+- **Returns**: File download with appropriate Content-Disposition header
+
+####2.23.2 CSV Export Format
+- **Columns**: ID, Title, Description, Status, Priority, Project Name, Assignee Name, Creator Name, Due Date, Created At, Updated At
+- **Escaping**: 
+  - Commas escaped with quotes
+  - Quotes escaped as double-quotes (`""`)
+  - Newlines preserved in multi-line fields
+- **Headers**: 
+  - `Content-Type: text/csv; charset=utf-8`
+  - `Content-Disposition: attachment; filename="tasks-{date}.csv"`
+- **Encoding**: UTF-8 with BOM for Excel compatibility
+
+#### 2.23.3 JSON Export Format
+- **Schema**: Array of task objects with full nested data
+  ```json
+  [
+    {
+      "id": "uuid",
+      "title": "Task title",
+      "description": "Description",
+      "status": "TODO",
+      "priority": "HIGH",
+      "project": { "id": "uuid", "name": "Project Name" },
+      "assignee": { "id": "uuid", "name": "John Doe" },
+      "creator": { "id": "uuid", "name": "Jane Smith" },
+      "dueDate": "2026-02-15T10:00:00Z",
+      "createdAt": "2026-02-01T08:00:00Z"
+    }
+  ]
+  ```
+- **Headers**: 
+  - `Content-Type: application/json`
+  - `Content-Disposition: attachment; filename="tasks-{date}.json"`
+
+#### 2.23.4 Frontend UI
+- **Location**: TasksPage header, next to filter controls
+- **Component**: Export dropdown with CSV/JSON options
+- **Loading State**: Shows spinner during export generation
+- **Error Handling**: Toast notification on export failure
+- **Success Feedback**: Browser triggers file download
+
+#### 2.23.5 Authorization
+- Users can only export tasks from projects they are members of
+- Export respects role-based permissions (VIEWER, MEMBER, ADMIN, OWNER)
+- Project filtering validates user has access to specified project
+
+#### 2.23.6 Performance Considerations
+- **Pagination**: Large exports (>1000 tasks) streamed in chunks
+- **Timeout**: 30-second request timeout for large datasets
+- **Future Enhancement**: Background job for very large exports with email delivery
+
+---
+
+### 2.24 Keyboard Shortcuts System
+
+**Status**: ✅ Implemented (Sprint 9)
+
+#### 2.24.1 Shortcuts Guide Modal
+- **Trigger**: `?` key from any page
+- **Component**: `KeyboardShortcutsModal`
+- **Layout**: Grouped shortcuts in card-based layout
+- **Dismissal**: Escape key or click outside modal
+
+#### 2.24.2 Shortcut Groups
+
+##### General
+- **Help**: `?` - Open shortcuts guide
+- **Close**: `Escape` - Dismiss modal/popover
+
+##### Navigation
+- **Dashboard**: `g` then `d` - Navigate to dashboard
+- **Tasks**: `g` then `t` - Navigate to tasks page
+- **Projects**: `g` then `p` - Navigate to projects page
+- **Profile**: `g` then `s` - Navigate to settings/profile
+
+##### Command Palette
+- **Open**: `Cmd+K` (Mac) / `Ctrl+K` (Windows/Linux)
+
+##### Tasks
+- **New Task**: `n` - Open create task modal
+- **Focus Mode**: `f` - Navigate to focus mode
+
+#### 2.24.3 Platform Detection
+- **Mac**: Shows `⌘` symbol for Cmd, `⌥` for Option
+- **Windows/Linux**: Shows `Ctrl`, `Alt` text
+- **Implementation**: User-agent detection in `useCommandPalette` hook
+- **Future Enhancement**: Detect physical keyboard layout
+
+#### 2.24.4 Global Registration
+- **Event Listener**: Attached to `document` on app mount
+- **Zustand Store**: Manages shortcut registry and modal state
+- **Prevent Default**: Prevents browser shortcuts (e.g., `Cmd+K` search)
+- **Scope Awareness**: Some shortcuts only active on specific pages
+
+#### 2.24.5 Visual Design
+- **Keyboard Key Badges**: 
+  - Rounded corners (`rounded-md`)
+  - Border for definition
+  - Monospace font for key labels
+  - Subtle background (`bg-gray-100` light, `bg-gray-800` dark)
+- **Grouping**: Clear section headers with dividers
+- **Typography**: Descriptive labels next to key badges
+- **Accessibility**: Full keyboard navigation within modal
+
+#### 2.24.6 Future Enhancements
+- **Customization**: User-defined shortcuts
+- **Search**: Filter shortcuts in guide modal
+- **Hints**: Tooltip hints on first use
+- **Cheat Sheet**: Printable PDF version
+
+---
+
+### 2.25 Pagination System
+
+**Status**: ✅ Implemented (Sprint 8)
+
+#### 2.25.1 Backend Implementation
+- **Pattern**: Offset-based pagination using `skip`/`take`
+- **Endpoints**: `GET /api/tasks`, `GET /api/projects`
+- **Query Parameters**:
+  - `page`: Page number (1-indexed, optional)
+  - `limit`: Items per page (default: 20, max: 100)
+- **Calculation**: 
+  - `skip = (page - 1) * limit`
+  - `take = limit`
+
+#### 2.25.2 Backward Compatibility
+- **Without `page` param**: Returns raw array (original behavior)
+  ```json
+  [ { task1 }, { task2 }, ... ]
+  ```
+- **With `page` param**: Returns envelope with pagination metadata
+  ```json
+  {
+    "data": [ { task1 }, { task2 }, ... ],
+    "pagination": {
+      "page": 2,
+      "limit": 20,
+      "total": 87,
+      "totalPages": 5
+    }
+  }
+  ```
+
+#### 2.25.3 Pagination Metadata
+- **page**: Current page number
+- **limit**: Items per page
+- **total**: Total count of items matching filters
+- **totalPages**: Calculated as `Math.ceil(total / limit)`
+
+#### 2.25.4 Frontend Component
+- **Component**: `Pagination.tsx`
+- **Features**:
+  - Page number buttons (max 7 visible)
+  - Previous / Next navigation buttons
+  - Ellipsis for large page counts (e.g., `1 ... 5 6 7 ... 20`)
+  - "Showing X-Y of Z results" text
+  - Disabled states for first page (no prev) and last page (no next)
+- **Styling**: Matches existing button/badge design system
+
+#### 2.25.5 Auto-Reset Behavior
+- **On Filter Change**: Page resets to 1 when user changes filters
+- **React Query**: Page stored in query params, synced with URL
+- **User Experience**: Prevents empty pages after filtering
+
+#### 2.25.6 Limit Clamping
+- **Validation**: Backend clamps `limit` to range `[1, 100]`
+- **Error Handling**: Returns 400 Bad Request if limit invalid
+- **Frontend**: Dropdown with preset options (10, 20, 50, 100)
+
+#### 2.25.7 Performance Considerations
+- **Database Indexes**: Ensure indexed columns for sort fields to optimize `OFFSET` queries
+- **Future Enhancement**: Cursor-based pagination for very large datasets
+- **Count Query**: Separate count query for total (can be cached)
 
 ---
 
@@ -1342,9 +1807,9 @@ enum ProjectRole {
 | GET | /api/auth/me | Yes | ✅ Live | Phase 1 |
 | PUT | /api/auth/profile | Yes | ✅ Live | Phase 1 |
 | PUT | /api/auth/password | Yes | ✅ Live | Phase 1 |
-| POST | /api/auth/api-keys | Yes | 🔄 Planned | Sprint 8 |
-| GET | /api/auth/api-keys | Yes | 🔄 Planned | Sprint 8 |
-| DELETE | /api/auth/api-keys/:id | Yes | 🔄 Planned | Sprint 8 |
+| POST | /api/auth/api-keys | Yes | ✅ Live | Sprint 8 |
+| GET | /api/auth/api-keys | Yes | ✅ Live | Sprint 8 |
+| DELETE | /api/auth/api-keys/:id | Yes | ✅ Live | Sprint 8 |
 | **Projects** |||||
 | GET | /api/projects | Yes | ✅ Live | Phase 2 |
 | GET | /api/projects/:id | Yes | ✅ Live | Phase 2 |
@@ -1353,9 +1818,9 @@ enum ProjectRole {
 | DELETE | /api/projects/:id | Yes | ✅ Live | Phase 2 |
 | POST | /api/projects/:id/members | Yes | ✅ Live | Phase 2 |
 | DELETE | /api/projects/:id/members/:userId | Yes | ✅ Live | Phase 2 |
-| GET | /api/projects/:id/fields | Yes | 🔄 Planned | Sprint 6 |
-| POST | /api/projects/:id/fields | Yes | 🔄 Planned | Sprint 6 |
-| DELETE | /api/projects/:id/fields/:fieldId | Yes | 🔄 Planned | Sprint 6 |
+| GET | /api/custom-fields | Yes | ✅ Live | Sprint 6 |
+| POST | /api/custom-fields | Yes | ✅ Live | Sprint 6 |
+| DELETE | /api/custom-fields/:id | Yes | ✅ Live | Sprint 6 |
 | GET | /api/projects/:id/critical-path | Yes | 🔄 Planned | Sprint 7 |
 | **Tasks** |||||
 | GET | /api/tasks | Yes | ✅ Live | Phase 3 |
@@ -1364,44 +1829,45 @@ enum ProjectRole {
 | PUT | /api/tasks/:id | Yes | ✅ Live | Phase 3 |
 | DELETE | /api/tasks/:id | Yes | ✅ Live | Phase 3 |
 | PATCH | /api/tasks/bulk-status | Yes | ✅ Live | Phase 3 |
-| PUT | /api/tasks/:id/recurrence | Yes | 🔄 Planned | Sprint 3 |
-| DELETE | /api/tasks/:id/recurrence | Yes | 🔄 Planned | Sprint 3 |
-| POST | /api/tasks/:id/complete-recurring | Yes | 🔄 Planned | Sprint 3 |
-| GET | /api/tasks/:id/dependencies | Yes | 🔄 Planned | Sprint 7 |
-| POST | /api/tasks/:id/dependencies | Yes | 🔄 Planned | Sprint 7 |
-| DELETE | /api/tasks/:id/dependencies/:depId | Yes | 🔄 Planned | Sprint 7 |
-| GET | /api/tasks/:id/activity | Yes | 🔄 Planned | Sprint 5 |
-| GET | /api/tasks/:id/comments | Yes | 🔄 Planned | Sprint 5 |
-| POST | /api/tasks/:id/comments | Yes | 🔄 Planned | Sprint 5 |
-| GET | /api/tasks/:id/time-entries | Yes | 🔄 Planned | Sprint 4 |
-| POST | /api/tasks/:id/time-entries | Yes | 🔄 Planned | Sprint 4 |
-| POST | /api/tasks/:id/attachments | Yes | 🔄 Planned | Sprint 6 |
-| PUT | /api/tasks/:id/field-values | Yes | 🔄 Planned | Sprint 6 |
-| PUT | /api/tasks/:id/tags | Yes | 🔄 Planned | Sprint 6 |
+| POST | /api/recurring-tasks | Yes | ✅ Live | Sprint 3 |
+| GET | /api/recurring-tasks | Yes | ✅ Live | Sprint 3 |
+| DELETE | /api/recurring-tasks/:id | Yes | ✅ Live | Sprint 3 |
+| GET | /api/tasks/:id/dependencies | Yes | ✅ Live | Sprint 7 |
+| POST | /api/tasks/:id/dependencies | Yes | ✅ Live | Sprint 7 |
+| DELETE | /api/tasks/:id/dependencies/:depId | Yes | ✅ Live | Sprint 7 |
+| GET | /api/tasks/:id/activity | Yes | ✅ Live | Sprint 5 |
+| GET | /api/tasks/:id/comments | Yes | ✅ Live | Sprint 5 |
+| POST | /api/tasks/:id/comments | Yes | ✅ Live | Sprint 5 |
+| GET | /api/time-entries | Yes | ✅ Live | Sprint 4 |
+| POST | /api/time-entries | Yes | ✅ Live | Sprint 4 |
+| POST | /api/attachments/task/:taskId | Yes | ✅ Live | Sprint 6 |
+| PUT | /api/custom-fields/task/:taskId | Yes | ✅ Live | Sprint 6 |
+| POST | /api/tags/task/:taskId | Yes | ✅ Live | Sprint 6 |
 | **Comments** |||||
-| PUT | /api/comments/:id | Yes | 🔄 Planned | Sprint 5 |
-| DELETE | /api/comments/:id | Yes | 🔄 Planned | Sprint 5 |
+| PUT | /api/comments/:id | Yes | ✅ Live | Sprint 5 |
+| DELETE | /api/comments/:id | Yes | ✅ Live | Sprint 5 |
 | **Time Tracking** |||||
-| DELETE | /api/time-entries/:id | Yes | 🔄 Planned | Sprint 4 |
+| DELETE | /api/time-entries/:id | Yes | ✅ Live | Sprint 4 |
+| GET | /api/time-entries/stats | Yes | ✅ Live | Sprint 4 |
 | **Attachments** |||||
-| GET | /api/attachments/:id | Yes | 🔄 Planned | Sprint 6 |
-| DELETE | /api/attachments/:id | Yes | 🔄 Planned | Sprint 6 |
+| GET | /api/attachments/:id/download | Yes | ✅ Live | Sprint 6 |
+| DELETE | /api/attachments/:id | Yes | ✅ Live | Sprint 6 |
 | **Tags** |||||
-| GET | /api/tags | Yes | 🔄 Planned | Sprint 6 |
-| POST | /api/tags | Yes | 🔄 Planned | Sprint 6 |
+| GET | /api/tags | Yes | ✅ Live | Sprint 6 |
+| POST | /api/tags | Yes | ✅ Live | Sprint 6 |
 | **Notifications** |||||
 | GET | /api/notifications | Yes | ✅ Live | Sprint 1 |
-| POST | /api/notifications/mark-read/:id | Yes | ✅ Live | Sprint 1 |
+| PATCH | /api/notifications/mark-read | Yes | ✅ Live | Sprint 1 |
 | DELETE | /api/notifications/:id | Yes | ✅ Live | Sprint 1 |
 | **Analytics** |||||
 | GET | /api/analytics/insights | Yes | ✅ Live | Sprint 2 |
-| GET | /api/analytics/creator-metrics | Yes | 🔄 Planned | Sprint 7 |
+| GET | /api/analytics/creator-metrics | Yes | ✅ Live | Sprint 2 |
 | **Webhooks** |||||
-| GET | /api/webhooks | Yes | 🔄 Planned | Sprint 8 |
-| POST | /api/webhooks | Yes | 🔄 Planned | Sprint 8 |
-| PUT | /api/webhooks/:id | Yes | 🔄 Planned | Sprint 8 |
-| DELETE | /api/webhooks/:id | Yes | 🔄 Planned | Sprint 8 |
-| GET | /api/webhooks/:id/logs | Yes | 🔄 Planned | Sprint 8 |
+| GET | /api/webhooks | Yes | ✅ Live | Sprint 8 |
+| POST | /api/webhooks | Yes | ✅ Live | Sprint 8 |
+| PUT | /api/webhooks/:id | Yes | ✅ Live | Sprint 8 |
+| DELETE | /api/webhooks/:id | Yes | ✅ Live | Sprint 8 |
+| GET | /api/webhooks/:id/logs | Yes | ✅ Live | Sprint 8 |
 | **Health** |||||
 | GET | /health | No | ✅ Live | Phase 0 |
 
