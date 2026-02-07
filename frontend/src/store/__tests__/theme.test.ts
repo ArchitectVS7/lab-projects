@@ -2,6 +2,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useThemeStore } from '../theme';
 import { COLOR_THEMES } from '../../lib/themes';
 
+// Type declaration for global in test environment
+declare const global: typeof globalThis;
+
 // Mock document and window
 const mockDocumentElement = {
   classList: {
