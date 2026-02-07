@@ -143,8 +143,7 @@ router.post('/tasks/:id/dependencies', authenticate, async (req: AuthRequest, re
       where: { taskId_dependsOnId: { taskId: blockedId, dependsOnId: blockingId } },
     });
     if (existing) {
-      // Idempotent success
-      return res.status(200).json(existing);
+      throw new AppError('This dependency already exists', 409);
     }
 
     // Cycle detection
