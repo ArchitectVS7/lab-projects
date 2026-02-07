@@ -6,7 +6,7 @@ import { useDensityStore } from '../store/density';
 import { pageTransition } from '../lib/animations';
 
 import { authApi } from '../lib/api';
-import { LayoutDashboard, CheckSquare, FolderKanban, Calendar, LogOut, User, Crosshair } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, FolderKanban, Calendar, LogOut, User, Crosshair, BarChart3 } from 'lucide-react';
 import TimerWidget from './TimerWidget';
 import clsx from 'clsx';
 import ToastContainer from './Toast';
@@ -24,6 +24,7 @@ const navItems = [
   { to: '/projects', label: 'Projects', icon: FolderKanban },
   { to: '/calendar', label: 'Calendar', icon: Calendar },
   { to: '/focus', label: 'Focus', icon: Crosshair },
+  { to: '/creator-dashboard', label: 'Creators', icon: BarChart3 },
 ];
 
 export default function Layout() {

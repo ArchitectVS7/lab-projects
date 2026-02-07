@@ -81,7 +81,7 @@ The app has reached competitive feature parity. The remaining work is about **di
 | Feature | Status | Detail |
 |---------|--------|--------|
 | Focus Mode | DONE | `FocusPage.tsx` -- top 3 priority tasks, mark-done animations |
-| Creator Dashboard | **NOT DONE** | Only basic `/api/analytics/insights` exists. No creator-specific metrics, no `/api/analytics/creator-metrics` endpoint |
+| Creator Dashboard | DONE | `GET /api/analytics/creator-metrics` endpoint (OWNER/ADMIN auth), `CreatorDashboardPage.tsx` with leaderboard, delegation ratio badges, velocity charts, bottleneck detection. 16 tests (8 permission, 8 metric calculation) |
 | Smart Dependencies | **NOT DONE** | No TaskDependency model, no routes, no cycle detection, no Gantt view |
 
 ### Sprint 8: Developer Experience & Scale -- NOT STARTED
@@ -133,13 +133,13 @@ Enums: TaskStatus, Priority, ProjectRole, NotificationType, ActivityAction, Recu
 - `auth.ts` (7), `projects.ts` (7), `tasks.ts` (7), `comments.ts` (4)
 - `notifications.ts` (5), `time-entries.ts` (9), `recurring-tasks.ts` (5)
 - `tags.ts` (6), `custom-fields.ts` (6), `attachments.ts` (4)
-- `analytics.ts` (1), `export.ts` (1)
+- `analytics.ts` (2), `export.ts` (1)
 
-### Test Coverage: 265 Tests across 14 Suites
+### Test Coverage: 287 Tests across 15 Suites
 - phase0 (6), auth (36), phase2 (50), phase3 (65), phase4 (9)
 - phase4-ratelimit (2, skipped), notifications (9), analytics (5)
-- recurring-tasks (19), comments (21), activity-logs (13), websocket (5)
-- export (6), sprint6 (19)
+- creator-metrics (16), recurring-tasks (19), comments (21), activity-logs (13)
+- websocket (5), export (6), sprint6 (19)
 
 ### Migrations: 5 Applied
 1. `init` -- Users, Projects, Tasks
@@ -170,17 +170,13 @@ Enums: TaskStatus, Priority, ProjectRole, NotificationType, ActivityAction, Recu
 
 ### P1: HIGH -- Unique Differentiators
 
-#### 2. Creator Accountability Dashboard (5 days)
-**Why:** Unique feature no competitor has. Positions TaskMan as "anti-busywork" tool. Backend analytics route already exists as a foundation.
-
-**Scope:**
-- Backend: GET `/api/analytics/creator-metrics` -- tasks created per user, self-assigned vs delegated ratio, velocity by creator, bottleneck identification
-- Authorization: OWNER/ADMIN only
-- Frontend: Creator leaderboard page, delegation ratio badges, charts
-- Tests: Permission checks, metric calculation correctness
-
-**Depends on:** Nothing
-**Blocks:** Nothing (standalone feature)
+#### 2. Creator Accountability Dashboard -- COMPLETE
+**Implemented:**
+- Backend: `GET /api/analytics/creator-metrics?projectId=` -- tasks created per user, self-assigned vs delegated ratio, velocity by creator, bottleneck identification
+- Authorization: OWNER/ADMIN only (returns 403 for MEMBER/VIEWER/non-member)
+- Frontend: `CreatorDashboardPage.tsx` -- creator leaderboard with rank, delegation ratio bars, velocity charts, badge system (delegator/doer/balanced/new), bottleneck panel
+- Navigation: `/creator-dashboard` route, "Creators" nav item with BarChart3 icon
+- Tests: 16 tests in `creator-metrics.test.ts` (8 permission checks, 8 metric calculation tests) -- all pass
 
 #### 3. Smart Task Dependencies (7-10 days)
 **Why:** High-value project management feature. Asana has it, most task managers don't. Enables critical path analysis and "What's blocking me?" views.

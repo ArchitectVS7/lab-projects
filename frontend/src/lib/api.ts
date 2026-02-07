@@ -1,5 +1,5 @@
 import { useAuthStore } from '../store/auth';
-import type { User, Task, Project, ProjectMember, TaskStatus, TaskPriority, RecurringTask, RecurrenceFrequency, TimeEntry, Comment, ActivityLog, Tag, TaskTag, CustomFieldDefinition, CustomFieldType, CustomFieldValue, Attachment } from '../types';
+import type { User, Task, Project, ProjectMember, TaskStatus, TaskPriority, RecurringTask, RecurrenceFrequency, TimeEntry, Comment, ActivityLog, Tag, TaskTag, CustomFieldDefinition, CustomFieldType, CustomFieldValue, Attachment, CreatorMetricsData } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
@@ -224,6 +224,8 @@ export interface AnalyticsData {
 
 export const analyticsApi = {
   getInsights: () => request<AnalyticsData>('/api/analytics/insights'),
+  getCreatorMetrics: (projectId: string) =>
+    request<CreatorMetricsData>(`/api/analytics/creator-metrics?projectId=${projectId}`),
 };
 
 // --- Recurring Tasks API ---

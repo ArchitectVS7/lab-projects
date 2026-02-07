@@ -162,6 +162,43 @@ export interface CustomFieldValue {
   field: CustomFieldDefinition;
 }
 
+// --- Creator Metrics ---
+
+export type CreatorBadge = 'delegator' | 'doer' | 'balanced' | 'new';
+
+export interface CreatorMetric {
+  user: Pick<User, 'id' | 'name' | 'avatarUrl'>;
+  tasksCreated: number;
+  selfAssigned: number;
+  delegated: number;
+  delegationRatio: number;
+  completedThisWeek: number;
+  completedLastWeek: number;
+  velocityChange: number;
+  openTasks: number;
+  staleTasks: number;
+  badge: CreatorBadge;
+}
+
+export interface CreatorBottleneck {
+  user: Pick<User, 'id' | 'name' | 'avatarUrl'>;
+  staleTasks: number;
+  openTasks: number;
+}
+
+export interface CreatorMetricsData {
+  projectId: string;
+  summary: {
+    totalTasks: number;
+    totalDone: number;
+    totalOpen: number;
+    totalStale: number;
+    memberCount: number;
+  };
+  creators: CreatorMetric[];
+  bottlenecks: CreatorBottleneck[];
+}
+
 // --- Attachment ---
 
 export interface Attachment {
