@@ -24,6 +24,7 @@ export default function MentionAutocomplete({
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedIndex(0);
   }, [query]);
 
@@ -61,11 +62,10 @@ export default function MentionAutocomplete({
       {filtered.map((member, i) => (
         <button
           key={member.userId}
-          className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
-            i === selectedIndex
+          className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${i === selectedIndex
               ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
               : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-          }`}
+            }`}
           onClick={() => onSelect(member)}
           onMouseEnter={() => setSelectedIndex(i)}
         >

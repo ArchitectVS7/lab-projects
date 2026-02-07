@@ -56,6 +56,10 @@ export interface Task {
   assignee: Pick<User, 'id' | 'name' | 'avatarUrl'> | null;
   creator: Pick<User, 'id' | 'name'>;
   tags?: TaskTag[];
+  _count?: {
+    dependsOn: number;
+    dependedOnBy: number;
+  };
 }
 
 // --- Time Entry ---

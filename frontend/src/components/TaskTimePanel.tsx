@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Play, Square, Timer, Trash2, Plus } from 'lucide-react';
 import { timeEntriesApi } from '../lib/api';
 import { useTimerStore } from '../store/timer';
-import { useToastStore } from './Toast';
+import { useToastStore } from '../store/toast';
 import clsx from 'clsx';
 import type { TimeEntry } from '../types';
 

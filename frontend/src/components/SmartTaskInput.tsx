@@ -41,25 +41,33 @@ export default function SmartTaskInput({
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
-  const { data: projects = [] } = useQuery({
+  const { data: projects = [] } = useQuery<Project[]>({
     queryKey: ['projects'],
     queryFn: projectsApi.getAll,
   });
 
+  // Handle input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInput(value);
+    if (!value.trim()) {
+      setParsed(null);
+    }
+  };
+
   // Parse input on change (debounced)
   useEffect(() => {
-    if (!input.trim()) {
-      setParsed(null);
-      return;
-    }
+    if (!input.trim()) return;
     const timer = setTimeout(() => {
       setParsed(parseNaturalLanguage(input));
     }, 150);
     return () => clearTimeout(timer);
   }, [input]);
 
-  // Auto-match project from hint
-  useEffect(() => {
+  // Auto-match project from hint during render to avoid useEffect cascading renders
+  const [prevHint, setPrevHint] = useState<string | undefined>(() => parsed?.projectHint || undefined);
+  if (parsed?.projectHint !== prevHint) {
+    setPrevHint(parsed?.projectHint as string | undefined);
     if (parsed?.projectHint && projects.length > 0) {
       const hint = parsed.projectHint.toLowerCase();
       const match = projects.find(
@@ -67,11 +75,9 @@ export default function SmartTaskInput({
           p.name.toLowerCase() === hint ||
           p.name.toLowerCase().includes(hint)
       );
-      if (match) {
-        setSelectedProjectId(match.id);
-      }
+      if (match) setSelectedProjectId(match.id);
     }
-  }, [parsed?.projectHint, projects]);
+  }
 
   // Auto-focus
   useEffect(() => {
@@ -130,7 +136,7 @@ export default function SmartTaskInput({
           ref={inputRef}
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           placeholder='Try: "Review PR by Friday high priority #frontend"'
           className="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"

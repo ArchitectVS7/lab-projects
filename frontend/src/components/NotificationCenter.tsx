@@ -86,8 +86,10 @@ export default function NotificationCenter() {
 
     // Navigate to related resource if applicable
     if (notification.taskId) {
+      // eslint-disable-next-line react-hooks/immutability
       window.location.href = '/tasks';
     } else if (notification.projectId) {
+      // eslint-disable-next-line react-hooks/immutability
       window.location.href = `/projects/${notification.projectId}`;
     }
   };

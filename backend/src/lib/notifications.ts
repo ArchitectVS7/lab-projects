@@ -99,20 +99,20 @@ export async function checkTasksDueSoon() {
     },
   });
 
-  const notifications = await Promise.all(
-    tasksDueSoon.map((task) => {
-      if (!task.assignee) return null;
-      return createNotification({
-        userId: task.assignee.id,
-        type: 'TASK_DUE_SOON',
-        title: 'Task due soon',
-        message: `Task "${task.title}" is due soon in project "${task.project.name}"`,
-        taskId: task.id,
-        projectId: task.projectId,
-      });
+  const tasksWithAssignee = tasksDueSoon.filter((task) => task.assignee !== null);
+
+  const notificationPromises = tasksWithAssignee.map((task) =>
+    createNotification({
+      userId: task.assignee!.id,
+      type: 'TASK_DUE_SOON',
+      title: 'Task due soon',
+      message: `Task "${task.title}" is due soon in project "${task.project.name}"`,
+      taskId: task.id,
+      projectId: task.projectId,
     })
   );
 
+  const notifications = await Promise.all(notificationPromises);
   return notifications.filter(Boolean);
 }
 
@@ -138,19 +138,19 @@ export async function checkOverdueTasks() {
     },
   });
 
-  const notifications = await Promise.all(
-    overdueTasks.map((task) => {
-      if (!task.assignee) return null;
-      return createNotification({
-        userId: task.assignee.id,
-        type: 'TASK_OVERDUE',
-        title: 'Task overdue',
-        message: `Task "${task.title}" is overdue in project "${task.project.name}"`,
-        taskId: task.id,
-        projectId: task.projectId,
-      });
+  const tasksWithAssignee = overdueTasks.filter((task) => task.assignee !== null);
+
+  const notificationPromises = tasksWithAssignee.map((task) =>
+    createNotification({
+      userId: task.assignee!.id,
+      type: 'TASK_OVERDUE',
+      title: 'Task overdue',
+      message: `Task "${task.title}" is overdue in project "${task.project.name}"`,
+      taskId: task.id,
+      projectId: task.projectId,
     })
   );
 
+  const notifications = await Promise.all(notificationPromises);
   return notifications.filter(Boolean);
 }

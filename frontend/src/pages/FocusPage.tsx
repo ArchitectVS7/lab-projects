@@ -6,6 +6,7 @@ import { tasksApi } from '../lib/api';
 import { ArrowLeft, CheckCircle2, Clock, AlertTriangle, Flame } from 'lucide-react';
 import clsx from 'clsx';
 import type { Task, TaskStatus, TaskPriority } from '../types';
+import TaskCompletionCelebration from '../components/TaskCompletionCelebration';
 
 const PRIORITY_ORDER: Record<TaskPriority, number> = {
   URGENT: 0,
@@ -110,6 +111,7 @@ export default function FocusPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [completingId, setCompletingId] = useState<string | null>(null);
+  const [celebrate, setCelebrate] = useState(false);
 
   const { data: allTasks = [], isLoading } = useQuery({
     queryKey: ['tasks'],
@@ -119,6 +121,10 @@ export default function FocusPage() {
   const completeMutation = useMutation({
     mutationFn: (taskId: string) => tasksApi.update(taskId, { status: 'DONE' as TaskStatus }),
     onMutate: (taskId) => setCompletingId(taskId),
+    onSuccess: () => {
+      setCelebrate(true);
+      setTimeout(() => setCelebrate(false), 100);
+    },
     onSettled: () => {
       setTimeout(() => {
         setCompletingId(null);
@@ -232,6 +238,7 @@ export default function FocusPage() {
           )}
         </div>
       </main>
+      <TaskCompletionCelebration trigger={celebrate} />
     </div>
   );
 }

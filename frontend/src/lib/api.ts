@@ -531,9 +531,9 @@ export const attachmentsApi = {
 
 export const dependenciesApi = {
   add: (taskId: string, dependsOnId: string) =>
-    request<any>(`/api/tasks/${taskId}/dependencies`, {
+    request<unknown>(`/api/tasks/${taskId}/dependencies`, {
       method: 'POST',
-      body: JSON.stringify({ dependsOnId }),
+      body: JSON.stringify({ blockingTaskId: dependsOnId }),
     }),
 
   list: (taskId: string) =>

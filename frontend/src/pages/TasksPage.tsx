@@ -4,7 +4,7 @@ import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCorners, 
 import { AnimatePresence, motion } from 'framer-motion';
 import { tasksApi, projectsApi, recurringTasksApi, exportApi } from '../lib/api';
 import { useAuthStore } from '../store/auth';
-import { Plus, Table, Columns3, Calendar as CalendarIcon, Pencil, Trash2, Repeat, Download, Zap, Loader2 } from 'lucide-react';
+import { Plus, Table, Columns3, Calendar as CalendarIcon, Pencil, Trash2, Repeat, Download, Zap, Loader2, Shield, ShieldAlert } from 'lucide-react';
 import { format } from 'date-fns';
 import clsx from 'clsx';
 import type { Task, Project, TaskStatus, TaskPriority } from '../types';
@@ -153,6 +153,16 @@ function TableView({
                       <Repeat size={10} />
                     </span>
                   )}
+                  {(task._count?.dependsOn ?? 0) > 0 && (
+                    <span className="text-red-500 dark:text-red-400" title={`Blocked by ${task._count!.dependsOn} tasks`}>
+                      <ShieldAlert size={14} />
+                    </span>
+                  )}
+                  {(task._count?.dependedOnBy ?? 0) > 0 && (
+                    <span className="text-amber-500 dark:text-amber-400" title={`Blocking ${task._count!.dependedOnBy} tasks`}>
+                      <Shield size={14} />
+                    </span>
+                  )}
                 </div>
                 {task.description && (
                   <div className="text-gray-500 dark:text-gray-400 text-xs line-clamp-1 mt-0.5">{task.description}</div>
@@ -280,6 +290,18 @@ function DraggableTaskCard({ task, onEdit, canEdit }: { task: Task; onEdit: (tas
             Recurring
           </span>
         )}
+        {(task._count?.dependsOn ?? 0) > 0 && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300 flex items-center gap-0.5" title="Blocked">
+            <ShieldAlert size={9} />
+            Blocked
+          </span>
+        )}
+        {(task._count?.dependedOnBy ?? 0) > 0 && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-300 flex items-center gap-0.5" title="Blocking others">
+            <Shield size={9} />
+            Blocking
+          </span>
+        )}
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: task.project.color }} />
           <span className="text-[10px] text-gray-500 dark:text-gray-400">{task.project.name}</span>
@@ -308,6 +330,18 @@ function TaskCardOverlay({ task }: { task: Task }) {
         <span className={clsx('text-[10px] px-1.5 py-0.5 rounded font-medium', PRIORITY_COLORS[task.priority])}>
           {task.priority}
         </span>
+        {(task._count?.dependsOn ?? 0) > 0 && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300 flex items-center gap-0.5">
+            <ShieldAlert size={9} />
+            Blocked
+          </span>
+        )}
+        {(task._count?.dependedOnBy ?? 0) > 0 && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-300 flex items-center gap-0.5">
+            <Shield size={9} />
+            Blocking
+          </span>
+        )}
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: task.project.color }} />
           <span className="text-[10px] text-gray-500 dark:text-gray-400">{task.project.name}</span>
@@ -644,11 +678,10 @@ export default function TasksPage() {
           </div>
           <button
             onClick={() => setShowQuickAdd((v) => !v)}
-            className={`flex items-center gap-1.5 px-3 py-2 text-sm border rounded-md transition-colors ${
-              showQuickAdd
-                ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'
-                : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
+            className={`flex items-center gap-1.5 px-3 py-2 text-sm border rounded-md transition-colors ${showQuickAdd
+              ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'
+              : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
             title="Quick create with natural language"
           >
             <Zap size={14} />

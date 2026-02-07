@@ -59,11 +59,13 @@ function ValueBadge({ field, value }: { field: string; value: string | null }) {
   }
 
   if (field === 'dueDate') {
+    let dateStr = value;
     try {
-      return <span className="text-sm text-gray-700 dark:text-gray-300">{new Date(value).toLocaleDateString()}</span>;
+      dateStr = new Date(value).toLocaleDateString();
     } catch {
-      return <span className="text-sm text-gray-700 dark:text-gray-300">{value}</span>;
+      // Keep original value
     }
+    return <span className="text-sm text-gray-700 dark:text-gray-300">{dateStr}</span>;
   }
 
   // Truncate long values like description

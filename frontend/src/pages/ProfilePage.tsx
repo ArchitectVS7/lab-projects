@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '../lib/api';
 import { useAuthStore } from '../store/auth';
-import { useToastStore } from '../components/Toast';
+import { useToastStore } from '../store/toast';
 import { User, Lock, Palette } from 'lucide-react';
 import ThemePicker from '../components/ThemePicker';
 import LayoutSwitcher from '../components/LayoutSwitcher';

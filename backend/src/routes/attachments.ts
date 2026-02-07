@@ -1,8 +1,7 @@
-import { Router, Response, NextFunction, Request } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { z } from 'zod';
 import prisma from '../lib/prisma.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
@@ -54,7 +53,7 @@ const upload = multer({
     if (ALLOWED_MIMES.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new AppError(`File type ${file.mimetype} is not allowed`, 400) as any);
+      cb(new AppError(`File type ${file.mimetype} is not allowed`, 400) as unknown as null);
     }
   },
 });

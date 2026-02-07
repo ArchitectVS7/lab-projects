@@ -20,7 +20,7 @@ async function deliverWebhook(
   url: string,
   secret: string,
   event: string,
-  data: any,
+  data: unknown,
   attempt: number = 1,
 ): Promise<void> {
   const body = JSON.stringify({ event, timestamp: new Date().toISOString(), data });
@@ -61,15 +61,15 @@ async function deliverWebhook(
     } else {
       throw new Error(`HTTP ${response.status}`);
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log the failure
     await prisma.webhookLog.create({
       data: {
         webhookId,
         event,
-        error: error.message || 'Unknown error',
+        error: error instanceof Error ? error.message : 'Unknown error',
       },
-    }).catch(() => {});
+    }).catch(() => { });
 
     // Increment failure count
     const updated = await prisma.webhook.update({
@@ -82,7 +82,7 @@ async function deliverWebhook(
       await prisma.webhook.update({
         where: { id: webhookId },
         data: { active: false },
-      }).catch(() => {});
+      }).catch(() => { });
       return; // Don't retry if disabled
     }
 
@@ -90,13 +90,13 @@ async function deliverWebhook(
     if (attempt < 3) {
       const delay = Math.pow(5, attempt - 1) * 1000;
       setTimeout(() => {
-        deliverWebhook(webhookId, url, secret, event, data, attempt + 1);
+        void deliverWebhook(webhookId, url, secret, event, data, attempt + 1);
       }, delay);
     }
   }
 }
 
-export async function dispatchWebhooks(event: string, data: any, userId: string): Promise<void> {
+export async function dispatchWebhooks(event: string, data: unknown, userId: string): Promise<void> {
   try {
     const webhooks = await prisma.webhook.findMany({
       where: {
@@ -108,7 +108,7 @@ export async function dispatchWebhooks(event: string, data: any, userId: string)
 
     for (const webhook of webhooks) {
       // Fire-and-forget: don't await delivery
-      deliverWebhook(webhook.id, webhook.url, webhook.secret, event, data).catch(() => {});
+      void deliverWebhook(webhook.id, webhook.url, webhook.secret, event, data).catch(() => { });
     }
   } catch (error) {
     console.error('Failed to dispatch webhooks:', error);

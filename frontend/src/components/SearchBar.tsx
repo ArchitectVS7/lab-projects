@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, X, Calendar } from 'lucide-react';
 import type { TaskStatus, TaskPriority, User, Project } from '../types';
 
@@ -24,15 +24,7 @@ export default function SearchBar({ onSearch, projects = [], users = [], initial
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>(initialFilters);
 
-  // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      handleSearch();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     const allFilters: SearchFilters = {
       ...(searchTerm && { q: searchTerm }),
       ...(filters.status && { status: filters.status }),
@@ -43,9 +35,17 @@ export default function SearchBar({ onSearch, projects = [], users = [], initial
       ...(filters.dueDateTo && { dueDateTo: filters.dueDateTo }),
     };
     onSearch(allFilters);
-  };
+  }, [searchTerm, filters, onSearch]);
 
-  const updateFilter = (key: keyof SearchFilters, value: any) => {
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleSearch();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm, handleSearch]);
+
+  const updateFilter = (key: keyof SearchFilters, value: string | undefined) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
     // Apply immediately

@@ -41,7 +41,7 @@ export function initializeSocket(httpServer: HttpServer) {
       }
 
       const payload = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
-      (socket as any).userId = payload.userId;
+      (socket as unknown as { userId: string }).userId = payload.userId;
       next();
     } catch {
       next(new Error('Invalid or expired token'));
@@ -49,10 +49,10 @@ export function initializeSocket(httpServer: HttpServer) {
   });
 
   io.on('connection', (socket: Socket) => {
-    const userId = (socket as any).userId as string;
+    const userId = (socket as unknown as { userId: string }).userId;
 
     // Auto-join personal room
-    socket.join(`user:${userId}`);
+    void socket.join(`user:${userId}`);
 
     // Track online users
     if (!onlineUsers.has(userId)) {
@@ -67,11 +67,11 @@ export function initializeSocket(httpServer: HttpServer) {
 
     // Join/leave task rooms
     socket.on('task:join', (taskId: string) => {
-      socket.join(`task:${taskId}`);
+      void socket.join(`task:${taskId}`);
     });
 
     socket.on('task:leave', (taskId: string) => {
-      socket.leave(`task:${taskId}`);
+      void socket.leave(`task:${taskId}`);
     });
 
     // Typing indicators for comments

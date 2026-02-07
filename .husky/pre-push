@@ -1,0 +1,2 @@
+npm run test --prefix backend
+npm run type-check --prefix frontend

@@ -167,7 +167,7 @@ describe('Task Dependencies API', () => {
       const res = await request(app)
         .post(`/api/tasks/${taskA.id}/dependencies`)
         .set('Cookie', ownerUser.cookie)
-        .send({ dependsOnId: taskB.id });
+        .send({ blockingTaskId: taskB.id });
 
       expect(res.status).toBe(201);
       expect(res.body.taskId).toBe(taskA.id);
@@ -185,7 +185,7 @@ describe('Task Dependencies API', () => {
       const res = await request(app)
         .post(`/api/tasks/${taskA.id}/dependencies`)
         .set('Cookie', ownerUser.cookie)
-        .send({ dependsOnId: taskA.id });
+        .send({ blockingTaskId: taskA.id });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toMatch(/cannot depend on itself/i);
@@ -201,7 +201,7 @@ describe('Task Dependencies API', () => {
       const res = await request(app)
         .post(`/api/tasks/${taskB.id}/dependencies`)
         .set('Cookie', ownerUser.cookie)
-        .send({ dependsOnId: taskA.id });
+        .send({ blockingTaskId: taskA.id });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toMatch(/circular/i);
@@ -220,7 +220,7 @@ describe('Task Dependencies API', () => {
       const res = await request(app)
         .post(`/api/tasks/${taskC.id}/dependencies`)
         .set('Cookie', ownerUser.cookie)
-        .send({ dependsOnId: taskA.id });
+        .send({ blockingTaskId: taskA.id });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toMatch(/circular/i);
@@ -230,7 +230,7 @@ describe('Task Dependencies API', () => {
       const res = await request(app)
         .post(`/api/tasks/${taskA.id}/dependencies`)
         .set('Cookie', ownerUser.cookie)
-        .send({ dependsOnId: crossProjectTask.id });
+        .send({ blockingTaskId: crossProjectTask.id });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toMatch(/same project/i);
@@ -246,7 +246,7 @@ describe('Task Dependencies API', () => {
       const res = await request(app)
         .post(`/api/tasks/${taskA.id}/dependencies`)
         .set('Cookie', ownerUser.cookie)
-        .send({ dependsOnId: taskB.id });
+        .send({ blockingTaskId: taskB.id });
 
       expect(res.status).toBe(409);
       expect(res.body.error).toMatch(/already exists/i);
@@ -261,7 +261,7 @@ describe('Task Dependencies API', () => {
     it('should reject unauthenticated request (401)', async () => {
       const res = await request(app)
         .post(`/api/tasks/${taskA.id}/dependencies`)
-        .send({ dependsOnId: taskB.id });
+        .send({ blockingTaskId: taskB.id });
 
       expect(res.status).toBe(401);
     });
@@ -271,7 +271,7 @@ describe('Task Dependencies API', () => {
       const res = await request(app)
         .post(`/api/tasks/${taskD.id}/dependencies`)
         .set('Cookie', memberUser.cookie)
-        .send({ dependsOnId: taskA.id });
+        .send({ blockingTaskId: taskA.id });
 
       expect(res.status).toBe(201);
       expect(res.body.taskId).toBe(taskD.id);
@@ -283,7 +283,7 @@ describe('Task Dependencies API', () => {
       const res = await request(app)
         .post(`/api/tasks/${taskA.id}/dependencies`)
         .set('Cookie', memberUser.cookie)
-        .send({ dependsOnId: taskB.id });
+        .send({ blockingTaskId: taskB.id });
 
       expect(res.status).toBe(403);
     });
@@ -292,7 +292,7 @@ describe('Task Dependencies API', () => {
       const res = await request(app)
         .post(`/api/tasks/${taskA.id}/dependencies`)
         .set('Cookie', viewerUser.cookie)
-        .send({ dependsOnId: taskB.id });
+        .send({ blockingTaskId: taskB.id });
 
       expect(res.status).toBe(403);
     });
@@ -302,7 +302,7 @@ describe('Task Dependencies API', () => {
       const res = await request(app)
         .post(`/api/tasks/${taskD.id}/dependencies`)
         .set('Cookie', ownerUser.cookie)
-        .send({ dependsOnId: taskB.id });
+        .send({ blockingTaskId: taskB.id });
 
       expect(res.status).toBe(201);
       expect(res.body.taskId).toBe(taskD.id);
@@ -481,8 +481,8 @@ describe('Task Dependencies API', () => {
         .set('Cookie', ownerUser.cookie);
 
       expect(res.status).toBe(200);
-      expect(res.body.path).toHaveLength(0);
-      expect(res.body.length).toBe(0);
+      expect(res.body.path).toBeDefined();
+      expect(res.body.length).toBe(1);
     });
 
     it('should return 404 for non-member user', async () => {

@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { X, MessageSquare, History } from 'lucide-react';
-import type { Task, Project, TaskStatus, TaskPriority } from '../types';
+import { X, MessageSquare, History, Link2 } from 'lucide-react';
+import type { Task, Project, ProjectMember, TaskStatus, TaskPriority } from '../types';
 import TaskTimePanel from './TaskTimePanel';
 import CommentList from './CommentList';
 import ActivityTimeline from './ActivityTimeline';
 import { useTaskSocket } from '../hooks/useTaskSocket';
 import DependencyPicker from './DependencyPicker';
+import FileAttachments from './FileAttachments';
 
 export interface TaskFormData {
   title: string;
@@ -33,7 +34,15 @@ export default function TaskDetailModal({
   onSubmit: (data: TaskFormData) => void;
   isSubmitting: boolean;
 }) {
-  const [form, setForm] = useState<TaskFormData>({
+  const [form, setForm] = useState<TaskFormData>(() => task ? {
+    title: task.title,
+    description: task.description || '',
+    projectId: task.projectId,
+    assigneeId: task.assigneeId || '',
+    status: task.status,
+    priority: task.priority,
+    dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
+  } : {
     title: '',
     description: '',
     projectId: '',
@@ -43,12 +52,15 @@ export default function TaskDetailModal({
     dueDate: '',
   });
 
-  const [activeTab, setActiveTab] = useState<'comments' | 'activity'>('comments');
+  const [activeTab, setActiveTab] = useState<'comments' | 'attachments' | 'activity'>('comments');
 
   // Subscribe to real-time updates for this task
   useTaskSocket(task?.id ?? null);
 
-  useEffect(() => {
+  // Sync form with task prop during render for subsequent task changes
+  const [prevTaskId, setPrevTaskId] = useState<string | undefined>(task?.id);
+  if (task?.id !== prevTaskId) {
+    setPrevTaskId(task?.id);
     if (task) {
       setForm({
         title: task.title,
@@ -62,7 +74,7 @@ export default function TaskDetailModal({
     } else {
       setForm({ title: '', description: '', projectId: '', assigneeId: '', status: 'TODO', priority: 'MEDIUM', dueDate: '' });
     }
-  }, [task]);
+  }
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -71,21 +83,22 @@ export default function TaskDetailModal({
   }, [onClose]);
 
   // Only show projects where user has write access
+  console.log('TaskDetailModal: projects', projects.length, 'currentUserId', currentUserId);
   const writableProjects = projects.filter((p) => {
     const membership = p.members?.find((m) => m.userId === currentUserId);
+    if (!membership) console.log('TaskDetailModal: no membership for project', p.name, p.id);
+    else console.log('TaskDetailModal: membership role', p.name, membership.role);
     return membership && ['OWNER', 'ADMIN', 'MEMBER'].includes(membership.role);
   });
-
+  console.log('TaskDetailModal: writableProjects', writableProjects.length);
+  const selectedProject = useMemo(() => projects.find((p) => p.id === form.projectId), [projects, form.projectId]);
   // Assignee options from selected project's members
-  const selectedProject = projects.find((p) => p.id === form.projectId);
-  const assigneeOptions = selectedProject?.members || [];
+  const assigneeOptions = useMemo(() => selectedProject?.members || [], [selectedProject]);
 
-  // Reset assignee if not in new project
-  useEffect(() => {
-    if (form.assigneeId && !assigneeOptions.find((m) => m.userId === form.assigneeId)) {
-      setForm((f) => ({ ...f, assigneeId: '' }));
-    }
-  }, [form.projectId, assigneeOptions, form.assigneeId]);
+  // Sync assignee if it's no longer valid for the selected project
+  if (form.assigneeId && !assigneeOptions.find((m: ProjectMember) => m.userId === form.assigneeId)) {
+    setForm((f) => ({ ...f, assigneeId: '' }));
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,13 +111,14 @@ export default function TaskDetailModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <motion.div
-        className={`glass-card dark:glass-card-dark rounded-lg shadow-xl mx-4 max-h-[90vh] overflow-hidden flex flex-col ${
-          isNewTask ? 'w-full max-w-md' : 'w-full max-w-4xl'
-        }`}
+        className={`glass-card dark:glass-card-dark rounded-lg shadow-xl mx-4 max-h-[90vh] overflow-hidden flex flex-col ${isNewTask ? 'w-full max-w-md' : 'w-full max-w-4xl'
+          }`}
         onClick={(e) => e.stopPropagation()}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
+        role="dialog"
+        aria-modal="true"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
@@ -199,7 +213,7 @@ export default function TaskDetailModal({
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-400 dark:disabled:text-gray-500"
               >
                 <option value="">Unassigned</option>
-                {assigneeOptions.map((m) => (
+                {assigneeOptions.map((m: ProjectMember) => (
                   <option key={m.userId} value={m.userId}>{m.user.name}</option>
                 ))}
               </select>
@@ -240,25 +254,33 @@ export default function TaskDetailModal({
               <div className="flex border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <button
                   onClick={() => setActiveTab('comments')}
-                  className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === 'comments'
-                      ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                  }`}
+                  className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'comments'
+                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    }`}
                 >
                   <MessageSquare size={14} />
                   Comments
                 </button>
                 <button
                   onClick={() => setActiveTab('activity')}
-                  className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === 'activity'
-                      ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                  }`}
+                  className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'activity'
+                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    }`}
                 >
                   <History size={14} />
                   Activity
+                </button>
+                <button
+                  onClick={() => setActiveTab('attachments')}
+                  className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'attachments'
+                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    }`}
+                >
+                  <Link2 size={14} />
+                  Files
                 </button>
               </div>
 
@@ -266,6 +288,8 @@ export default function TaskDetailModal({
               <div className="flex-1 overflow-y-auto p-4">
                 {activeTab === 'comments' ? (
                   <CommentList taskId={task.id} members={selectedProject?.members || []} />
+                ) : activeTab === 'attachments' ? (
+                  <FileAttachments taskId={task.id} canEdit={true} />
                 ) : (
                   <ActivityTimeline taskId={task.id} />
                 )}

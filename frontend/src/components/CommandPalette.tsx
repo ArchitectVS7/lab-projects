@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCommandPaletteStore } from '../store/commandPalette';
@@ -35,7 +35,7 @@ export default function CommandPalette() {
   const [quickCreateMode, setQuickCreateMode] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const navigationCommands: Command[] = [
+  const navigationCommands: Command[] = useMemo(() => [
     {
       id: 'nav-dashboard',
       label: 'Go to Dashboard',
@@ -64,9 +64,9 @@ export default function CommandPalette() {
       action: () => { navigate('/profile'); close(); },
       group: 'navigation',
     },
-  ];
+  ], [navigate, close]);
 
-  const taskCommands: Command[] = [
+  const taskCommands: Command[] = useMemo(() => [
     {
       id: 'task-new',
       label: 'Create New Task',
@@ -81,9 +81,9 @@ export default function CommandPalette() {
       action: () => { setQuickCreateMode(true); setQuery(''); },
       group: 'tasks',
     },
-  ];
+  ], [navigate, close]);
 
-  const projectCommands: Command[] = [
+  const projectCommands: Command[] = useMemo(() => [
     {
       id: 'project-new',
       label: 'Create New Project',
@@ -91,15 +91,15 @@ export default function CommandPalette() {
       action: () => { navigate('/projects?new=true'); close(); },
       group: 'projects',
     },
-  ];
+  ], [navigate, close]);
 
-  const allCommands = [...navigationCommands, ...taskCommands, ...projectCommands];
+  const allCommands = useMemo(() => [...navigationCommands, ...taskCommands, ...projectCommands], [navigationCommands, taskCommands, projectCommands]);
 
   // Filter commands based on query
   const filteredCommands = query
     ? allCommands.filter((cmd) =>
-        cmd.label.toLowerCase().includes(query.toLowerCase())
-      )
+      cmd.label.toLowerCase().includes(query.toLowerCase())
+    )
     : allCommands;
 
   // Search tasks when query is present
@@ -127,7 +127,7 @@ export default function CommandPalette() {
   }, [query]);
 
   // Combine commands and search results
-  const allItems = [
+  const allItems = useMemo(() => [
     ...filteredCommands,
     ...searchResults.map((task) => ({
       id: `task-${task.id}`,
@@ -136,7 +136,7 @@ export default function CommandPalette() {
       action: () => { navigate(`/tasks?taskId=${task.id}`); close(); },
       group: 'tasks' as const,
     })),
-  ];
+  ], [filteredCommands, searchResults, navigate, close]);
 
   // Reset selected index when items change
   useEffect(() => {
@@ -191,93 +191,94 @@ export default function CommandPalette() {
           exit={{ opacity: 0 }}
         >
           <motion.div
+            role="dialog"
+            aria-modal="true"
             className="glass-card dark:glass-card-dark rounded-lg shadow-xl w-full max-w-2xl mx-4"
             onClick={(e) => e.stopPropagation()}
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
           >
-        {/* Search Input */}
-        <div className="flex items-center gap-3 p-4 border-b border-gray-200 dark:border-gray-700">
-          <Search size={20} className="text-gray-400" />
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Type a command or search..."
-            className="flex-1 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none text-base"
-          />
-          <button
-            onClick={close}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Results */}
-        <div className="max-h-96 overflow-y-auto">
-          {quickCreateMode ? (
-            <div className="p-4">
-              <SmartTaskInput
-                autoFocus
-                onCreated={() => { close(); }}
-                onCancel={() => setQuickCreateMode(false)}
+            {/* Search Input */}
+            <div className="flex items-center gap-3 p-4 border-b border-gray-200 dark:border-gray-700">
+              <Search size={20} className="text-gray-400" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Type a command or search..."
+                className="flex-1 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none text-base"
               />
+              <button
+                onClick={close}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X size={20} />
+              </button>
             </div>
-          ) : (
-            <>
-              {allItems.length === 0 && !isSearching && (
-                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                  No results found
+
+            {/* Results */}
+            <div className="max-h-96 overflow-y-auto">
+              {quickCreateMode ? (
+                <div className="p-4">
+                  <SmartTaskInput
+                    autoFocus
+                    onCreated={() => { close(); }}
+                    onCancel={() => setQuickCreateMode(false)}
+                  />
                 </div>
+              ) : (
+                <>
+                  {allItems.length === 0 && !isSearching && (
+                    <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                      No results found
+                    </div>
+                  )}
+
+                  {isSearching && (
+                    <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                      Searching...
+                    </div>
+                  )}
+
+                  {allItems.map((item, index) => {
+                    const Icon = item.icon;
+                    const isSelected = index === selectedIndex;
+
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={item.action}
+                        onMouseEnter={() => setSelectedIndex(index)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${isSelected
+                          ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                          }`}
+                      >
+                        <Icon size={18} />
+                        <span className="flex-1 text-sm font-medium">{item.label}</span>
+                        {item.group === 'navigation' && (
+                          <span className="text-xs text-gray-400 dark:text-gray-500">Navigate</span>
+                        )}
+                        {item.group === 'tasks' && item.id.startsWith('task-') && item.id !== 'task-new' && item.id !== 'task-quick-create' && (
+                          <span className="text-xs text-gray-400 dark:text-gray-500">Task</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </>
               )}
+            </div>
 
-              {isSearching && (
-                <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
-                  Searching...
-                </div>
-              )}
-
-              {allItems.map((item, index) => {
-                const Icon = item.icon;
-                const isSelected = index === selectedIndex;
-
-                return (
-                  <button
-                    key={item.id}
-                    onClick={item.action}
-                    onMouseEnter={() => setSelectedIndex(index)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
-                      isSelected
-                        ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    <Icon size={18} />
-                    <span className="flex-1 text-sm font-medium">{item.label}</span>
-                    {item.group === 'navigation' && (
-                      <span className="text-xs text-gray-400 dark:text-gray-500">Navigate</span>
-                    )}
-                    {item.group === 'tasks' && item.id.startsWith('task-') && item.id !== 'task-new' && item.id !== 'task-quick-create' && (
-                      <span className="text-xs text-gray-400 dark:text-gray-500">Task</span>
-                    )}
-                  </button>
-                );
-              })}
-            </>
-          )}
-        </div>
-
-        {/* Footer hint */}
-        <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-          <div className="flex items-center gap-4">
-            <span><kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">↑↓</kbd> Navigate</span>
-            <span><kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">Enter</kbd> Select</span>
-            <span><kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">Esc</kbd> Close</span>
-          </div>
-        </div>
+            {/* Footer hint */}
+            <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+              <div className="flex items-center gap-4">
+                <span><kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">↑↓</kbd> Navigate</span>
+                <span><kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">Enter</kbd> Select</span>
+                <span><kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">Esc</kbd> Close</span>
+              </div>
+            </div>
           </motion.div>
         </motion.div>
       )}

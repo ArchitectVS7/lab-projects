@@ -23,6 +23,7 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
     const cursorId = (req.query.cursor as string) || undefined;
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string, 10) || 20));
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
       userId: req.userId!,
     };
@@ -34,6 +35,7 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (hasCursorParam) {
       // Cursor-based pagination
       // Secondary sort on id ensures deterministic ordering for stable cursor traversal
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const findArgs: any = {
         where,
         orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],

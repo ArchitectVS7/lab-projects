@@ -1,16 +1,23 @@
 import prisma from './prisma.js';
+import { getIO } from './socket.js';
 
 const TRACKED_FIELDS = ['title', 'description', 'status', 'priority', 'assigneeId', 'dueDate'] as const;
 
 export async function logTaskCreated(taskId: string, userId: string) {
   try {
-    await prisma.activityLog.create({
+    const activity = await prisma.activityLog.create({
       data: {
         action: 'CREATED',
         taskId,
         userId,
       },
     });
+
+    const io = getIO();
+    if (io) {
+      io.to(`task:${taskId}`).emit('task:updated', { taskId });
+      io.to(`task:${taskId}`).emit('activity:new', activity);
+    }
   } catch (error) {
     console.error('Failed to log task creation:', error);
   }
@@ -24,11 +31,11 @@ export async function logTaskChanges({
 }: {
   taskId: string;
   userId: string;
-  oldTask: Record<string, any>;
-  newTask: Record<string, any>;
+  oldTask: Record<string, unknown>;
+  newTask: Record<string, unknown>;
 }) {
   try {
-    const logs: { action: 'UPDATED'; field: string; oldValue: string | null; newValue: string | null; taskId: string; userId: string }[] = [];
+    const logsData: { action: 'UPDATED'; field: string; oldValue: string | null; newValue: string | null; taskId: string; userId: string }[] = [];
 
     for (const field of TRACKED_FIELDS) {
       const oldVal = oldTask[field];
@@ -39,7 +46,7 @@ export async function logTaskChanges({
       const newStr = newVal == null ? null : String(newVal);
 
       if (oldStr !== newStr) {
-        logs.push({
+        logsData.push({
           action: 'UPDATED',
           field,
           oldValue: oldStr,
@@ -50,8 +57,20 @@ export async function logTaskChanges({
       }
     }
 
-    if (logs.length > 0) {
-      await prisma.activityLog.createMany({ data: logs });
+    if (logsData.length > 0) {
+      const createdLogs = await prisma.$transaction(
+        logsData.map(log => prisma.activityLog.create({ data: log }))
+      );
+
+      const io = getIO();
+      if (io) {
+        io.to(`task:${taskId}`).emit('task:updated', { taskId });
+        // Emit each log or a batch? useTaskSocket expects 'activity:new'.
+        // Sending multiple might be noisy but correct.
+        createdLogs.forEach(log => {
+          io.to(`task:${taskId}`).emit('activity:new', log);
+        });
+      }
     }
   } catch (error) {
     console.error('Failed to log task changes:', error);
@@ -68,6 +87,12 @@ export async function logTaskDeleted(taskId: string, userId: string, taskTitle: 
         oldValue: taskTitle,
       },
     });
+
+    const io = getIO();
+    if (io) {
+      io.to(`task:${taskId}`).emit('task:deleted', { taskId }); // Custom event, though frontend might not listen to it yet
+      io.to(`task:${taskId}`).emit('task:updated', { taskId });
+    }
   } catch (error) {
     console.error('Failed to log task deletion:', error);
   }
@@ -75,7 +100,7 @@ export async function logTaskDeleted(taskId: string, userId: string, taskTitle: 
 
 export async function logDependencyAdded(taskId: string, userId: string, dependsOnTitle: string) {
   try {
-    await prisma.activityLog.create({
+    const activity = await prisma.activityLog.create({
       data: {
         action: 'DEPENDENCY_ADDED',
         taskId,
@@ -83,6 +108,12 @@ export async function logDependencyAdded(taskId: string, userId: string, depends
         newValue: dependsOnTitle,
       },
     });
+
+    const io = getIO();
+    if (io) {
+      io.to(`task:${taskId}`).emit('task:updated', { taskId });
+      io.to(`task:${taskId}`).emit('activity:new', activity);
+    }
   } catch (error) {
     console.error('Failed to log dependency added:', error);
   }
@@ -90,7 +121,7 @@ export async function logDependencyAdded(taskId: string, userId: string, depends
 
 export async function logDependencyRemoved(taskId: string, userId: string, dependsOnTitle: string) {
   try {
-    await prisma.activityLog.create({
+    const activity = await prisma.activityLog.create({
       data: {
         action: 'DEPENDENCY_REMOVED',
         taskId,
@@ -98,6 +129,12 @@ export async function logDependencyRemoved(taskId: string, userId: string, depen
         oldValue: dependsOnTitle,
       },
     });
+
+    const io = getIO();
+    if (io) {
+      io.to(`task:${taskId}`).emit('task:updated', { taskId });
+      io.to(`task:${taskId}`).emit('activity:new', activity);
+    }
   } catch (error) {
     console.error('Failed to log dependency removed:', error);
   }
@@ -109,13 +146,20 @@ export async function logCommentAction(
   userId: string,
 ) {
   try {
-    await prisma.activityLog.create({
+    const activity = await prisma.activityLog.create({
       data: {
         action,
         taskId,
         userId,
       },
     });
+
+    const io = getIO();
+    if (io) {
+      io.to(`task:${taskId}`).emit('activity:new', activity);
+      // Comments have their own events (comment:new) usually emitted by the route, 
+      // but activity log should also trigger activity:new
+    }
   } catch (error) {
     console.error('Failed to log comment action:', error);
   }

@@ -4,7 +4,7 @@ import { Square, ChevronUp, ChevronDown, Timer } from 'lucide-react';
 import { useTimerStore } from '../store/timer';
 import { timeEntriesApi } from '../lib/api';
 import { useQueryClient } from '@tanstack/react-query';
-import { useToastStore } from './Toast';
+import { useToastStore } from '../store/toast';
 import clsx from 'clsx';
 
 function formatElapsed(seconds: number): string {

@@ -4,10 +4,6 @@ import prisma from '../lib/prisma.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
 import { logDependencyAdded, logDependencyRemoved } from '../lib/activityLog.js';
-
-// Let's stick to the generated file structure but fix the fields.
-// Also "dependsOnId" in the request body is fine (client side terminology), but maps to "blockingId".
-
 import { getIO } from '../lib/socket.js';
 
 const router = Router();
@@ -54,11 +50,17 @@ function canModifyTask(
  * Graph direction: Blocking -> Blocked.
  * We are adding edge: target -> start.
  * Check if path start -> ... -> target exists.
+ * 
+ * In DB: 'dependsOnId' is the BLOCKER. 'taskId' is the BLOCKED.
+ * We want to add: taskId=blockedId, dependsOnId=blockingId.
+ * Cycle if blockingId depends on ... -> blockedId.
  */
 async function wouldCreateCycle(blockingId: string, blockedId: string): Promise<boolean> {
   // We want to add blockingId -> blockedId.
   // Check if there is already a path from blockedId to blockingId.
   // If so, adding the edge would close the cycle.
+  // In schema terms: blockedId will have dependsOnId=blockingId
+  // We check if blockingId has a chain that leads to blockedId
 
   const visited = new Set<string>();
   const stack = [blockedId]; // Start searching from the task that is being inhibited
@@ -69,16 +71,16 @@ async function wouldCreateCycle(blockingId: string, blockedId: string): Promise<
     if (visited.has(current)) continue;
     visited.add(current);
 
-    // Find what 'current' blocks.
-    // current is blocking X, Y, Z.
-    // relations: blockingId=current, blockedId=X
+    // Find what 'current' blocks (tasks that depend on current)
+    // In schema: find TaskDependency where dependsOnId = current
+    // Those taskIds are blocked by current
     const downstream = await prisma.taskDependency.findMany({
-      where: { blockingId: current },
-      select: { blockedId: true },
+      where: { dependsOnId: current },
+      select: { taskId: true },
     });
 
     for (const dep of downstream) {
-      stack.push(dep.blockedId);
+      stack.push(dep.taskId);
     }
   }
 
@@ -104,8 +106,8 @@ router.post('/tasks/:id/dependencies', authenticate, async (req: AuthRequest, re
     validateUUID(req.params.id, 'task ID');
     const data = addDependencySchema.parse(req.body); // data.blockingTaskId is blockingId
 
-    const blockedId = req.params.id;
-    const blockingId = data.blockingTaskId;
+    const blockedId = req.params.id; // This maps to 'taskId' in TaskDependency
+    const blockingId = data.blockingTaskId; // This maps to 'dependsOnId' in TaskDependency
 
     // Self-dependency check
     if (blockedId === blockingId) {
@@ -138,7 +140,7 @@ router.post('/tasks/:id/dependencies', authenticate, async (req: AuthRequest, re
 
     // Check for duplicate
     const existing = await prisma.taskDependency.findUnique({
-      where: { blockingId_blockedId: { blockingId, blockedId } },
+      where: { taskId_dependsOnId: { taskId: blockedId, dependsOnId: blockingId } },
     });
     if (existing) {
       // Idempotent success
@@ -153,11 +155,11 @@ router.post('/tasks/:id/dependencies', authenticate, async (req: AuthRequest, re
 
     const dependency = await prisma.taskDependency.create({
       data: {
-        blockingId,
-        blockedId,
+        taskId: blockedId,
+        dependsOnId: blockingId,
       },
       include: {
-        blocking: { select: taskSelect }, // Return the blocking task details
+        dependsOn: { select: taskSelect }, // Return the blocking task details
       },
     });
 
@@ -198,16 +200,16 @@ router.get('/tasks/:id/dependencies', authenticate, async (req: AuthRequest, res
     // blocks: Tasks that THIS task blocks
     const [blocking, blockedBy] = await Promise.all([
       prisma.taskDependency.findMany({
-        where: { blockedId: req.params.id }, // I am blocked by...
+        where: { taskId: req.params.id }, // I am blocked by...
         include: {
-          blocking: { select: taskSelect },
+          dependsOn: { select: taskSelect },
         },
         orderBy: { createdAt: 'asc' },
       }),
       prisma.taskDependency.findMany({
-        where: { blockingId: req.params.id }, // I am blocking...
+        where: { dependsOnId: req.params.id }, // I am blocking...
         include: {
-          blocked: { select: taskSelect },
+          task: { select: taskSelect },
         },
         orderBy: { createdAt: 'asc' },
       }),
@@ -216,12 +218,12 @@ router.get('/tasks/:id/dependencies', authenticate, async (req: AuthRequest, res
     res.json({
       dependsOn: blocking.map((d) => ({
         id: d.id,
-        task: d.blocking, // The task that blocks me
+        task: d.dependsOn, // The task that blocks me
         createdAt: d.createdAt,
       })),
       blocks: blockedBy.map((d) => ({
         id: d.id,
-        task: d.blocked, // The task I block
+        task: d.task, // The task I block
         createdAt: d.createdAt,
       })),
     });
@@ -231,38 +233,23 @@ router.get('/tasks/:id/dependencies', authenticate, async (req: AuthRequest, res
 });
 
 // DELETE /api/tasks/:id/dependencies/:depId
-// Remove dependency. depId is the ID of the Dependency Record, NOT the task ID.
-// Wait, my plan said :dependencyId but usually FE prefers sending blockingTaskId.
-// But :depId is safer if unique.
-// Let's stick to :depId being the Dependency Record ID for REST correctness.
 router.delete('/tasks/:id/dependencies/:depId', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     validateUUID(req.params.id, 'task ID');
     validateUUID(req.params.depId, 'dependency ID');
 
-    // Find dependency to check permissions
-    // We need to know if it belongs to task :id
-    // It could be that task :id is the blocked one, OR the blocking one?
-    // Usually "remove dependency FROM task :id" implies :id is the blocked one.
-
     const dependency = await prisma.taskDependency.findUnique({
       where: { id: req.params.depId },
       include: {
-        blocked: { select: { projectId: true, id: true } },
-        blocking: { select: { title: true } }
+        task: { select: { projectId: true, id: true } }, // Blocked task
+        dependsOn: { select: { title: true } } // Blocking task
       },
     });
 
     // Ensure consistency
-    if (!dependency || dependency.blockedId !== req.params.id) {
-      // If the user tries to delete a dependency where :id is the blocker, maybe allow it?
-      // But semantic '/tasks/:id/dependencies' usually implies 'req.params.id' is the "subject".
-      // If I am blocked by X, I want to remove X.
-      // If I block Y, I might want to unblock Y?
-      // Let's enforce that :id must be one of the parties.
-      if (!dependency || (dependency.blockedId !== req.params.id && dependency.blockingId !== req.params.id)) {
-        throw new AppError('Dependency not found or not related to this task', 404);
-      }
+    // Let's enforce that :id must be one of the parties.
+    if (!dependency || (dependency.taskId !== req.params.id && dependency.dependsOnId !== req.params.id)) {
+      throw new AppError('Dependency not found or not related to this task', 404);
     }
 
     if (!dependency) { // TypeScript check
@@ -270,15 +257,11 @@ router.delete('/tasks/:id/dependencies/:depId', authenticate, async (req: AuthRe
     }
 
     // Auth check on the PROJECT
-    const membership = await getProjectMembership(req.userId!, dependency.blocked.projectId);
-    // User needs edit rights on the project or the tasks?
-    // Let's require project edit rights (Owner/Admin) or being the creator of the blocked task?
     // Simplified: Check standard modify permission on the blocked task.
-    // We don't have blocked task full details here, but we have projectID.
     // We need creatorId to check MEMBER role.
+    const blockedTask = await prisma.task.findUnique({ where: { id: dependency.taskId }, select: { creatorId: true } });
 
-    const blockedTask = await prisma.task.findUnique({ where: { id: dependency.blockedId }, select: { creatorId: true } });
-
+    const membership = await getProjectMembership(req.userId!, dependency.task.projectId);
     if (!blockedTask || !canModifyTask(membership, blockedTask, req.userId!)) {
       throw new AppError('You cannot modify this task', 403);
     }
@@ -288,15 +271,18 @@ router.delete('/tasks/:id/dependencies/:depId', authenticate, async (req: AuthRe
     });
 
     // Log activity
-    await logDependencyRemoved(dependency.blockedId, req.userId!, dependency.blocking.title);
+    await logDependencyRemoved(dependency.taskId, req.userId!, dependency.dependsOn.title);
 
     const io = getIO();
     if (io) {
-      io.to(`task:${dependency.blockedId}`).emit('dependency:removed', { id: req.params.depId });
+      io.to(`task:${dependency.taskId}`).emit('dependency:removed', { id: req.params.depId });
     }
 
     res.status(204).send();
-  });
+  } catch (error) {
+    next(error);
+  }
+});
 
 // GET /api/projects/:id/critical-path - Calculate critical path
 router.get('/projects/:id/critical-path', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -321,7 +307,7 @@ router.get('/projects/:id/critical-path', authenticate, async (req: AuthRequest,
         ...taskSelect,
         dependsOn: {
           select: {
-            blockingId: true,
+            dependsOnId: true, // ID of the blocking task
           },
         },
       },
@@ -331,7 +317,7 @@ router.get('/projects/:id/critical-path', authenticate, async (req: AuthRequest,
       return res.json({ path: [], length: 0 });
     }
 
-    // Build adjacency list: task -> list of tasks it blocks
+    // Build adjacency list: task -> list of tasks it blocks (downstream)
     const graph = new Map<string, string[]>();
     const inDegree = new Map<string, number>();
     const taskMap = new Map(tasks.map(t => [t.id, t]));
@@ -345,9 +331,11 @@ router.get('/projects/:id/critical-path', authenticate, async (req: AuthRequest,
     // Build graph from dependencies
     for (const task of tasks) {
       for (const dep of task.dependsOn) {
-        const blockingId = dep.blockingId;
+        const blockingId = dep.dependsOnId;
         // Only consider if blocking task is also in our task set (non-DONE)
         if (taskMap.has(blockingId)) {
+          // blockingId BLOCKS task.id
+          // Edge: blockingId -> task.id
           graph.get(blockingId)!.push(task.id);
           inDegree.set(task.id, (inDegree.get(task.id) || 0) + 1);
         }
@@ -359,7 +347,7 @@ router.get('/projects/:id/critical-path', authenticate, async (req: AuthRequest,
     const distance = new Map<string, number>();
     const parent = new Map<string, string | null>();
 
-    // Start with nodes that have no dependencies
+    // Start with nodes that have no incoming edges (no blockers within this set)
     for (const [taskId, degree] of inDegree) {
       if (degree === 0) {
         queue.push(taskId);
@@ -407,7 +395,8 @@ router.get('/projects/:id/critical-path', authenticate, async (req: AuthRequest,
     }
 
     // Backtrack to build path
-    const path: typeof tasks = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const path: any[] = [];
     let current: string | null = endTask;
 
     while (current) {

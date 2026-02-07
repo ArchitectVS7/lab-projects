@@ -56,6 +56,12 @@ const taskInclude = {
       tag: true,
     },
   },
+  _count: {
+    select: {
+      dependsOn: true,
+      dependedOnBy: true,
+    },
+  },
 } as const;
 
 async function getProjectMembership(userId: string, projectId: string) {
@@ -176,6 +182,7 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
     const projectIds = userProjects.map(p => p.id);
 
     // Build filters
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
       projectId: { in: projectIds },
     };
@@ -238,6 +245,7 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (hasCursorParam) {
       // Cursor-based pagination
       // Secondary sort on id ensures deterministic ordering for stable cursor traversal
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const findArgs: any = {
         where,
         include: taskInclude,
@@ -541,6 +549,7 @@ router.get('/:id/activity', async (req: AuthRequest, res: Response, next: NextFu
     if (hasCursorParam) {
       // Cursor-based pagination
       // Secondary sort on id ensures deterministic ordering for stable cursor traversal
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const findArgs: any = {
         where: { taskId: req.params.id },
         orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
