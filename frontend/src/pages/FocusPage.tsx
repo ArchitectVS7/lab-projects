@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -114,6 +114,18 @@ export default function FocusPage() {
     queryKey: ['tasks'],
     queryFn: () => tasksApi.getAll(),
   });
+
+  // Handle Escape key to return to dashboard
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        navigate('/');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
 
   const completeMutation = useMutation({
     mutationFn: (taskId: string) => tasksApi.update(taskId, { status: 'DONE' as TaskStatus }),
