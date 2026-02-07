@@ -14,6 +14,10 @@ import analyticsRoutes from './routes/analytics.js';
 import recurringTasksRoutes from './routes/recurring-tasks.js';
 import timeEntriesRoutes from './routes/time-entries.js';
 import commentRoutes from './routes/comments.js';
+import exportRoutes from './routes/export.js';
+import tagRoutes from './routes/tags.js';
+import customFieldRoutes from './routes/custom-fields.js';
+import attachmentRoutes from './routes/attachments.js';
 
 dotenv.config();
 
@@ -58,6 +62,10 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/recurring-tasks', recurringTasksRoutes);
 app.use('/api/time-entries', timeEntriesRoutes);
 app.use('/api', commentRoutes);
+app.use('/api/export', exportRoutes);
+app.use('/api/tags', tagRoutes);
+app.use('/api/custom-fields', customFieldRoutes);
+app.use('/api/attachments', attachmentRoutes);
 
 // Health check -- verifies database connectivity
 app.get('/health', async (_req, res) => {

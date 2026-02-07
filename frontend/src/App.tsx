@@ -13,6 +13,7 @@ import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import ProfilePage from './pages/ProfilePage';
 import CalendarPage from './pages/CalendarPage';
+import FocusPage from './pages/FocusPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user);
@@ -59,6 +60,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
         <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
+        <Route path="/focus" element={<ProtectedRoute><FocusPage /></ProtectedRoute>} />
         <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route index element={<DashboardPage />} />
           <Route path="tasks" element={<TasksPage />} />

@@ -55,6 +55,7 @@ export interface Task {
   project: Pick<Project, 'id' | 'name' | 'color'>;
   assignee: Pick<User, 'id' | 'name' | 'avatarUrl'> | null;
   creator: Pick<User, 'id' | 'name'>;
+  tags?: TaskTag[];
 }
 
 // --- Time Entry ---
@@ -121,4 +122,57 @@ export interface ActivityLog {
   userId: string;
   createdAt: string;
   user: Pick<User, 'id' | 'name' | 'avatarUrl'>;
+}
+
+// --- Tag ---
+
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+  projectId: string;
+  createdAt: string;
+}
+
+export interface TaskTag {
+  taskId: string;
+  tagId: string;
+  tag: Tag;
+}
+
+// --- Custom Field ---
+
+export type CustomFieldType = 'TEXT' | 'NUMBER' | 'DATE' | 'DROPDOWN';
+
+export interface CustomFieldDefinition {
+  id: string;
+  name: string;
+  type: CustomFieldType;
+  options: string | null; // JSON array for DROPDOWN
+  required: boolean;
+  projectId: string;
+  createdAt: string;
+}
+
+export interface CustomFieldValue {
+  id: string;
+  value: string;
+  taskId: string;
+  fieldId: string;
+  field: CustomFieldDefinition;
+}
+
+// --- Attachment ---
+
+export interface Attachment {
+  id: string;
+  filename: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  path: string;
+  taskId: string;
+  uploadedById: string;
+  createdAt: string;
+  uploadedBy: Pick<User, 'id' | 'name' | 'avatarUrl'>;
 }

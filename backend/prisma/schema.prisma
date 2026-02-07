@@ -24,6 +24,7 @@ model User {
   recurringTasks RecurringTask[]
   comments       Comment[]
   activityLogs   ActivityLog[]
+  attachments    Attachment[]
 
   @@map("users")
 }
@@ -40,6 +41,8 @@ model Project {
   members        ProjectMember[]
   tasks          Task[]
   recurringTasks RecurringTask[]
+  tags           Tag[]
+  customFields   CustomFieldDefinition[]
 
   @@map("projects")
 }
@@ -69,6 +72,9 @@ model Task {
   timeEntries       TimeEntry[]
   comments          Comment[]
   activityLogs      ActivityLog[]
+  tags              TaskTag[]
+  customFieldValues CustomFieldValue[]
+  attachments       Attachment[]
 
   @@index([projectId])
   @@index([assigneeId])
@@ -242,4 +248,88 @@ model ActivityLog {
   @@index([userId])
   @@index([createdAt])
   @@map("activity_logs")
+}
+
+model Tag {
+  id        String   @id @default(uuid())
+  name      String
+  color     String   @default("#6366f1")
+  projectId String   @map("project_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks   TaskTag[]
+
+  @@unique([projectId, name])
+  @@index([projectId])
+  @@map("tags")
+}
+
+model TaskTag {
+  taskId String @map("task_id")
+  tagId  String @map("tag_id")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, tagId])
+  @@map("task_tags")
+}
+
+model CustomFieldDefinition {
+  id        String   @id @default(uuid())
+  name      String
+  type      CustomFieldType
+  options   String?  // JSON array for dropdown options
+  required  Boolean  @default(false)
+  projectId String   @map("project_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  values  CustomFieldValue[]
+
+  @@unique([projectId, name])
+  @@index([projectId])
+  @@map("custom_field_definitions")
+}
+
+model CustomFieldValue {
+  id         String @id @default(uuid())
+  value      String
+  taskId     String @map("task_id")
+  fieldId    String @map("field_id")
+
+  task  Task                  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  field CustomFieldDefinition @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, fieldId])
+  @@index([taskId])
+  @@index([fieldId])
+  @@map("custom_field_values")
+}
+
+model Attachment {
+  id           String   @id @default(uuid())
+  filename     String
+  originalName String   @map("original_name")
+  mimeType     String   @map("mime_type")
+  size         Int      // in bytes
+  path         String   // storage path
+  taskId       String   @map("task_id")
+  uploadedById String   @map("uploaded_by_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  task       Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploadedBy User @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([uploadedById])
+  @@map("attachments")
+}
+
+enum CustomFieldType {
+  TEXT
+  NUMBER
+  DATE
+  DROPDOWN
 }
