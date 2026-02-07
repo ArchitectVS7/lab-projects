@@ -12,8 +12,14 @@ This roadmap organizes TaskMan's evolution into balanced sprints, each containin
 
 ### Core Features
 - ✅ **Dark Mode** (3 days) - Light/Dark/System themes with persistence
+  - Zustand store (`theme.ts`) with `persist` middleware
+  - ThemeToggle component in Layout sidebar
 - ✅ **Search & Filtering** (5 days) - Full-text search, advanced filters, date ranges
+  - Filter bar in TasksPage (project, status, priority filters)
+  - Backend query param filtering in `tasks.ts` route
 - ✅ **Notifications System** (5 days) - Real-time notifications with auto-refresh
+  - `notifications.ts` backend route with CRUD
+  - `NotificationCenter.tsx` frontend component
 
 **Impact:** Modern baseline established. App no longer "vanilla."
 
@@ -30,12 +36,13 @@ This roadmap organizes TaskMan's evolution into balanced sprints, each containin
   - 5 preset themes (Indigo, Purple, Rose, Emerald, Amber)
   - Theme switcher UI in settings
   - Replace hardcoded colors with CSS variables
-  - Effort: Create `themes.ts`, update Tailwind config, add theme picker modal
+  - Implemented in `frontend/src/lib/themes.ts`
 
 - [x] **Layout Templates** (3-4 days)
   - 5 layouts: Compact, Spacious, Minimal, Split, Dashboard-First
   - Layout switcher in user settings
   - Collapsible sidebar for Minimal mode
+  - Implemented in `frontend/src/store/layout.ts`
   - **Result:** 5 colors × 5 layouts = 25 UI combinations
 
 ### Substantial Task
@@ -45,7 +52,7 @@ This roadmap organizes TaskMan's evolution into balanced sprints, each containin
   - Generate insights: "You complete tasks 30% faster on Tuesdays"
   - Smart suggestions: "This task usually takes 2 hours based on history"
   - Backend: Analytics table, aggregation queries
-  - Frontend: Insights dashboard widget
+  - Frontend: `InsightsWidget.tsx` dashboard component used in DashboardPage
 
 **Sprint Result:** Users can customize appearance to their taste + see intelligent insights about their productivity patterns.
 
@@ -64,11 +71,12 @@ This roadmap organizes TaskMan's evolution into balanced sprints, each containin
   - Keyboard navigation (arrows, Enter, Escape)
   - Keyboard-first workflow (Linear/Notion style)
   - Glass morphism styling with Framer Motion
+  - Implemented in `CommandPalette.tsx` + `useCommandPalette.ts`
 
 - ✅ **Glassmorphism + Micro-interactions** (3 days)
-  - Frosted glass effect on modals/cards
+  - Frosted glass effect on modals/cards (`GlassCard.tsx`, `glass-card` CSS classes)
   - Button hover scale animations
-  - Task completion celebrations (confetti)
+  - Task completion celebrations (confetti via `TaskCompletionCelebration.tsx`)
   - Smooth scale-in animations on modal open
   - Uses Framer Motion and canvas-confetti
 
@@ -81,74 +89,83 @@ This roadmap organizes TaskMan's evolution into balanced sprints, each containin
   - Automatic generation via cron scheduler (daily at 6 AM)
   - Manual generation endpoint
   - Recurring task badges in table and kanban views
-  - Backend: RecurringTask model, recurrence logic, API endpoints
-  - Frontend: RecurrencePickerModal UI, recurring badges
+  - Backend: RecurringTask model, `recurring-tasks.ts` route, `recurrence.ts` logic
+  - Frontend: `RecurrencePickerModal.tsx` UI, recurring badges with Repeat icon
 
 **Sprint Result:** App feels fast and polished. Power users can fly through tasks with keyboard shortcuts. Recurring tasks automate repetitive work.
 
 ---
 
-## Sprint 4: Time Management & Views
+## Sprint 4: Time Management & Views ✅ COMPLETED
+
+**Status:** All features implemented. Skeleton loading, empty states, time tracking, and calendar view all functional.
 
 **Goal:** Help users visualize and manage time better
 
 ### Quick Wins
-- [ ] **Skeleton Loading States** (2 days)
+- [x] **Skeleton Loading States** (2 days)
   - Replace spinners with content placeholders
-  - Dashboard, projects, tasks skeletons
-  - Perceived performance boost
+  - `Skeletons.tsx`: `DashboardSkeleton`, `TableSkeleton`, `KanbanSkeleton`, `ProjectCardSkeleton`
+  - View-aware loading (table skeleton vs kanban skeleton based on active view)
+  - Shimmer animation pattern with `animate-pulse`
 
-- [ ] **Empty State Illustrations** (1 day)
-  - Friendly illustrations for empty screens
-  - Use undraw.co or humaaans
-  - Onboarding guidance
+- [x] **Empty State Illustrations** (1 day)
+  - `EmptyStates.tsx`: SVG illustrations for tasks, projects, calendar, time entries
+  - `EmptyState.tsx`: Generic reusable empty state with action buttons
+  - Framer Motion slide-up entrance animations
+  - CTA buttons to create first items
 
 ### Substantial Task
-- [ ] **Time Tracking + Calendar View** (7 days)
+- [x] **Time Tracking + Calendar View** (7 days)
   - **Time Tracking:**
-    - Start/stop timer on tasks
-    - Manual time entry
+    - Start/stop timer on tasks (`TimerWidget.tsx`, `timer.ts` Zustand store)
+    - Manual time entry (`TaskTimePanel.tsx`)
     - Time estimates vs. actual
-    - Pomodoro mode (25min work / 5min break)
+    - Pomodoro mode (25min work / 5min break) — full countdown timer in store
   - **Calendar View:**
-    - Monthly calendar showing due dates
-    - Drag tasks to reschedule
-    - Week view option
-  - Backend: Time entries table
-  - Frontend: Calendar component (use `react-big-calendar` or build custom)
+    - Custom-built monthly calendar (`CalendarView.tsx`) — no external library needed
+    - Drag tasks to reschedule (drag-and-drop with overlay)
+    - Dedicated calendar page route (`CalendarPage.tsx`)
+  - Backend: `time-entries.ts` route with full CRUD
+  - Frontend: Timer widget, time panel, calendar component
 
 **Sprint Result:** Users can see tasks in time context + track how long things actually take.
 
 ---
 
-## Sprint 5: Team Collaboration
+## Sprint 5: Team Collaboration ✅ COMPLETED
+
+**Status:** All features implemented including WebSocket real-time, comments, activity logs, and @mentions.
 
 **Goal:** Enable better team communication and real-time updates
 
 ### Quick Wins
-- [ ] **Activity Logs** (3 days)
+- [x] **Activity Logs** (3 days)
   - Track all task changes (status, assignee, description)
   - Show "who did what when" on task detail
-  - Backend: Activity table, middleware to log changes
-  - Frontend: Activity timeline component
+  - Backend: `activityLog.ts` library for logging changes in task routes
+  - Frontend: `ActivityTimeline.tsx` component
 
-- [ ] **@Mentions in Comments** (2 days)
-  - Parse @username in comments
+- [x] **@Mentions in Comments** (2 days)
+  - Parse @username in comments (`mentions.ts` library)
   - Send notification to mentioned user
-  - Frontend: Autocomplete dropdown
+  - Frontend: `MentionAutocomplete.tsx` autocomplete dropdown
 
 ### Substantial Task
-- [ ] **Comments System + WebSocket Real-time** (10 days)
+- [x] **Comments System + WebSocket Real-time** (10 days)
   - **Comments:**
-    - Discussion threads on tasks
-    - Rich text editor (use `slate` or `tiptap`)
+    - Discussion threads on tasks (`comments.ts` backend route)
+    - `CommentEditor.tsx` for composing, `CommentList.tsx` for display
     - Edit/delete own comments
   - **WebSocket:**
+    - Socket.IO server (`backend/src/lib/socket.ts`) integrated with HTTP server
     - Real-time task updates (when teammate changes task)
-    - Real-time notifications (replace 30s polling)
-    - Presence indicators (who's viewing this task)
-  - Backend: Comments table, WebSocket server setup
-  - Frontend: WebSocket client, comment UI
+    - Real-time notifications via socket events
+    - Presence indicators (`presence:update` events — who's viewing tasks)
+    - Frontend: `socket.ts` client, `useSocket.ts` / `useTaskSocket.ts` hooks
+    - `ConnectionStatus.tsx` component showing connection state
+    - `socket.ts` Zustand store for socket state management
+  - ⚠️ **Note:** Rich text editor uses custom implementation, not `slate` or `tiptap`
 
 **Sprint Result:** Team can discuss tasks inline + see live updates without refreshing.
 
@@ -206,16 +223,21 @@ This roadmap organizes TaskMan's evolution into balanced sprints, each containin
 
 ---
 
-## Sprint 7: Differentiation - Analytics & Focus
+## Sprint 7: Differentiation - Analytics & Focus ⚠️ PARTIAL
+
+**Status:** Focus Mode implemented. Creator Dashboard and Smart Dependencies not started.
 
 **Goal:** Build features competitors don't have
 
 ### Quick Win
-- [ ] **Focus Mode** (3 days)
-  - Hide sidebar, show only 1-3 top-priority tasks
-  - Distraction-free view
-  - "Don't break the chain" streak tracker
-  - Minimal UI with large task cards
+- [x] **Focus Mode** (3 days)
+  - Hide sidebar — standalone full-screen route (`/focus`) outside Layout wrapper
+  - Shows top 1-3 priority tasks with large animated cards
+  - Distraction-free view with task completion animations (AnimatePresence)
+  - Minimal UI with large task cards sorted by priority then due date
+  - "Completed today" counter
+  - Implemented in `FocusPage.tsx` with protected route in `App.tsx`
+  - ⚠️ **Not implemented:** "Don't break the chain" streak tracker
 
 ### Substantial Tasks
 - [ ] **Creator Accountability Dashboard** (5 days)
@@ -233,11 +255,13 @@ This roadmap organizes TaskMan's evolution into balanced sprints, each containin
   - Backend: Dependencies table, graph algorithms
   - Frontend: Dependency picker, timeline chart
 
-**Sprint Result:** Unique features that set TaskMan apart. Team can see who's overloading whom + understand project critical paths.
+**Sprint Result:** Focus mode provides distraction-free deep work. Creator Dashboard and Smart Dependencies remain as future work.
 
 ---
 
-## Sprint 8: Developer Experience & Scale
+## Sprint 8: Developer Experience & Scale ⚠️ PARTIAL
+
+**Status:** Pagination system implemented. CLI Tool, Public API, and Webhooks not started.
 
 **Goal:** Attract developer users + prepare for scale
 
@@ -256,29 +280,42 @@ This roadmap organizes TaskMan's evolution into balanced sprints, each containin
   - Auto-generated OpenAPI docs
   - Position as "task manager for developers"
 
-- [ ] **Pagination System** (3 days) ⚠️ CRITICAL
-  - Backend: Cursor-based pagination
-  - Frontend: Infinite scroll or page buttons
-  - Required before scaling
+- [x] **Pagination System** (3 days) ✅ IMPLEMENTED
+  - Backend: Offset-based pagination with `skip`/`take` in `tasks.ts` and `projects.ts`
+  - Backward-compatible: Returns raw array without `page` param, envelope `{ data, pagination }` with it
+  - Frontend: `Pagination.tsx` component with page buttons, prev/next, ellipsis for large page counts
+  - "Showing X-Y of Z" display text
+  - Page auto-resets on filter change
+  - Limit clamped to max 100 per page
+  - Backend integration tests (`pagination.test.ts`)
+  - ⚠️ **Note:** Uses offset-based pagination (not cursor-based as originally planned)
 
-**Sprint Result:** Developers can integrate TaskMan into their workflows. App won't break at scale.
+**Sprint Result:** Pagination prevents performance issues at scale. CLI and Public API remain as future work.
 
 ---
 
-## Sprint 9: Advanced Capabilities
+## Sprint 9: Advanced Capabilities ⚠️ PARTIAL
+
+**Status:** Keyboard Shortcuts Guide and Export Data implemented. Natural Language Input not started.
 
 **Goal:** Cover remaining competitive features
 
 ### Quick Wins
-- [ ] **Keyboard Shortcuts Guide** (1 day)
-  - `?` to show shortcuts modal
-  - Document all keyboard commands
-  - Printable cheat sheet
+- [x] **Keyboard Shortcuts Guide** (1 day)
+  - `?` key opens shortcuts modal (skips when focus is in inputs)
+  - `KeyboardShortcutsModal.tsx` documents all keyboard commands organized by group
+  - Platform-aware modifier key display (⌘ on Mac, Ctrl on others)
+  - `shortcutsModal.ts` Zustand store for open/close state
+  - Framer Motion AnimatePresence for enter/exit
+  - ⚠️ **Not implemented:** Printable cheat sheet export
 
-- [ ] **Export Data** (2 days)
-  - Export tasks to CSV/JSON
-  - Data portability
-  - GDPR compliance
+- [x] **Export Data** (2 days)
+  - `export.ts` backend route supporting CSV and JSON formats
+  - Proper CSV escaping (commas, quotes, newlines)
+  - Filters by user's project membership with optional projectId filter
+  - Frontend: `exportApi.downloadTasks()` with blob download via `URL.createObjectURL`
+  - Export dropdown menu in TasksPage header (Export CSV / Export JSON)
+  - Backend integration tests (`export.test.ts`)
 
 ### Substantial Task
 - [ ] **Natural Language Input** (10 days)
@@ -288,11 +325,13 @@ This roadmap organizes TaskMan's evolution into balanced sprints, each containin
   - Smart quick-add bar
   - Todoist-style experience
 
-**Sprint Result:** Users can capture tasks naturally without form fields.
+**Sprint Result:** Keyboard shortcuts discoverable. Data export enables portability. Natural language input remains as future work.
 
 ---
 
 ## Sprint 10: Nice-to-Have Features
+
+**Status:** Not started.
 
 **Goal:** Bonus features if time permits
 
@@ -323,12 +362,12 @@ This roadmap organizes TaskMan's evolution into balanced sprints, each containin
 
 These should be tackled incrementally, not as separate sprints:
 
-- [ ] **Pagination** (Sprint 8) - CRITICAL before scaling
-- [ ] **Rate Limiting** (Sprint 8) - Protect API
-- [ ] **E2E Testing** (Ongoing) - Set up Playwright, add tests per feature
-- [ ] **Error Boundaries** (Sprint 3) - Wrap async operations
-- [ ] **Performance Monitoring** (Sprint 6) - Add Sentry or similar
-- [ ] **Mobile Responsiveness Audit** (Sprint 4) - Ensure all features work on mobile
+- [x] **Pagination** (Sprint 8) - ✅ Offset-based pagination on tasks and projects routes
+- [~] **Rate Limiting** (Sprint 8) - ⚠️ PARTIAL: Auth routes only (`express-rate-limit` on login/register). Not API-wide.
+- [ ] **E2E Testing** (Ongoing) - No Playwright/Cypress setup. Only Jest + supertest unit/integration tests exist.
+- [x] **Error Boundaries** (Sprint 3) - ✅ `ErrorBoundary.tsx` component, used in `main.tsx`
+- [ ] **Performance Monitoring** (Sprint 6) - No Sentry or similar integrated
+- [~] **Mobile Responsiveness Audit** (Sprint 4) - ⚠️ Tailwind responsive classes used throughout (`sm:`, `md:`, `lg:` breakpoints) but no formal audit conducted
 
 ---
 
@@ -338,10 +377,12 @@ Install these incrementally when relevant:
 
 - ✅ **Framer Motion** - Animations, page transitions (Sprint 3, 6) - INSTALLED
 - ✅ **canvas-confetti** - Task completion celebrations (Sprint 3) - INSTALLED
+- ✅ **socket.io-client** - WebSocket real-time (Sprint 5) - INSTALLED
+- ✅ **multer** - File upload handling (Sprint 6) - INSTALLED
 - [ ] **shadcn/ui** - Dialogs, dropdowns (Future sprints)
-- [ ] **react-colorful** - Color picker (Sprint 2)
-- [ ] **react-big-calendar** or **FullCalendar** - Calendar view (Sprint 4)
-- [ ] **slate** or **tiptap** - Rich text editor for comments (Sprint 5)
+- [ ] **react-colorful** - Color picker (Sprint 2) — not needed, preset colors used instead
+- [x] **Calendar view** (Sprint 4) — Custom-built, no external library needed
+- [x] **Comment editor** (Sprint 5) — Custom-built, not `slate` or `tiptap`
 - [ ] **Aceternity UI** - Landing page wow factor (Marketing)
 
 ---
@@ -358,7 +399,7 @@ Install these incrementally when relevant:
 1. Creator accountability analytics (Sprint 7) - "Stop busywork"
 2. Smart task dependencies (Sprint 7) - "See your critical path"
 3. Developer-first (Sprint 8) - "API, CLI, webhooks"
-4. Focus mode (Sprint 7) - "Deep work built-in"
+4. Focus mode (Sprint 7) - "Deep work built-in" ✅ IMPLEMENTED
 5. Burnout prevention (Sprint 10) - "Protect your team"
 
 ---
@@ -372,22 +413,22 @@ Comparing TaskMan to Todoist, TickTick, Things 3, Notion, Asana, Monday.com:
 - ✅ Search & filtering
 - ✅ Notifications
 - ✅ Recurring tasks (Sprint 3)
-- [ ] Calendar view (Sprint 4)
-- [ ] Time tracking (Sprint 4)
-- [ ] Comments (Sprint 5)
-- [ ] File attachments (Sprint 6)
-- [ ] Custom fields/tags (Sprint 6)
-- [ ] Activity logs (Sprint 5)
+- ✅ Calendar view (Sprint 4)
+- ✅ Time tracking (Sprint 4)
+- ✅ Comments (Sprint 5)
+- ✅ File attachments (Sprint 6)
+- ✅ Custom fields/tags (Sprint 6)
+- ✅ Activity logs (Sprint 5)
 
 ### High-Value Differentiators
-- [ ] AI-powered insights (Sprint 2)
+- ✅ AI-powered insights (Sprint 2)
 - ✅ Command palette (Sprint 3)
-- [ ] Real-time WebSocket (Sprint 5)
+- ✅ Real-time WebSocket (Sprint 5)
 - [ ] Natural language input (Sprint 9)
 - [ ] Public API (Sprint 8)
 - [ ] Creator analytics (Sprint 7) - UNIQUE
 - [ ] Smart dependencies (Sprint 7) - UNIQUE
-- [ ] Focus mode (Sprint 7) - UNIQUE
+- ✅ Focus mode (Sprint 7) - UNIQUE
 
 ### Nice-to-Have
 - [ ] Voice input (Sprint 10)
@@ -399,47 +440,53 @@ Comparing TaskMan to Todoist, TickTick, Things 3, Notion, Asana, Monday.com:
 
 ## Effort Summary by Sprint
 
-| Sprint | Quick Wins | Substantial Task | Total Days |
-|--------|-----------|------------------|------------|
-| 1 ✅    | 8 days    | -                | 8 days     |
-| 2 ✅    | 7-9 days  | 7 days           | 14-16 days |
-| 3 ✅    | 5 days    | 5 days           | 10 days    |
-| 4      | 3 days    | 7 days           | 10 days    |
-| 5      | 5 days    | 10 days          | 15 days    |
-| 6      | 3 days    | 10 days          | 13 days    |
-| 7      | 3 days    | 12 days          | 15 days    |
-| 8      | 4 days    | 13 days          | 17 days    |
-| 9      | 3 days    | 10 days          | 13 days    |
-| 10     | -         | 21 days          | 21 days    |
+| Sprint | Quick Wins | Substantial Task | Total Days | Status |
+|--------|-----------|------------------|------------|--------|
+| 1 ✅    | 8 days    | -                | 8 days     | Complete |
+| 2 ✅    | 7-9 days  | 7 days           | 14-16 days | Complete |
+| 3 ✅    | 5 days    | 5 days           | 10 days    | Complete |
+| 4 ✅    | 3 days    | 7 days           | 10 days    | Complete |
+| 5 ✅    | 5 days    | 10 days          | 15 days    | Complete |
+| 6 ✅    | 3 days    | 10 days          | 13 days    | Complete |
+| 7 ⚠️    | 3 days    | 12 days          | 15 days    | Partial (Focus Mode only) |
+| 8 ⚠️    | 4 days    | 13 days          | 17 days    | Partial (Pagination only) |
+| 9 ⚠️    | 3 days    | 10 days          | 13 days    | Partial (Shortcuts + Export) |
+| 10     | -         | 21 days          | 21 days    | Not started |
 
 **Total Development Time:** ~136 days (6-7 months) for complete roadmap
 
-**MVP (Sprints 1-6):** ~76 days (3.5 months) for competitive feature parity
+**MVP (Sprints 1-6):** ✅ COMPLETE — ~76 days of competitive feature parity achieved
+
+**Remaining work:** Sprint 7 substantial tasks (12 days), Sprint 8 quick win + substantial (14 days), Sprint 9 substantial (10 days), Sprint 10 (21 days) = ~57 days
 
 ---
 
 ## Next Immediate Actions
 
-From Sprint 2, prioritize these first:
+MVP (Sprints 1-6) is complete. Remaining high-impact items to prioritize:
 
-1. **Color Theme System** (4-5 days)
-   - File: `frontend/src/lib/themes.ts`
-   - Update Tailwind config with CSS variables
-   - Create theme picker modal
+1. **Creator Accountability Dashboard** (Sprint 7, 5 days)
+   - Backend: Analytics queries for task creation patterns
+   - Frontend: Dashboard with creator metrics, bottleneck identification
+   - High differentiation value
 
-2. **Layout Templates** (3-4 days)
-   - File: `frontend/src/store/layout.ts`
-   - 5 layout variants
-   - Layout switcher UI
+2. **Smart Task Dependencies** (Sprint 7, 7 days)
+   - Backend: Dependencies table, graph algorithms
+   - Frontend: Dependency picker, timeline/Gantt chart
+   - Critical for project management credibility
 
-3. **AI Task Insights Foundation** (7 days)
-   - Backend: Analytics aggregation
-   - Track completion patterns
-   - Generate insights
+3. **Public API + Webhooks** (Sprint 8, 10 days)
+   - API key authentication layer
+   - Webhook event system
+   - OpenAPI auto-documentation
+   - Positions TaskMan as developer-first tool
 
-**Or** if you prefer immediate user-facing impact, jump to Sprint 3:
-- Command palette (2 days) - Instant power user love
-- Glassmorphism polish (3 days) - Visual wow factor
+4. **Natural Language Input** (Sprint 9, 10 days)
+   - NLP parsing with chrono-node or compromise
+   - Smart quick-add bar
+   - Major UX differentiator
+
+**Quick wins available:** CLI Tool (Sprint 8, 4 days), Focus Mode streak tracker (1 day), Printable shortcuts cheat sheet (0.5 days)
 
 ---
 
@@ -468,8 +515,8 @@ From Sprint 2, prioritize these first:
 
 ## Current Tech Stack
 
-**Frontend:** React 18.2, TypeScript 5.4, Vite 5.1, Tailwind CSS 3.4, Zustand 4.5, TanStack Query 5.28, dnd-kit 6.1
+**Frontend:** React 18.2, TypeScript 5.4, Vite 5.1, Tailwind CSS 3.4, Zustand 4.5, TanStack Query 5.28, dnd-kit 6.1, Framer Motion, socket.io-client
 
-**Backend:** Node.js 18+, TypeScript 5.4, Express 4.18, PostgreSQL 16, Prisma 5.10, Zod 3.22
+**Backend:** Node.js 18+, TypeScript 5.4, Express 4.18, PostgreSQL 16, Prisma 5.10, Zod 3.22, Socket.IO, Multer
 
-**Current Features:** Authentication, Projects, Tasks (table + kanban), Role-based permissions, Dashboard, Dark mode ✅, Search ✅, Notifications ✅, Command Palette ✅, Glassmorphism ✅, Recurring Tasks ✅
+**Current Features:** Authentication, Projects, Tasks (table + kanban + calendar), Role-based permissions, Dashboard, Dark mode ✅, Search ✅, Notifications ✅, Command Palette ✅, Glassmorphism ✅, Recurring Tasks ✅, Time Tracking ✅, Calendar View ✅, Comments ✅, Activity Logs ✅, @Mentions ✅, WebSocket Real-time ✅, Tags ✅, Custom Fields ✅, File Attachments ✅, Density Settings ✅, Focus Mode ✅, Pagination ✅, Export Data ✅, Keyboard Shortcuts Guide ✅, Skeleton Loading ✅, Empty States ✅, Error Boundaries ✅, AI Insights ✅, Color Themes ✅, Layout Templates ✅
