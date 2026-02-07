@@ -206,3 +206,35 @@ export const recurringTasksApi = {
   generateNext: (id: string) =>
     request<Task>(`/api/recurring-tasks/${id}/generate`, { method: 'POST' }),
 };
+
+// --- Export API ---
+
+export const exportApi = {
+  /**
+   * Triggers a file download of tasks in the given format.
+   * Uses a direct fetch + blob approach so the browser downloads the file.
+   */
+  downloadTasks: async (format: 'csv' | 'json' = 'csv', projectId?: string) => {
+    const params = new URLSearchParams({ format });
+    if (projectId) params.set('projectId', projectId);
+
+    const res = await fetch(`${API_BASE}/api/export/tasks?${params}`, {
+      credentials: 'include',
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: 'Export failed' }));
+      throw new Error(body.error || `HTTP ${res.status}`);
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tasks-export.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
+};

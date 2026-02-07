@@ -3,16 +3,20 @@ import { useAuthStore } from '../store/auth';
 import { useLayoutStore } from '../store/layout';
 
 import { authApi } from '../lib/api';
-import { LayoutDashboard, CheckSquare, FolderKanban, LogOut, User } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, FolderKanban, LogOut, User, Crosshair } from 'lucide-react';
 import clsx from 'clsx';
 import ToastContainer from './Toast';
 import ThemeToggle from './ThemeToggle';
 import NotificationCenter from './NotificationCenter';
+import CommandPalette from './CommandPalette';
+import KeyboardShortcutsModal from './KeyboardShortcutsModal';
+import { useCommandPalette } from '../hooks/useCommandPalette';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/tasks', label: 'Tasks', icon: CheckSquare },
   { to: '/projects', label: 'Projects', icon: FolderKanban },
+  { to: '/focus', label: 'Focus', icon: Crosshair },
 ];
 
 export default function Layout() {
@@ -112,6 +116,7 @@ export default function Layout() {
       </main>
       <ToastContainer />
       <CommandPalette />
+      <KeyboardShortcutsModal />
     </div>
   );
 }

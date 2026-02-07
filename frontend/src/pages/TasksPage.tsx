@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCorners, useDroppable, useDraggable } from '@dnd-kit/core';
 import { motion } from 'framer-motion';
-import { tasksApi, projectsApi, recurringTasksApi } from '../lib/api';
+import { tasksApi, projectsApi, recurringTasksApi, exportApi } from '../lib/api';
 import { useAuthStore } from '../store/auth';
-import { Plus, Table, Columns3, X, Calendar, Pencil, Trash2, Repeat } from 'lucide-react';
+import { Plus, Table, Columns3, X, Calendar, Pencil, Trash2, Repeat, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import clsx from 'clsx';
 import type { Task, Project, TaskStatus, TaskPriority } from '../types';
@@ -556,6 +556,7 @@ export default function TasksPage() {
   const [celebrateCompletion, setCelebrateCompletion] = useState(false);
   const [recurrenceModalOpen, setRecurrenceModalOpen] = useState(false);
   const [taskForRecurrence, setTaskForRecurrence] = useState<Task | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('task-view-mode', viewMode);
@@ -703,6 +704,17 @@ export default function TasksPage() {
     bulkStatusMutation.mutate({ taskIds, status });
   };
 
+  const handleExport = async (format: 'csv' | 'json') => {
+    setExporting(true);
+    try {
+      await exportApi.downloadTasks(format, filters.projectId);
+    } catch (err) {
+      console.error('Export failed:', err);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -747,6 +759,30 @@ export default function TasksPage() {
               <Columns3 size={14} />
               Kanban
             </button>
+          </div>
+          {/* Export Menu */}
+          <div className="relative group">
+            <button
+              disabled={exporting}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md disabled:opacity-50"
+            >
+              <Download size={14} />
+              {exporting ? 'Exporting...' : 'Export'}
+            </button>
+            <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 min-w-[120px]">
+              <button
+                onClick={() => handleExport('csv')}
+                className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-md"
+              >
+                Export CSV
+              </button>
+              <button
+                onClick={() => handleExport('json')}
+                className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-b-md"
+              >
+                Export JSON
+              </button>
+            </div>
           </div>
           <button
             onClick={() => { setEditingTask(null); setModalOpen(true); }}
