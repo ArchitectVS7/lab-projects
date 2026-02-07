@@ -19,25 +19,27 @@ This roadmap organizes TaskMan's evolution into balanced sprints, each containin
 
 ---
 
-## Sprint 2: Visual Customization & AI Foundation
+## Sprint 2: Visual Customization & AI Foundation ✅ COMPLETED
+
+**Status:** All features implemented and verified.
 
 **Goal:** Give users control over appearance + lay groundwork for intelligent features
 
 ### Quick Wins
-- [ ] **Color Theme System** (4-5 days)
+- [x] **Color Theme System** (4-5 days)
   - 5 preset themes (Indigo, Purple, Rose, Emerald, Amber)
   - Theme switcher UI in settings
   - Replace hardcoded colors with CSS variables
   - Effort: Create `themes.ts`, update Tailwind config, add theme picker modal
 
-- [ ] **Layout Templates** (3-4 days)
+- [x] **Layout Templates** (3-4 days)
   - 5 layouts: Compact, Spacious, Minimal, Split, Dashboard-First
   - Layout switcher in user settings
   - Collapsible sidebar for Minimal mode
   - **Result:** 5 colors × 5 layouts = 25 UI combinations
 
 ### Substantial Task
-- [ ] **AI-Powered Task Insights** (7 days)
+- [x] **AI-Powered Task Insights** (7 days)
   - Track task completion patterns (day of week, time of day)
   - Calculate velocity metrics (tasks/week, completion rate)
   - Generate insights: "You complete tasks 30% faster on Tuesdays"
@@ -49,33 +51,40 @@ This roadmap organizes TaskMan's evolution into balanced sprints, each containin
 
 ---
 
-## Sprint 3: Power User Features & Polish
+## Sprint 3: Power User Features & Polish ✅ COMPLETED
+
+**Status:** All features implemented and integrated
 
 **Goal:** Speed up workflows for keyboard users + add visual polish
 
 ### Quick Wins
-- [ ] **Command Palette** (2 days)
+- ✅ **Command Palette** (2 days)
   - `Cmd+K` / `Ctrl+K` to open
   - Search tasks, navigate pages, create tasks
-  - Use shadcn/ui Command component
+  - Keyboard navigation (arrows, Enter, Escape)
   - Keyboard-first workflow (Linear/Notion style)
+  - Glass morphism styling with Framer Motion
 
-- [ ] **Glassmorphism + Micro-interactions** (3 days)
+- ✅ **Glassmorphism + Micro-interactions** (3 days)
   - Frosted glass effect on modals/cards
   - Button hover scale animations
   - Task completion celebrations (confetti)
-  - Loading state animations
-  - Use Framer Motion for animations
+  - Smooth scale-in animations on modal open
+  - Uses Framer Motion and canvas-confetti
 
 ### Substantial Task
-- [ ] **Recurring Tasks** (5 days)
-  - Daily, weekly, monthly patterns
-  - Custom recurrence rules (every 2nd Tuesday)
-  - "Complete and create next" button
-  - Backend: Recurrence model, generation logic
-  - Frontend: Recurrence picker UI
+- ✅ **Recurring Tasks** (5 days)
+  - Daily, weekly, monthly, custom patterns
+  - Weekly tasks support specific days (Mon, Wed, Fri, etc.)
+  - Monthly tasks support specific day of month
+  - Start/end date configuration
+  - Automatic generation via cron scheduler (daily at 6 AM)
+  - Manual generation endpoint
+  - Recurring task badges in table and kanban views
+  - Backend: RecurringTask model, recurrence logic, API endpoints
+  - Frontend: RecurrencePickerModal UI, recurring badges
 
-**Sprint Result:** App feels fast and polished. Power users can fly through tasks with keyboard shortcuts.
+**Sprint Result:** App feels fast and polished. Power users can fly through tasks with keyboard shortcuts. Recurring tasks automate repetitive work.
 
 ---
 
@@ -310,8 +319,9 @@ These should be tackled incrementally, not as separate sprints:
 
 Install these incrementally when relevant:
 
-- [ ] **shadcn/ui** - Command palette, dialogs, dropdowns (Sprint 3)
-- [ ] **Framer Motion** - Animations, page transitions (Sprint 3, 6)
+- ✅ **Framer Motion** - Animations, page transitions (Sprint 3, 6) - INSTALLED
+- ✅ **canvas-confetti** - Task completion celebrations (Sprint 3) - INSTALLED
+- [ ] **shadcn/ui** - Dialogs, dropdowns (Future sprints)
 - [ ] **react-colorful** - Color picker (Sprint 2)
 - [ ] **react-big-calendar** or **FullCalendar** - Calendar view (Sprint 4)
 - [ ] **slate** or **tiptap** - Rich text editor for comments (Sprint 5)
@@ -344,7 +354,7 @@ Comparing TaskMan to Todoist, TickTick, Things 3, Notion, Asana, Monday.com:
 - ✅ Dark mode
 - ✅ Search & filtering
 - ✅ Notifications
-- [ ] Recurring tasks (Sprint 3)
+- ✅ Recurring tasks (Sprint 3)
 - [ ] Calendar view (Sprint 4)
 - [ ] Time tracking (Sprint 4)
 - [ ] Comments (Sprint 5)
@@ -354,7 +364,7 @@ Comparing TaskMan to Todoist, TickTick, Things 3, Notion, Asana, Monday.com:
 
 ### High-Value Differentiators
 - [ ] AI-powered insights (Sprint 2)
-- [ ] Command palette (Sprint 3)
+- ✅ Command palette (Sprint 3)
 - [ ] Real-time WebSocket (Sprint 5)
 - [ ] Natural language input (Sprint 9)
 - [ ] Public API (Sprint 8)
@@ -375,8 +385,8 @@ Comparing TaskMan to Todoist, TickTick, Things 3, Notion, Asana, Monday.com:
 | Sprint | Quick Wins | Substantial Task | Total Days |
 |--------|-----------|------------------|------------|
 | 1 ✅    | 8 days    | -                | 8 days     |
-| 2      | 7-9 days  | 7 days           | 14-16 days |
-| 3      | 5 days    | 5 days           | 10 days    |
+| 2 ✅    | 7-9 days  | 7 days           | 14-16 days |
+| 3 ✅    | 5 days    | 5 days           | 10 days    |
 | 4      | 3 days    | 7 days           | 10 days    |
 | 5      | 5 days    | 10 days          | 15 days    |
 | 6      | 3 days    | 10 days          | 13 days    |
@@ -445,4 +455,4 @@ From Sprint 2, prioritize these first:
 
 **Backend:** Node.js 18+, TypeScript 5.4, Express 4.18, PostgreSQL 16, Prisma 5.10, Zod 3.22
 
-**Current Features:** Authentication, Projects, Tasks (table + kanban), Role-based permissions, Dashboard, Dark mode ✅, Search ✅, Notifications ✅
+**Current Features:** Authentication, Projects, Tasks (table + kanban), Role-based permissions, Dashboard, Dark mode ✅, Search ✅, Notifications ✅, Command Palette ✅, Glassmorphism ✅, Recurring Tasks ✅

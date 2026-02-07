@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCorners, useDroppable, useDraggable } from '@dnd-kit/core';
-import { tasksApi, projectsApi } from '../lib/api';
+import { motion } from 'framer-motion';
+import { tasksApi, projectsApi, recurringTasksApi } from '../lib/api';
 import { useAuthStore } from '../store/auth';
-import { Plus, Table, Columns3, X, Calendar, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Table, Columns3, X, Calendar, Pencil, Trash2, Repeat } from 'lucide-react';
 import { format } from 'date-fns';
 import clsx from 'clsx';
 import type { Task, Project, TaskStatus, TaskPriority } from '../types';
 import type { TaskFilters } from '../lib/api';
+import TaskCompletionCelebration from '../components/TaskCompletionCelebration';
+import RecurrencePickerModal, { RecurrenceConfig } from '../components/RecurrencePickerModal';
+import { slideUp } from '../lib/animations';
 
 // --- Constants ---
 
@@ -132,7 +136,13 @@ function TaskModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <motion.div
+        className="glass-card dark:glass-card-dark rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+      >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{task ? 'Edit Task' : 'New Task'}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"><X size={20} /></button>
@@ -215,7 +225,7 @@ function TaskModal({
             </button>
           </div>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -235,7 +245,13 @@ function DeleteConfirmDialog({
 }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-sm mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+      <motion.div
+        className="glass-card dark:glass-card-dark rounded-lg shadow-xl w-full max-w-sm mx-4 p-6"
+        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+      >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Delete Task</h3>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
           Are you sure you want to delete <span className="font-medium">"{taskTitle}"</span>?
@@ -247,7 +263,7 @@ function DeleteConfirmDialog({
             {isDeleting ? 'Deleting...' : 'Delete'}
           </button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -291,7 +307,14 @@ function TableView({
           {tasks.map((task) => (
             <tr key={task.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
               <td className="px-4 py-3">
-                <div className="font-medium text-gray-900 dark:text-gray-100">{task.title}</div>
+                <div className="flex items-center gap-2">
+                  <div className="font-medium text-gray-900 dark:text-gray-100">{task.title}</div>
+                  {task.isRecurring && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-300" title="Recurring task">
+                      <Repeat size={10} />
+                    </span>
+                  )}
+                </div>
                 {task.description && (
                   <div className="text-gray-500 dark:text-gray-400 text-xs line-clamp-1 mt-0.5">{task.description}</div>
                 )}
@@ -411,6 +434,12 @@ function DraggableTaskCard({ task, onEdit, canEdit }: { task: Task; onEdit: (tas
         <span className={clsx('text-[10px] px-1.5 py-0.5 rounded font-medium', PRIORITY_COLORS[task.priority])}>
           {task.priority}
         </span>
+        {task.isRecurring && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-300 flex items-center gap-0.5" title="Recurring task">
+            <Repeat size={9} />
+            Recurring
+          </span>
+        )}
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: task.project.color }} />
           <span className="text-[10px] text-gray-500 dark:text-gray-400">{task.project.name}</span>
@@ -524,6 +553,9 @@ export default function TasksPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
+  const [celebrateCompletion, setCelebrateCompletion] = useState(false);
+  const [recurrenceModalOpen, setRecurrenceModalOpen] = useState(false);
+  const [taskForRecurrence, setTaskForRecurrence] = useState<Task | null>(null);
 
   useEffect(() => {
     localStorage.setItem('task-view-mode', viewMode);
@@ -600,6 +632,11 @@ export default function TasksPage() {
   });
 
   const handleStatusChange = (id: string, status: TaskStatus) => {
+    // Trigger confetti if task is being marked as DONE
+    if (status === 'DONE') {
+      setCelebrateCompletion(true);
+      setTimeout(() => setCelebrateCompletion(false), 100);
+    }
     // For single status changes, we can use the optimistic bulk update or standard update
     // Using bulk mutation for consistency with Kanban drop
     bulkStatusMutation.mutate({ taskIds: [id], status });
@@ -630,6 +667,36 @@ export default function TasksPage() {
   const handleDelete = () => {
     if (!deletingTask) return;
     deleteMutation.mutate(deletingTask.id);
+  };
+
+  const createRecurringMutation = useMutation({
+    mutationFn: (data: { taskId: string; config: RecurrenceConfig }) =>
+      recurringTasksApi.create({
+        baseTaskId: data.taskId,
+        ...data.config,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recurringTasks'] });
+      setRecurrenceModalOpen(false);
+      setTaskForRecurrence(null);
+      alert('Recurring task created successfully!');
+    },
+    onError: (err: Error) => {
+      alert(`Failed to create recurring task: ${err.message}`);
+    },
+  });
+
+  const handleMakeRecurring = (task: Task) => {
+    setTaskForRecurrence(task);
+    setRecurrenceModalOpen(true);
+  };
+
+  const handleRecurrenceSubmit = (config: RecurrenceConfig) => {
+    if (!taskForRecurrence) return;
+    createRecurringMutation.mutate({
+      taskId: taskForRecurrence.id,
+      config,
+    });
   };
 
   const handleBulkStatus = (taskIds: string[], status: TaskStatus) => {
@@ -784,6 +851,21 @@ export default function TasksPage() {
           isDeleting={deleteMutation.isPending}
         />
       )}
+
+      {/* Recurrence Picker Modal */}
+      {recurrenceModalOpen && taskForRecurrence && (
+        <RecurrencePickerModal
+          onClose={() => {
+            setRecurrenceModalOpen(false);
+            setTaskForRecurrence(null);
+          }}
+          onSubmit={handleRecurrenceSubmit}
+          isSubmitting={createRecurringMutation.isPending}
+        />
+      )}
+
+      {/* Confetti Celebration */}
+      <TaskCompletionCelebration trigger={celebrateCompletion} />
     </div>
   );
 }

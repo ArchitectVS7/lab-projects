@@ -1,5 +1,5 @@
 import { useAuthStore } from '../store/auth';
-import type { User, Task, Project, ProjectMember, TaskStatus, TaskPriority } from '../types';
+import type { User, Task, Project, ProjectMember, TaskStatus, TaskPriority, RecurringTask, RecurrenceFrequency } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
@@ -175,4 +175,34 @@ export interface AnalyticsData {
 
 export const analyticsApi = {
   getInsights: () => request<AnalyticsData>('/api/analytics/insights'),
+};
+
+// --- Recurring Tasks API ---
+
+export const recurringTasksApi = {
+  getAll: () =>
+    request<RecurringTask[]>('/api/recurring-tasks'),
+
+  getOne: (id: string) =>
+    request<RecurringTask>(`/api/recurring-tasks/${id}`),
+
+  create: (data: {
+    baseTaskId: string;
+    frequency: RecurrenceFrequency;
+    interval: number;
+    daysOfWeek?: string;
+    dayOfMonth?: number;
+    startDate: string;
+    endDate?: string | null;
+  }) =>
+    request<RecurringTask>('/api/recurring-tasks', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    request<void>(`/api/recurring-tasks/${id}`, { method: 'DELETE' }),
+
+  generateNext: (id: string) =>
+    request<Task>(`/api/recurring-tasks/${id}/generate`, { method: 'POST' }),
 };

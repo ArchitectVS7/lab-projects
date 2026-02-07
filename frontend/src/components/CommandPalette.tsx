@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useCommandPaletteStore } from '../store/commandPalette';
 import { tasksApi } from '../lib/api';
 import {
@@ -168,17 +169,23 @@ export default function CommandPalette() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, selectedIndex, allItems, close]);
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 pt-20"
-      onClick={close}
-    >
-      <div
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl mx-4"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 pt-20"
+          onClick={close}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="glass-card dark:glass-card-dark rounded-lg shadow-xl w-full max-w-2xl mx-4"
+            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
         {/* Search Input */}
         <div className="flex items-center gap-3 p-4 border-b border-gray-200 dark:border-gray-700">
           <Search size={20} className="text-gray-400" />
@@ -248,7 +255,9 @@ export default function CommandPalette() {
             <span><kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">Esc</kbd> Close</span>
           </div>
         </div>
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

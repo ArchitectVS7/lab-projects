@@ -45,6 +45,8 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   dueDate: string | null;
+  recurringTaskId: string | null;
+  isRecurring: boolean;
   createdAt: string;
   updatedAt: string;
   projectId: string;
@@ -53,4 +55,25 @@ export interface Task {
   project: Pick<Project, 'id' | 'name' | 'color'>;
   assignee: Pick<User, 'id' | 'name' | 'avatarUrl'> | null;
   creator: Pick<User, 'id' | 'name'>;
+}
+
+// --- Recurring Task ---
+
+export type RecurrenceFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
+
+export interface RecurringTask {
+  id: string;
+  baseTaskId: string;
+  frequency: RecurrenceFrequency;
+  interval: number;
+  daysOfWeek: string | null;
+  dayOfMonth: number | null;
+  startDate: string;
+  endDate: string | null;
+  lastGenerated: string | null;
+  createdAt: string;
+  projectId: string;
+  creatorId: string;
+  project: Pick<Project, 'id' | 'name' | 'color'>;
+  creator: Pick<User, 'id' | 'name' | 'avatarUrl'>;
 }

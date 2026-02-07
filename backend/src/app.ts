@@ -11,6 +11,7 @@ import projectRoutes from './routes/projects.js';
 import taskRoutes from './routes/tasks.js';
 import notificationRoutes from './routes/notifications.js';
 import analyticsRoutes from './routes/analytics.js';
+import recurringTasksRoutes from './routes/recurring-tasks.js';
 
 dotenv.config();
 
@@ -52,6 +53,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/recurring-tasks', recurringTasksRoutes);
 
 // Health check -- verifies database connectivity
 app.get('/health', async (_req, res) => {

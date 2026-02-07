@@ -19,6 +19,7 @@ export default function Layout() {
   const location = useLocation();
   const { user, clearUser } = useAuthStore();
   const { layout } = useLayoutStore();
+  useCommandPalette();
 
   const handleLogout = async () => {
     try { await authApi.logout(); } catch { /* server unreachable is fine */ }
@@ -110,6 +111,7 @@ export default function Layout() {
         <Outlet />
       </main>
       <ToastContainer />
+      <CommandPalette />
     </div>
   );
 }
