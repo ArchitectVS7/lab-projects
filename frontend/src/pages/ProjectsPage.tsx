@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/auth';
 import { Plus, Trash2, Users, CheckSquare, X } from 'lucide-react';
 import clsx from 'clsx';
 import { ProjectsPageSkeleton } from '../components/Skeletons';
+import EmptyState from '../components/EmptyState';
 import type { Project } from '../types';
 
 const PRESET_COLORS = [
@@ -256,15 +257,14 @@ export default function ProjectsPage() {
       </div>
 
       {!projects || projects.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <p className="text-gray-500 dark:text-gray-400 mb-4">No projects yet. Create your first project to get started.</p>
-          <button
-            onClick={() => setModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 rounded-md"
-          >
-            <Plus size={16} />
-            Create Project
-          </button>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <EmptyState
+            type="projects"
+            title="No projects yet"
+            description="Projects help you organize related tasks together. Create your first one to get started."
+            actionLabel="Create Project"
+            onAction={() => setModalOpen(true)}
+          />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

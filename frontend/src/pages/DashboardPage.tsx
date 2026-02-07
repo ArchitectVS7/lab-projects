@@ -4,6 +4,7 @@ import { tasksApi, projectsApi } from '../lib/api';
 import { CheckCircle2, Clock, AlertTriangle, ListTodo } from 'lucide-react';
 import InsightsWidget from '../components/InsightsWidget';
 import { DashboardSkeleton } from '../components/Skeletons';
+import EmptyState from '../components/EmptyState';
 import clsx from 'clsx';
 import type { Task, Project, TaskStatus, TaskPriority } from '../types';
 
@@ -136,9 +137,14 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
-              <p className="text-gray-500 dark:text-gray-400">No tasks yet. Create your first task!</p>
-              <Link to="/tasks" className="mt-2 inline-block text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">Go to Tasks →</Link>
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <EmptyState
+                type="tasks"
+                title="No tasks yet"
+                description="Create your first task to start tracking your work."
+                actionLabel="Go to Tasks"
+                actionTo="/tasks"
+              />
             </div>
           )}
         </div>
@@ -155,9 +161,14 @@ export default function DashboardPage() {
                 <ProjectCard key={project.id} project={project} />
               ))
             ) : (
-              <div className="p-6 text-center">
-                <p className="text-gray-500 dark:text-gray-400 text-sm">No projects yet.</p>
-              </div>
+              <EmptyState
+                type="projects"
+                title="No projects yet"
+                description="Create a project to organize your tasks."
+                actionLabel="Create Project"
+                actionTo="/projects"
+                className="py-8"
+              />
             )}
           </div>
         </div>
