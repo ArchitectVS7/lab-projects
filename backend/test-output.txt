@@ -1,0 +1,9 @@
+  console.log
+    CORS allowed origins: [ 'http://localhost:3000' ]
+
+      at Object.<anonymous> (src/app.ts:45:9)
+
+[0mPOST /api/auth/register [32m201[0m 335.326 ms - 192[0m
+[0mPOST /api/auth/register [32m201[0m 352.032 ms - 188[0m
+[0mPOST /api/projects [32m201[0m 27.459 ms - 720[0m
+[0mPOST /api/tasks [32m201[0m 21.386 ms - 601[0m
