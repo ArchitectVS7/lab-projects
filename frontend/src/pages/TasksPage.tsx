@@ -698,11 +698,6 @@ export default function TasksPage() {
     },
   });
 
-  const handleMakeRecurring = (task: Task) => {
-    setTaskForRecurrence(task);
-    setRecurrenceModalOpen(true);
-  };
-
   const handleRecurrenceSubmit = (config: RecurrenceConfig) => {
     if (!taskForRecurrence) return;
     createRecurringMutation.mutate({

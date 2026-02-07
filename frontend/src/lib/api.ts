@@ -1,5 +1,5 @@
 import { useAuthStore } from '../store/auth';
-import type { User, Task, Project, ProjectMember, TaskStatus, TaskPriority, RecurringTask, RecurrenceFrequency } from '../types';
+import type { User, Task, Project, ProjectMember, TaskStatus, TaskPriority, RecurringTask, RecurrenceFrequency, Tag, TaskTag, CustomFieldDefinition, CustomFieldType, CustomFieldValue, Attachment } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
@@ -237,4 +237,91 @@ export const exportApi = {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   },
+};
+
+// --- Tags API ---
+
+export const tagsApi = {
+  getByProject: (projectId: string) =>
+    request<Tag[]>(`/api/tags?projectId=${projectId}`),
+
+  create: (data: { name: string; color?: string; projectId: string }) =>
+    request<Tag>('/api/tags', { method: 'POST', body: JSON.stringify(data) }),
+
+  update: (id: string, data: { name?: string; color?: string }) =>
+    request<Tag>(`/api/tags/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  delete: (id: string) =>
+    request<void>(`/api/tags/${id}`, { method: 'DELETE' }),
+
+  addToTask: (taskId: string, tagId: string) =>
+    request<TaskTag>(`/api/tags/task/${taskId}`, { method: 'POST', body: JSON.stringify({ tagId }) }),
+
+  removeFromTask: (taskId: string, tagId: string) =>
+    request<void>(`/api/tags/task/${taskId}/${tagId}`, { method: 'DELETE' }),
+};
+
+// --- Custom Fields API ---
+
+export const customFieldsApi = {
+  getByProject: (projectId: string) =>
+    request<CustomFieldDefinition[]>(`/api/custom-fields?projectId=${projectId}`),
+
+  create: (data: { name: string; type: CustomFieldType; options?: string; required?: boolean; projectId: string }) =>
+    request<CustomFieldDefinition>('/api/custom-fields', { method: 'POST', body: JSON.stringify(data) }),
+
+  update: (id: string, data: { name?: string; type?: CustomFieldType; options?: string; required?: boolean }) =>
+    request<CustomFieldDefinition>(`/api/custom-fields/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  delete: (id: string) =>
+    request<void>(`/api/custom-fields/${id}`, { method: 'DELETE' }),
+
+  getTaskValues: (taskId: string) =>
+    request<CustomFieldValue[]>(`/api/custom-fields/task/${taskId}`),
+
+  setTaskValues: (taskId: string, fields: { fieldId: string; value: string }[]) =>
+    request<CustomFieldValue[]>(`/api/custom-fields/task/${taskId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ fields }),
+    }),
+};
+
+// --- Attachments API ---
+
+export const attachmentsApi = {
+  getByTask: (taskId: string) =>
+    request<Attachment[]>(`/api/attachments/task/${taskId}`),
+
+  upload: async (taskId: string, file: File): Promise<Attachment> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch(`${API_BASE}/api/attachments/task/${taskId}`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+      // Note: do NOT set Content-Type header - browser sets it with boundary for multipart
+    });
+
+    if (res.status === 401) {
+      useAuthStore.getState().clearUser();
+      window.location.href = '/login';
+      throw new Error('Unauthorized');
+    }
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: 'Upload failed' }));
+      throw new Error(body.error || `HTTP ${res.status}`);
+    }
+
+    return res.json();
+  },
+
+  download: (id: string) => {
+    // Direct browser navigation for file download
+    window.open(`${API_BASE}/api/attachments/${id}/download`, '_blank');
+  },
+
+  delete: (id: string) =>
+    request<void>(`/api/attachments/${id}`, { method: 'DELETE' }),
 };

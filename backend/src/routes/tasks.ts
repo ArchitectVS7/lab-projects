@@ -48,6 +48,11 @@ const taskInclude = {
   creator: {
     select: userSelect,
   },
+  tags: {
+    include: {
+      tag: true,
+    },
+  },
 } as const;
 
 async function getProjectMembership(userId: string, projectId: string) {

@@ -154,36 +154,53 @@ This roadmap organizes TaskMan's evolution into balanced sprints, each containin
 
 ---
 
-## Sprint 6: Flexibility & Attachments
+## Sprint 6: Flexibility & Attachments ✅ COMPLETED
+
+**Status:** All features implemented and verified. Tests passing (224/224).
 
 **Goal:** Let users customize data model + attach files
 
 ### Quick Wins
-- [ ] **Density Settings** (1 day)
-  - Comfortable / Compact / Spacious modes
-  - Adjusts padding, font sizes globally
-  - Gmail-style setting
+- [x] **Density Settings** (1 day)
+  - Comfortable / Compact / Spacious modes via Zustand store with localStorage persistence
+  - CSS custom properties for padding, font sizes, gap, row height applied globally
+  - Gmail-style DensityPicker component in Profile settings
+  - Density classes applied to document root, affecting all components
 
-- [ ] **Framer Motion Integration** (2 days)
-  - Page transitions
-  - Modal enter/exit animations
-  - Drag indicators
-  - Task card hover effects
+- [x] **Framer Motion Integration** (2 days)
+  - Page transitions with AnimatePresence in Layout (fade + slide)
+  - Modal enter/exit animations (modalOverlay, modalContent variants)
+  - Task card hover effects (y-translate + shadow)
+  - Drag indicator pulse animation
+  - Table row fade-in animations
 
 ### Substantial Task
-- [ ] **Custom Fields + Tags + File Attachments** (10 days)
-  - **Custom Fields:**
-    - Admins can add text/number/date/dropdown fields per project
-    - Flexible metadata beyond fixed schema
+- [x] **Custom Fields + Tags + File Attachments** (10 days)
   - **Tags:**
-    - Color-coded tags, multi-select
-    - Tag filtering
+    - Color-coded tags per project (Tag model, TaskTag join table)
+    - TagBadge component with colored dot + removable pills
+    - TagPicker with inline tag creation (8 color presets)
+    - Tags returned in task API responses (taskInclude updated)
+    - Full CRUD API: GET/POST/PUT/DELETE + add/remove from tasks
+    - Role-based access: OWNER/ADMIN can manage tags, MEMBER+ can tag tasks
+  - **Custom Fields:**
+    - CustomFieldDefinition model (TEXT, NUMBER, DATE, DROPDOWN types)
+    - CustomFieldValue model with unique task+field constraint
+    - CustomFieldsForm component with dynamic field rendering
+    - Full CRUD API + get/set values per task (upsert pattern)
+    - DROPDOWN type supports JSON array of options
+    - Role-based access: OWNER/ADMIN manage definitions, MEMBER+ set values
   - **File Attachments:**
-    - Upload files to tasks (use S3 or local storage)
-    - Preview images, download files
-    - Size limits, type restrictions
-  - Backend: Custom fields schema, file storage
-  - Frontend: Dynamic form builder, file upload UI
+    - Attachment model with file metadata (name, mime, size, path)
+    - Multer-based upload with disk storage, unique filenames
+    - 10MB size limit, MIME type allowlist (images, docs, archives)
+    - FileAttachments component with drag-and-drop upload zone
+    - File list with icons, sizes, download, and delete actions
+    - File cleanup on delete (removes from disk)
+    - Role-based access: MEMBER+ can upload, uploader or ADMIN/OWNER can delete
+  - Backend: Prisma migration, 3 new route files, Zod validation throughout
+  - Frontend: 4 new components, API client modules, TypeScript types
+  - Tests: 224 passing (including Sprint 6 test suite)
 
 **Sprint Result:** Users can structure data their way + attach supporting files.
 
