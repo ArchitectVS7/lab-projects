@@ -56,14 +56,14 @@ export default function ProfilePage() {
       }
       return res.json();
     },
-    onSuccess: () => {
-      addToast('Seed data imported successfully', 'success');
-      // Refresh user to get any new achievements potentially unlocked
-      // and refresh projects/tasks by invalidating queries
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      // We might need to refresh "me" as well if achievements were added
-      // authApi.getMe().then(res => setUser(res.user));
+    onSuccess: (data: { message: string; alreadySeeded?: boolean }) => {
+      if (data.alreadySeeded) {
+        addToast('Sample data was already imported', 'success');
+      } else {
+        addToast('Seed data imported successfully', 'success');
+        queryClient.invalidateQueries({ queryKey: ['projects'] });
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      }
     },
     onError: (err: Error) => addToast(err.message, 'error'),
   });
