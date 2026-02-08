@@ -183,7 +183,7 @@ describe('CalendarView', () => {
     const initialMonth = monthHeader.textContent;
 
     // Click next month button
-    const nextButton = screen.getByRole('button', { name: 'ChevronRight' });
+    const nextButton = screen.getByRole('button', { name: 'Next' });
     fireEvent.click(nextButton);
 
     // Month should have changed
@@ -191,7 +191,7 @@ describe('CalendarView', () => {
     expect(newMonthHeader.textContent).not.toEqual(initialMonth);
 
     // Click previous month button
-    const prevButton = screen.getByRole('button', { name: 'ChevronLeft' });
+    const prevButton = screen.getByRole('button', { name: 'Previous' });
     fireEvent.click(prevButton);
 
     // Month should have changed back

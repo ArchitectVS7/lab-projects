@@ -1,0 +1,146 @@
+// This schema defines the database structure for the documentation automation system
+// It supports both user manual content and in-app help content
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Features that have documentation
+model DocumentationFeature {
+  id          String   @id @default(cuid())
+  featureId   String   @unique // e.g., "auth.login", "projects.create"
+  name        String   // Human-readable name
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  contentBlocks DocumentationContentBlock[]
+  
+  @@map("documentation_features")
+}
+
+/// Content blocks extracted from PRD
+model DocumentationContentBlock {
+  id          String   @id @default(cuid())
+  blockId     String   @unique // Generated from title, URL-friendly
+  title       String
+  content     String   // Markdown content
+  level       Int      // Heading level (1-6)
+  sortOrder   Int      // Order within parent section
+  
+  // Metadata
+  featureId   String?
+  route       String?  // Associated UI route (e.g., "/login")
+  audience    String[] // e.g., ["user", "admin", "developer"]
+  surface     String[] // e.g., ["docs", "help", "tooltips"]
+  tags        String[] // Additional tags for categorization
+  
+  // Relationships
+  feature     DocumentationFeature? @relation(fields: [featureId], references: [id])
+  parentId    String?
+  parent      DocumentationContentBlock? @relation("ContentHierarchy", fields: [parentId], references: [id])
+  children    DocumentationContentBlock[] @relation("ContentHierarchy")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("documentation_content_blocks")
+}
+
+/// User manual sections
+model UserManualSection {
+  id            String   @id @default(cuid())
+  slug          String   @unique // URL-friendly identifier
+  title         String
+  content       String   // HTML or processed content
+  description   String?
+  sortOrder     Int      // Order in the manual
+  
+  // SEO and metadata
+  metaTitle     String?
+  metaDescription String?
+  
+  // Relationships
+  parentSectionId String?
+  parentSection   UserManualSection? @relation("ManualSections", fields: [parentSectionId], references: [id])
+  childSections   UserManualSection[] @relation("ManualSections")
+  contentBlocks   DocumentationContentBlock[] @relation(name: "ManualContentBlocks")
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("user_manual_sections")
+}
+
+/// In-app help articles
+model InAppHelpArticle {
+  id              String   @id @default(cuid())
+  slug            String   @unique // URL-friendly identifier
+  title           String
+  content         String   // HTML or processed content
+  summary         String?  // Brief summary for listings
+  contextRoute    String?  // Specific route where help is relevant (e.g., "/dashboard", "/projects/create")
+  contextElement  String?  // Specific element ID where help applies
+  priority        Int      // Display priority (lower numbers first)
+  
+  // Relationships
+  contentBlocks   DocumentationContentBlock[] @relation(name: "HelpContentBlocks")
+  relatedArticles InAppHelpArticle[] @relation("RelatedHelpArticles")
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("in_app_help_articles")
+}
+
+/// Association table for related help articles
+model RelatedHelpArticles {
+  id          String @id @default(cuid())
+  fromArticle InAppHelpArticle @relation("RelatedHelpArticles", fields: [fromArticleId], references: [id])
+  fromArticleId String
+  toArticle   InAppHelpArticle @relation("ReverseRelatedHelpArticles", fields: [toArticleId], references: [id])
+  toArticleId String
+  createdAt   DateTime @default(now())
+  
+  @@map("related_help_articles")
+  @@unique([fromArticleId, toArticleId])
+}
+
+/// Documentation versioning
+model DocumentationVersion {
+  id          String   @id @default(cuid())
+  version     String   // e.g., "1.0.0", "PRD-v3.0"
+  title       String   // e.g., "Initial Release", "Sprint 9 Update"
+  description String?
+  isCurrent   Boolean  @default(false) // Is this the current version?
+  
+  // Relationships
+  contentBlocks DocumentationContentBlock[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("documentation_versions")
+}
+
+/// Documentation change log
+model DocumentationChange {
+  id            String   @id @default(cuid())
+  changeType    String   // "added", "modified", "removed", "deprecated"
+  description   String   // Description of the change
+  affectedBlock String?  // Reference to the affected content block ID
+  
+  // Relationships
+  version DocumentationVersion @relation(fields: [versionId], references: [id])
+  versionId String
+  
+  createdAt DateTime @default(now())
+  
+  @@map("documentation_changes")
+}

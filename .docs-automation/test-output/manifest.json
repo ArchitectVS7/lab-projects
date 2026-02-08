@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "title": "TaskMan Documentation",
+  "description": "Complete documentation for TaskMan platform",
+  "builtAt": "2026-02-08T00:39:18.286Z",
+  "blockCount": 215,
+  "surfaces": [
+    "user-manual",
+    "in-app-help"
+  ],
+  "outputPaths": {
+    "manual": "test-output\\manual",
+    "help": "test-output\\help",
+    "database": "test-output\\database"
+  }
+}

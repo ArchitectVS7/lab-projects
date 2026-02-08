@@ -14,6 +14,7 @@ export default function ThemePicker() {
                 return (
                     <button
                         key={theme.id}
+                        data-testid={`color-theme-option-${theme.id}`}
                         onClick={() => setColorTheme(theme.id)}
                         className={`
               w-10 h-10 rounded-full flex items-center justify-center transition-all

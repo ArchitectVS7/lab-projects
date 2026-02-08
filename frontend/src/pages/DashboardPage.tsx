@@ -1,36 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion, Transition } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { tasksApi, projectsApi } from '../lib/api';
-import { CheckCircle2, Clock, AlertTriangle, ListTodo } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import InsightsWidget from '../components/InsightsWidget';
 import { DashboardSkeleton } from '../components/Skeletons';
 import EmptyState from '../components/EmptyState';
-import { usePerformanceAnimations } from '../hooks/usePerformanceAnimations';
 import { useAuthStore } from '../store/auth';
 import clsx from 'clsx';
-import type { Task, Project, TaskStatus, TaskPriority } from '../types';
+import type { Project } from '../types';
 
-const STATUS_LABELS: Record<TaskStatus, string> = {
-  TODO: 'To Do',
-  IN_PROGRESS: 'In Progress',
-  IN_REVIEW: 'In Review',
-  DONE: 'Done',
-};
-
-const STATUS_COLORS: Record<TaskStatus, string> = {
-  TODO: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300',
-  IN_PROGRESS: 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300',
-  IN_REVIEW: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-600 dark:text-yellow-300',
-  DONE: 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-300',
-};
-
-const PRIORITY_COLORS: Record<TaskPriority, string> = {
-  LOW: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300',
-  MEDIUM: 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300',
-  HIGH: 'bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-300',
-  URGENT: 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300',
-};
 
 function StatCard({ title, value, icon: Icon, color }: { title: string; value: number; icon: React.ElementType; color: string }) {
   return (
@@ -49,96 +27,9 @@ function StatCard({ title, value, icon: Icon, color }: { title: string; value: n
   );
 }
 
-function TaskCard({ task }: { task: Task }) {
-  const navigate = useNavigate();
-  const { getTaskCardHover } = usePerformanceAnimations();
-  const taskCardHover = getTaskCardHover();
 
-  const handleAssigneeClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (task.assignee) {
-      navigate(`/tasks?assignee=${task.assignee.id}`);
-    }
-  };
-
-  const handleCreatorClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (task.creator) {
-      navigate(`/tasks?creator=${task.creator.id}`);
-    }
-  };
-
-  return (
-    <motion.div
-      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow"
-      whileHover={taskCardHover.whileHover}
-      transition={taskCardHover.transition as Transition}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="font-medium text-gray-900 dark:text-gray-100 line-clamp-1">{task.title}</h3>
-        <span className={clsx('text-xs px-2 py-0.5 rounded font-medium', PRIORITY_COLORS[task.priority])}>
-          {task.priority}
-        </span>
-      </div>
-      <div className="flex items-center gap-2 mt-2">
-        <span className={clsx('text-xs px-2 py-0.5 rounded', STATUS_COLORS[task.status])}>
-          {STATUS_LABELS[task.status]}
-        </span>
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: task.project.color }} />
-          <span className="text-xs text-gray-500 dark:text-gray-400">{task.project.name}</span>
-        </div>
-      </div>
-      {/* Dependencies and recurring info */}
-      <div className="flex items-center gap-3 mt-3 pt-2 border-t border-gray-100 dark:border-gray-700 flex-wrap">
-        {(task._count?.dependsOn ?? 0) > 0 && (
-          <div className="flex items-center gap-1 px-2 py-1 bg-red-50 dark:bg-red-900/20 rounded text-red-700 dark:text-red-300">
-            <span className="text-xs font-medium">⚠️ {task._count!.dependsOn} blocker{task._count!.dependsOn > 1 ? 's' : ''}</span>
-          </div>
-        )}
-        {(task._count?.dependedOnBy ?? 0) > 0 && (
-          <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 rounded text-blue-700 dark:text-blue-300">
-            <span className="text-xs font-medium">🔗 Blocks {task._count!.dependedOnBy}</span>
-          </div>
-        )}
-        {task.isRecurring && (
-          <div className="flex items-center gap-1 px-2 py-1 rounded text-purple-700 dark:text-purple-300 font-medium text-xs" style={{ backgroundColor: 'color-mix(in srgb, #a855f7 20%, transparent)' }}>
-            🔄 Repeats
-          </div>
-        )}
-      </div>
-      <div className="flex items-center gap-3 mt-2 flex-wrap">
-        {task.assignee && (
-          <button
-            onClick={handleAssigneeClick}
-            className="flex items-center gap-1 hover:opacity-80 transition-opacity cursor-pointer"
-            title={`Filter tasks assigned to ${task.assignee.name}`}
-          >
-            <div className="w-5 h-5 rounded-full bg-[var(--primary-base)] text-white flex items-center justify-center text-xs font-semibold">
-              {task.assignee.name.charAt(0).toUpperCase()}
-            </div>
-            <span className="text-xs text-gray-600 dark:text-gray-400">{task.assignee.name}</span>
-          </button>
-        )}
-        {task.creator && (
-          <>
-            <span className="text-xs text-gray-400">→</span>
-            <button
-              onClick={handleCreatorClick}
-              className="flex items-center gap-1 hover:opacity-80 transition-opacity cursor-pointer"
-              title={`Filter tasks created by ${task.creator.name}`}
-            >
-              <div className="w-5 h-5 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-gray-100 flex items-center justify-center text-xs font-semibold">
-                {task.creator.name.charAt(0).toUpperCase()}
-              </div>
-              <span className="text-xs text-gray-600 dark:text-gray-400">{task.creator.name}</span>
-            </button>
-          </>
-        )}
-      </div>
-    </motion.div>
-  );
-}
+// TaskCard replaced by shared component
+import TaskCard from '../components/TaskCard';
 
 function ProjectCard({ project }: { project: Project }) {
   return (

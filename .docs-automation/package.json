@@ -1,0 +1,26 @@
+{
+  "name": "docs-automation-tools",
+  "version": "1.0.0",
+  "description": "Tools for automating documentation from PRD source",
+  "main": "dist/parser.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch parser.ts",
+    "start": "node dist/parser.js",
+    "test": "tsx test-parser.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "typescript": "^5.4.2",
+    "tsx": "^4.7.1"
+  },
+  "keywords": [
+    "documentation",
+    "automation",
+    "markdown",
+    "parser",
+    "prd"
+  ],
+  "author": "TaskMan Documentation System",
+  "license": "MIT"
+}

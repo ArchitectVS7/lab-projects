@@ -12,6 +12,28 @@ vi.mock('../../lib/api', () => ({
   },
 }));
 
+// Mock hooks
+vi.mock('../../hooks/usePerformanceAnimations', () => ({
+  usePerformanceAnimations: () => ({
+    performanceMode: 'default',
+    getTaskCardHover: () => ({}),
+  }),
+}));
+
+// Mock TaskCompletionCelebration
+vi.mock('../../components/TaskCompletionCelebration', () => ({
+  default: () => <div data-testid="celebration" />,
+}));
+
+// Mock Lucide icons
+vi.mock('lucide-react', () => ({
+  ArrowLeft: () => <span data-testid="icon-arrow-left" />,
+  CheckCircle2: () => <span data-testid="icon-check" />,
+  Clock: () => <span data-testid="icon-clock" />,
+  AlertTriangle: () => <span data-testid="icon-alert" />,
+  Flame: () => <span data-testid="icon-flame" />,
+}));
+
 // Mock framer-motion
 vi.mock('framer-motion', async () => {
   const actual = await vi.importActual('framer-motion');
@@ -23,13 +45,27 @@ vi.mock('framer-motion', async () => {
           {children}
         </div>
       ),
-      button: ({ children, ...props }: any) => (
+      button: ({ children, whileHover, whileTap, ...props }: any) => (
         <button data-motion {...props}>
           {children}
         </button>
       ),
     },
     AnimatePresence: ({ children }: any) => <>{children}</>,
+  };
+});
+
+
+// Mock TaskCard
+vi.mock('../../components/TaskCard', () => {
+  return {
+    __esModule: true,
+    default: ({ task, onEdit }: any) => (
+      <div data-testid="task-card">
+        <span>{task.title}</span>
+        <button onClick={() => onEdit && onEdit(task)}>Edit</button>
+      </div>
+    ),
   };
 });
 
@@ -106,8 +142,10 @@ describe('FocusPage', () => {
 
     // Wait for the tasks to load
     await waitFor(() => {
-      const taskTitles = screen.getAllByText(/Task \d/);
-      expect(taskTitles).toHaveLength(3);
+      expect(screen.getAllByTestId('task-card')).toHaveLength(3);
+      expect(screen.getByText('Task 1')).toBeInTheDocument();
+      expect(screen.getByText('Task 2')).toBeInTheDocument();
+      expect(screen.getByText('Task 3')).toBeInTheDocument();
     });
 
     // Verify that only the top 3 tasks are displayed

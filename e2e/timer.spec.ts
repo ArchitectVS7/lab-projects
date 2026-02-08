@@ -20,7 +20,7 @@ test.describe('Pomodoro Timer', () => {
         await startButton.click();
 
         // Verify timer widget appears
-        const timerWidget = page.locator('[data-testid="timer-widget"], .timer-widget');
+        const timerWidget = page.locator('[data-testid="timer-widget"]');
         await expect(timerWidget).toBeVisible({ timeout: 3000 });
 
         // Verify timer is running (shows time)
@@ -82,7 +82,7 @@ test.describe('Pomodoro Timer', () => {
         await expect(timerWidget).toBeVisible();
 
         // Find expand/collapse button
-        const expandButton = timerWidget.getByRole('button', { name: /chevron|expand|collapse/i });
+        const expandButton = timerWidget.getByRole('button', { name: /expand|collapse/i });
 
         if (await expandButton.isVisible()) {
             // Get initial height

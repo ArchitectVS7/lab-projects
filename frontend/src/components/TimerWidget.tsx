@@ -106,6 +106,7 @@ export default function TimerWidget() {
   return (
     <AnimatePresence>
       <motion.div
+        data-testid="timer-widget"
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
@@ -154,6 +155,7 @@ export default function TimerWidget() {
                   <Square size={16} fill="currentColor" />
                 </button>
                 <button
+                  aria-label={expanded ? "Collapse timer details" : "Expand timer details"}
                   onClick={() => setExpanded(!expanded)}
                   className="p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
                 >

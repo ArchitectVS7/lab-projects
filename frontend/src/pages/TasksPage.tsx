@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCorners, useDroppable, useDraggable } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCorners, useDraggable } from '@dnd-kit/core';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { tasksApi, projectsApi, recurringTasksApi, exportApi } from '../lib/api';
@@ -18,8 +18,10 @@ import CalendarView from '../components/CalendarView';
 import TaskDetailModal from '../components/TaskDetailModal';
 import type { TaskFormData } from '../components/TaskDetailModal';
 import { modalOverlay, modalContent } from '../lib/animations';
-import { usePerformanceAnimations } from '../hooks/usePerformanceAnimations';
 import SmartTaskInput from '../components/SmartTaskInput';
+
+import TaskCard from '../components/TaskCard';
+import KanbanColumn from '../components/KanbanColumn';
 
 // --- Constants ---
 
@@ -39,11 +41,11 @@ const STATUS_BG: Record<TaskStatus, string> = {
   DONE: 'bg-green-500',
 };
 
-const STATUS_COLUMN_COLORS: Record<TaskStatus, string> = {
-  TODO: 'bg-gray-100 dark:bg-gray-800',
-  IN_PROGRESS: 'bg-blue-50 dark:bg-blue-900/20',
-  IN_REVIEW: 'bg-yellow-50 dark:bg-yellow-900/20',
-  DONE: 'bg-green-50 dark:bg-green-900/20',
+const STATUS_BG: Record<TaskStatus, string> = {
+  TODO: 'bg-gray-400',
+  IN_PROGRESS: 'bg-blue-500',
+  IN_REVIEW: 'bg-yellow-500',
+  DONE: 'bg-green-500',
 };
 
 const PRIORITY_COLORS: Record<TaskPriority, string> = {
@@ -287,138 +289,39 @@ function TableView({
 
 // --- Kanban Components ---
 
-function KanbanColumn({ status, tasks, children }: { status: TaskStatus; tasks: Task[]; children: React.ReactNode }) {
-  const { setNodeRef, isOver } = useDroppable({ id: status });
-  return (
-    <div
-      ref={setNodeRef}
-      className={clsx(
-        'flex-1 min-w-[260px] p-3 rounded-lg transition-colors',
-        isOver ? 'bg-indigo-50 dark:bg-indigo-900/30 ring-2 ring-indigo-300 dark:ring-indigo-600' : STATUS_COLUMN_COLORS[status]
-      )}
-    >
-      <div className="flex items-center justify-between mb-3">
-        <span className={clsx('text-xs font-semibold px-2 py-1 rounded text-white', STATUS_BG[status])}>
-          {STATUS_LABELS[status]}
-        </span>
-        <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">{tasks.length}</span>
-      </div>
-      <div className="space-y-2 min-h-[80px]">{children}</div>
-    </div>
-  );
-}
+// KanbanColumn replaced by shared component
 
 function DraggableTaskCard({ task, onEdit, canEdit }: { task: Task; onEdit: (task: Task) => void; canEdit: boolean }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
-  const { performanceMode } = usePerformanceAnimations();
 
   return (
-    <motion.div
+    <div
       ref={setNodeRef}
       style={style}
       {...listeners}
       {...attributes}
-      whileHover={performanceMode !== 'performance' ? { y: -6, boxShadow: '0 20px 25px rgba(0, 0, 0, 0.15)' } : {}}
-      transition={performanceMode !== 'performance' ? { duration: 0.3, type: 'spring', stiffness: 300 } : { duration: 0 }}
-      className={clsx(
-        'bg-white dark:bg-gray-800 p-3 rounded-md shadow-sm border border-gray-200 dark:border-gray-700 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow',
-        isDragging && 'opacity-50 shadow-lg'
-      )}
+      className={clsx(isDragging && 'opacity-50 z-50')}
     >
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2 flex-1">{task.title}</p>
-        {canEdit && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onEdit(task); }}
-            onPointerDown={(e) => e.stopPropagation()}
-            className="text-gray-300 dark:text-gray-600 hover:text-[var(--primary-base)] flex-shrink-0 mt-0.5 transition-colors"
-            title="Edit"
-          >
-            <Pencil size={12} />
-          </button>
-        )}
-      </div>
-      {task.description && (
-        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">{task.description}</p>
-      )}
-      <div className="flex items-center gap-2 mt-2 flex-wrap">
-        <span className={clsx('text-[10px] px-1.5 py-0.5 rounded font-medium', PRIORITY_COLORS[task.priority])}>
-          {task.priority}
-        </span>
-        {task.isRecurring && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-300 flex items-center gap-0.5" title="Recurring task">
-            <Repeat size={9} />
-            Recurring
-          </span>
-        )}
-        {(task._count?.dependsOn ?? 0) > 0 && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300 flex items-center gap-0.5" title="Blocked">
-            <ShieldAlert size={9} />
-            Blocked
-          </span>
-        )}
-        {(task._count?.dependedOnBy ?? 0) > 0 && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-300 flex items-center gap-0.5" title="Blocking others">
-            <Shield size={9} />
-            Blocking
-          </span>
-        )}
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: task.project.color }} />
-          <span className="text-[10px] text-gray-500 dark:text-gray-400">{task.project.name}</span>
-        </div>
-        {task.dueDate && (
-          <span className="text-[10px] text-gray-400 dark:text-gray-500 flex items-center gap-0.5">
-            <CalendarIcon size={9} />
-            {format(new Date(task.dueDate), 'MMM d')}
-          </span>
-        )}
-        {task.assignee && (
-          <span className="ml-auto w-5 h-5 rounded-full bg-[var(--primary-light)] dark:bg-[var(--primary-dark)] flex items-center justify-center text-[10px] font-medium text-[var(--primary-base)]">
-            {task.assignee.name.charAt(0).toUpperCase()}
-          </span>
-        )}
-        {task.creator && !task.assignee && (
-          <span className="ml-auto w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-[10px] font-medium text-gray-600 dark:text-gray-400" title={`Created by ${task.creator.name}`}>
-            {task.creator.name.charAt(0).toUpperCase()}
-          </span>
-        )}
-        {task.creator && task.assignee && (
-          <span className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-[10px] font-medium text-gray-600 dark:text-gray-400 -ml-1 border border-white dark:border-gray-800" title={`Created by ${task.creator.name}`}>
-            {task.creator.name.charAt(0).toUpperCase()}
-          </span>
-        )}
-      </div>
-    </motion.div>
+      <TaskCard
+        task={task}
+        onEdit={onEdit}
+        canEdit={canEdit}
+        isDraggable={true}
+        showStatus={false} // Status is shown in column header
+      />
+    </div>
   );
 }
 
 function TaskCardOverlay({ task }: { task: Task }) {
   return (
-    <div className="bg-white dark:bg-gray-800 p-3 rounded-md shadow-xl border-2 opacity-90 w-[260px]" style={{ borderColor: 'var(--primary-base)' }}>
-      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">{task.title}</p>
-      <div className="flex items-center gap-2 mt-2">
-        <span className={clsx('text-[10px] px-1.5 py-0.5 rounded font-medium', PRIORITY_COLORS[task.priority])}>
-          {task.priority}
-        </span>
-        {(task._count?.dependsOn ?? 0) > 0 && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300 flex items-center gap-0.5">
-            <ShieldAlert size={9} />
-            Blocked
-          </span>
-        )}
-        {(task._count?.dependedOnBy ?? 0) > 0 && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-300 flex items-center gap-0.5">
-            <Shield size={9} />
-            Blocking
-          </span>
-        )}
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: task.project.color }} />
-          <span className="text-[10px] text-gray-500 dark:text-gray-400">{task.project.name}</span>
-        </div>
-      </div>
+    <div className="w-[280px] opacity-90 rotate-3 cursor-grabbing shadow-2xl">
+      <TaskCard
+        task={task}
+        showStatus={false}
+        isDraggable={true}
+      />
     </div>
   );
 }

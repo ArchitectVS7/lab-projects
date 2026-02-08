@@ -16,6 +16,7 @@ export default function LayoutSwitcher() {
             {LAYOUTS.map((L) => (
                 <button
                     key={L.id}
+                    data-testid={`layout-option-${L.id}`}
                     onClick={() => setLayout(L.id)}
                     className={`
             flex flex-col items-center justify-center p-3 rounded-lg border transition-all

@@ -62,25 +62,25 @@ function SessionValidator({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <ErrorBoundary>
-    <SessionValidator>
-      <Routes>
-        <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
-        <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
-        <Route path="/focus" element={<ProtectedRoute><FocusPage /></ProtectedRoute>} />
-        <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-          <Route index element={<DashboardPage />} />
-          <Route path="tasks" element={<TasksPage />} />
-          <Route path="projects" element={<ProjectsPage />} />
-          <Route path="projects/:id" element={<ProjectDetailPage />} />
-          <Route path="calendar" element={<CalendarPage />} />
-          <Route path="creator-dashboard" element={<CreatorDashboardPage />} />
-          <Route path="dependencies" element={<DependenciesDashboardPage />} />
-          <Route path="api-keys" element={<ApiKeysPage />} />
-          <Route path="webhooks" element={<WebhooksPage />} />
-          <Route path="profile" element={<ProfilePage />} />
-        </Route>
-      </Routes>
-    </SessionValidator>
+      <SessionValidator>
+        <Routes>
+          <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
+          <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
+          <Route path="/focus" element={<ProtectedRoute><FocusPage /></ProtectedRoute>} />
+          <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+            <Route index element={<DashboardPage />} />
+            <Route path="tasks" element={<TasksPage />} />
+            <Route path="projects" element={<ProjectsPage />} />
+            <Route path="projects/:id" element={<ProjectDetailPage />} />
+            <Route path="calendar" element={<CalendarPage />} />
+            <Route path="creator-dashboard" element={<CreatorDashboardPage />} />
+            <Route path="dependencies" element={<DependenciesDashboardPage />} />
+            <Route path="api-keys" element={<ApiKeysPage />} />
+            <Route path="webhooks" element={<WebhooksPage />} />
+            <Route path="profile" element={<ProfilePage />} />
+          </Route>
+        </Routes>
+      </SessionValidator>
     </ErrorBoundary>
   );
 }

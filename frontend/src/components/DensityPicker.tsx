@@ -15,6 +15,7 @@ export default function DensityPicker() {
       {DENSITIES.map((d) => (
         <button
           key={d.id}
+          data-testid={`density-option-${d.id}`}
           onClick={() => setDensity(d.id)}
           className={`
             flex flex-col items-center justify-center ${d.padding} rounded-lg border transition-all

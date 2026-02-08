@@ -1,0 +1,1479 @@
+[
+  {
+    "slug": "product-requirements-document-prd-unified-task-management-platform",
+    "title": "Product Requirements Document (PRD): Unified Task Management Platform",
+    "content": "# Product Requirements Document (PRD): Unified Task Management Platform",
+    "sortOrder": 0,
+    "description": "# Product Requirements Document (PRD): Unified Task Management Platform..."
+  },
+  {
+    "slug": "status-living-document",
+    "title": "Status: Living Document",
+    "content": "## Status: Living Document (Updated with Sprint 1-9 Implementation Status)",
+    "sortOrder": 1,
+    "description": "## Status: Living Document (Updated with Sprint 1-9 Implementation Status)..."
+  },
+  {
+    "slug": "date-2026-02-07",
+    "title": "Date: 2026-02-07",
+    "content": "## Date: 2026-02-07 (Last Updated)",
+    "sortOrder": 2,
+    "description": "## Date: 2026-02-07 (Last Updated)..."
+  },
+  {
+    "slug": "version-30",
+    "title": "Version: 3.0",
+    "content": "## Version: 3.0",
+    "sortOrder": 3,
+    "description": "## Version: 3.0..."
+  },
+  {
+    "slug": "upstream-sources-task-management-saas-1",
+    "title": "Upstream Sources: task-management-saas-1",
+    "content": "## Upstream Sources: task-management-saas-1 (TaskApp), task-management-saas-2 (TaskFlow)\n\n---",
+    "sortOrder": 4,
+    "description": "## Upstream Sources: task-management-saas-1 (TaskApp), task-management-saas-2 (TaskFlow)\n\n---..."
+  },
+  {
+    "slug": "1-executive-summary",
+    "title": "1. Executive Summary",
+    "content": "## 1. Executive Summary\n\nThis document specifies the requirements for a unified task management platform that merges the strongest capabilities from two existing prototype systems (task-management-saas-1 and task-management-saas-2) into a single, production-grade application.\n\n**saas-1** brought superior developer experience through Zustand state management, React Query data fetching with caching, a compact table-based task view with inline status editing, and task creator tracking. **saas-2** brought stronger security via HTTP-only cookie authentication with token refresh, a more complete API surface (user profiles, password management, team member management), Zod-based validation, a Kanban board view, bulk status operations, and explicit database indexes.\n\nThe unified system takes the best-in-class approach from each:\n\n| Concern | Source | Rationale |\n|---------|--------|-----------|\n| Authentication | saas-2 | HTTP-only cookies, token refresh, logout endpoint |\n| State management | saas-1 | Zustand is lighter and avoids Context re-render issues |\n| Data fetching | saas-1 | React Query provides caching, deduplication, background refetch |\n| Task views | Both | Table view (saas-1) + Kanban board (saas-2) with a toggle |\n| User profiles | saas-2 | Profile update, avatar, password change |\n| Team management | saas-2 | Role-based member add/remove |\n| Validation | saas-2 | Zod for type-safe schema validation on the backend |\n| Task creator tracking | saas-1 | creatorId on the Task model |\n| Database indexes | saas-2 | Explicit indexes on status, projectId, assigneeId |\n| Bulk operations | saas-2 | Bulk status update endpoint for drag-and-drop |",
+    "sortOrder": 5,
+    "description": "## 1. Executive Summary\n\nThis document specifies the requirements for a unified task management plat..."
+  },
+  {
+    "slug": "evolution-from-mvp-to-full-platform",
+    "title": "Evolution from MVP to Full Platform",
+    "content": "### Evolution from MVP to Full Platform\n\n**Phase 0-4 (Implemented)**: Core foundation with authentication, projects, tasks, team management, and basic dashboard. **Status: ✅ Production-ready** with comprehensive test coverage.\n\n**Sprints 1-9 (Implemented)**: All core and advanced features completed. **Status: ✅ Production-ready** with 371/373 backend tests passing (99.5%) and 26/26 CLI tests passing (100%).\n\n**Sprint 10 (Future)**: Nice-to-have features (habit tracking, voice input, burnout prevention). **Status: 🔄 Planned** for future releases.\n\n**Current Status**: 397 passing tests, 67+ API endpoints, 18 Prisma models, 14 route files. Feature-complete through Sprint 9.",
+    "sortOrder": 6,
+    "description": "### Evolution from MVP to Full Platform\n\n**Phase 0-4 (Implemented)**: Core foundation with authentic..."
+  },
+  {
+    "slug": "strategic-positioning",
+    "title": "Strategic Positioning",
+    "content": "### Strategic Positioning\n\nTaskMan differentiates itself as **\"The task manager for developers\"** with unique features:\n- **Creator Accountability Dashboard**: Identify bottlenecks and delegation patterns (no competitor has this)\n- **Smart Task Dependencies**: Critical path visualization for project planning\n- **CLI Tool**: Terminal-native task management for developer workflows\n- **Public API + Webhooks**: Full automation and integration capabilities\n- **AI-Powered Insights**: Productivity pattern analysis and recommendations\n\n\n---",
+    "sortOrder": 7,
+    "description": "### Strategic Positioning\n\nTaskMan differentiates itself as **\"The task manager for developers\"** wi..."
+  },
+  {
+    "slug": "11-strategic-positioning",
+    "title": "1.1 Strategic Positioning",
+    "content": "## 1.1 Strategic Positioning",
+    "sortOrder": 8,
+    "description": "## 1.1 Strategic Positioning..."
+  },
+  {
+    "slug": "product-identity",
+    "title": "Product Identity",
+    "content": "### Product Identity\n\nTaskMan positions itself as **\"The task manager for developers\"** with five core principles:\n\n1. **Fast, Focused, No-Nonsense**\n   - Anti-bloatware: No feature creep like Notion or Monday.com\n   - Keyboard-first workflows for speed\n   - Instant loading with aggressive caching strategies\n   - Minimal clicks to complete common actions\n\n2. **Developer-First Tooling**\n   - Full REST API with API key authentication\n   - Webhooks for automation and integrations\n   - CLI tool for terminal-native task management\n   - TypeScript end-to-end (frontend + backend)\n   - Self-hostable via Docker\n\n3. **Privacy-First, Self-Hostable**\n   - Data ownership: users control their data\n   - Docker deployment option for on-premise hosting\n   - No third-party analytics tracking\n   - Open-source roadmap consideration\n\n4. **Beautiful AND Functional**\n   - Design and engineering balance (not design-first or engineering-only)\n   - Glassmorphism UI with micro-interactions\n   - Smooth animations without sacrificing performance\n   - Accessibility baked in (keyboard navigation, ARIA labels)\n\n5. **Unique Accountability Features**\n   - Creator analytics (no competitor has this)\n   - Burnout prevention dashboard\n   - Smart dependency management with critical path\n   - AI-powered productivity insights",
+    "sortOrder": 9,
+    "description": "### Product Identity\n\nTaskMan positions itself as **\"The task manager for developers\"** with five co..."
+  },
+  {
+    "slug": "unique-selling-points",
+    "title": "Unique Selling Points",
+    "content": "### Unique Selling Points\n\n| Feature | Competitive Advantage |\n|---------|----------------------|\n| **Creator Accountability Dashboard** | Identify bottlenecks and delegation imbalances. Unique to TaskMan. Positioned as \"anti-busywork\" feature. |\n| **Smart Task Dependencies** | Critical path visualization for project planning. Auto-adjust due dates when blockers shift. |\n| **CLI Tool** | Terminal-native management for developers. Quick capture from command line. |\n| **Public API + Webhooks** | Full automation capabilities. Position as \"task manager for developers\". |\n| **AI-Powered Insights** | Productivity pattern analysis (\"You're most productive on Tuesdays\"). Task duration predictions. |\n| **Focus Mode** | Deep work built-in. Distraction-free full-screen interface. |\n| **Burnout Prevention** | Warn when team members are over-assigned. Workload balancing suggestions. Industry-first feature. |",
+    "sortOrder": 10,
+    "description": "### Unique Selling Points\n\n| Feature | Competitive Advantage |\n|---------|----------------------|\n| ..."
+  },
+  {
+    "slug": "competitive-differentiation",
+    "title": "Competitive Differentiation",
+    "content": "### Competitive Differentiation\n\n**vs. Todoist**: More developer-friendly (API, CLI), better team collaboration (real-time updates, comments)\n\n**vs. TickTick**: Stronger project management (dependencies, critical path), more customizable UI\n\n**vs. Notion**: Faster, more focused (no bloat), better task-specific features (recurring tasks, time tracking)\n\n**vs. Asana/Monday.com**: Simpler to use, self-hostable, privacy-first, lower cost of ownership\n\n**vs. Things 3**: Cross-platform (not Mac-only), team collaboration, public API",
+    "sortOrder": 11,
+    "description": "### Competitive Differentiation\n\n**vs. Todoist**: More developer-friendly (API, CLI), better team co..."
+  },
+  {
+    "slug": "target-audience",
+    "title": "Target Audience",
+    "content": "### Target Audience\n\n- **Primary**: Software developers, engineering teams, technical project managers\n- **Secondary**: Knowledge workers who value keyboard shortcuts and automation\n- **Tertiary**: Privacy-conscious users seeking self-hosted alternatives to SaaS tools",
+    "sortOrder": 12,
+    "description": "### Target Audience\n\n- **Primary**: Software developers, engineering teams, technical project manage..."
+  },
+  {
+    "slug": "marketing-messaging",
+    "title": "Marketing Messaging",
+    "content": "### Marketing Messaging\n\n- **Headline**: \"The task manager built for developers who hate context-switching\"\n- **Subhead**: \"CLI, API, webhooks, and a beautiful UI. Self-host or use our cloud.\"\n- **CTA**: \"Start for free. No credit card required. Deploy in 60 seconds.\"\n\n---",
+    "sortOrder": 13,
+    "description": "### Marketing Messaging\n\n- **Headline**: \"The task manager built for developers who hate context-swi..."
+  },
+  {
+    "slug": "2-feature-specifications",
+    "title": "2. Feature Specifications",
+    "content": "## 2. Feature Specifications",
+    "sortOrder": 14,
+    "description": "## 2. Feature Specifications..."
+  },
+  {
+    "slug": "21-authentication-session-management",
+    "title": "2.1 Authentication & Session Management",
+    "content": "### 2.1 Authentication & Session Management\n\n**Source: saas-2 (auth model), saas-1 (state persistence pattern)**",
+    "sortOrder": 15,
+    "description": "### 2.1 Authentication & Session Management\n\n**Source: saas-2 (auth model), saas-1 (state persistenc..."
+  },
+  {
+    "slug": "211-registration",
+    "title": "2.1.1 Registration",
+    "content": "#### 2.1.1 Registration\n- **Endpoint**: `POST /api/auth/register`\n- **Input validation**:\n  - `email`: valid email format, normalized to lowercase\n  - `password`: minimum 8 characters, must contain uppercase, lowercase, and a digit\n  - `name`: trimmed, minimum 2 characters\n- **Behavior**:\n  - Check for duplicate email (return 409 if exists)\n  - Hash password with bcryptjs (12 salt rounds)\n  - Create user record\n  - Generate JWT, set as HTTP-only cookie\n  - Return user object (id, email, name, avatarUrl, createdAt) -- never return passwordHash\n- **Cookie configuration**:\n  - `httpOnly: true`\n  - `secure: true` in production\n  - `sameSite: 'none'` for cross-subdomain (Railway), `'strict'` for same-domain production\n  - `maxAge: 7 days`",
+    "sortOrder": 16,
+    "description": "#### 2.1.1 Registration\n- **Endpoint**: `POST /api/auth/register`\n- **Input validation**:\n  - `email..."
+  },
+  {
+    "slug": "212-login",
+    "title": "2.1.2 Login",
+    "content": "#### 2.1.2 Login\n- **Endpoint**: `POST /api/auth/login`\n- **Input**: email (validated), password (required)\n- **Behavior**:\n  - Find user by email\n  - Compare password hash\n  - On success: generate JWT, set HTTP-only cookie, return user object\n  - On failure: generic \"Invalid email or password\" (401) -- no user enumeration",
+    "sortOrder": 17,
+    "description": "#### 2.1.2 Login\n- **Endpoint**: `POST /api/auth/login`\n- **Input**: email (validated), password (re..."
+  },
+  {
+    "slug": "213-logout",
+    "title": "2.1.3 Logout",
+    "content": "#### 2.1.3 Logout\n- **Endpoint**: `POST /api/auth/logout`\n- **Behavior**: Clear the auth cookie, return success message",
+    "sortOrder": 18,
+    "description": "#### 2.1.3 Logout\n- **Endpoint**: `POST /api/auth/logout`\n- **Behavior**: Clear the auth cookie, ret..."
+  },
+  {
+    "slug": "214-session-refresh",
+    "title": "2.1.4 Session Refresh",
+    "content": "#### 2.1.4 Session Refresh\n- **Endpoint**: `POST /api/auth/refresh`\n- **Requires**: Valid existing session (authenticate middleware)\n- **Behavior**: Generate new JWT, replace cookie, return success",
+    "sortOrder": 19,
+    "description": "#### 2.1.4 Session Refresh\n- **Endpoint**: `POST /api/auth/refresh`\n- **Requires**: Valid existing s..."
+  },
+  {
+    "slug": "215-current-user",
+    "title": "2.1.5 Current User",
+    "content": "#### 2.1.5 Current User\n- **Endpoint**: `GET /api/auth/me`\n- **Requires**: Authentication\n- **Returns**: User object (id, email, name, avatarUrl, createdAt)",
+    "sortOrder": 20,
+    "description": "#### 2.1.5 Current User\n- **Endpoint**: `GET /api/auth/me`\n- **Requires**: Authentication\n- **Return..."
+  },
+  {
+    "slug": "216-frontend-auth-state",
+    "title": "2.1.6 Frontend Auth State",
+    "content": "#### 2.1.6 Frontend Auth State\n- Zustand store with persistence middleware (persists user object only, not the token -- token lives in HTTP-only cookie)\n- Persistence key: `'auth-storage'`\n- On app load: call `GET /api/auth/me` to validate session\n- On 401 from any API call: clear Zustand state, redirect to `/login`\n- All API requests use `credentials: 'include'` for automatic cookie attachment\n\n---",
+    "sortOrder": 21,
+    "description": "#### 2.1.6 Frontend Auth State\n- Zustand store with persistence middleware (persists user object onl..."
+  },
+  {
+    "slug": "22-user-profile-management",
+    "title": "2.2 User Profile Management",
+    "content": "### 2.2 User Profile Management\n\n**Source: saas-2**",
+    "sortOrder": 22,
+    "description": "### 2.2 User Profile Management\n\n**Source: saas-2**..."
+  },
+  {
+    "slug": "221-update-profile",
+    "title": "2.2.1 Update Profile",
+    "content": "#### 2.2.1 Update Profile\n- **Endpoint**: `PUT /api/auth/profile`\n- **Requires**: Authentication\n- **Updatable fields**: `name` (min 2 chars), `avatarUrl` (valid URL)\n- **Returns**: Updated user object",
+    "sortOrder": 23,
+    "description": "#### 2.2.1 Update Profile\n- **Endpoint**: `PUT /api/auth/profile`\n- **Requires**: Authentication\n- *..."
+  },
+  {
+    "slug": "222-change-password",
+    "title": "2.2.2 Change Password",
+    "content": "#### 2.2.2 Change Password\n- **Endpoint**: `PUT /api/auth/password`\n- **Requires**: Authentication\n- **Input**:\n  - `currentPassword`: required, verified against stored hash\n  - `newPassword`: minimum 8 characters, must contain uppercase, lowercase, and a digit\n- **Behavior**: Verify current password, hash new password, update record\n- **Returns**: Success message",
+    "sortOrder": 24,
+    "description": "#### 2.2.2 Change Password\n- **Endpoint**: `PUT /api/auth/password`\n- **Requires**: Authentication\n-..."
+  },
+  {
+    "slug": "223-frontend-profile-page",
+    "title": "2.2.3 Frontend Profile Page",
+    "content": "#### 2.2.3 Frontend Profile Page\n- Accessible from user menu in the navigation bar\n- Form fields: name, avatar URL\n- Separate form/section for password change (current password + new password + confirm)\n- Validation feedback inline\n\n---",
+    "sortOrder": 25,
+    "description": "#### 2.2.3 Frontend Profile Page\n- Accessible from user menu in the navigation bar\n- Form fields: na..."
+  },
+  {
+    "slug": "23-project-management",
+    "title": "2.3 Project Management",
+    "content": "### 2.3 Project Management\n\n**Source: saas-2 (API completeness, member management), saas-1 (data fetching patterns)**",
+    "sortOrder": 26,
+    "description": "### 2.3 Project Management\n\n**Source: saas-2 (API completeness, member management), saas-1 (data fet..."
+  },
+  {
+    "slug": "231-list-projects",
+    "title": "2.3.1 List Projects",
+    "content": "#### 2.3.1 List Projects\n- **Endpoint**: `GET /api/projects`\n- **Requires**: Authentication\n- **Returns**: Projects where user is owner OR member, including:\n  - Owner info (id, name, avatarUrl)\n  - Member list with roles\n  - Task count (`_count.tasks`)\n- **Ordering**: by `createdAt` descending\n- **Frontend**: React Query with `['projects']` query key, automatic cache invalidation on mutations",
+    "sortOrder": 27,
+    "description": "#### 2.3.1 List Projects\n- **Endpoint**: `GET /api/projects`\n- **Requires**: Authentication\n- **Retu..."
+  },
+  {
+    "slug": "232-get-project-detail",
+    "title": "2.3.2 Get Project Detail",
+    "content": "#### 2.3.2 Get Project Detail\n- **Endpoint**: `GET /api/projects/:id`\n- **Requires**: Authentication + membership in project\n- **Returns**: Project with all tasks (including assignee info and creator info), all members (including email), owner details, task count\n- **Validation**: UUID format on `:id` param",
+    "sortOrder": 28,
+    "description": "#### 2.3.2 Get Project Detail\n- **Endpoint**: `GET /api/projects/:id`\n- **Requires**: Authentication..."
+  },
+  {
+    "slug": "233-create-project",
+    "title": "2.3.3 Create Project",
+    "content": "#### 2.3.3 Create Project\n- **Endpoint**: `POST /api/projects`\n- **Input**:\n  - `name`: required, 1-100 characters, trimmed\n  - `description`: optional, max 500 characters\n  - `color`: optional, hex format (`#RRGGBB`), default `#6366f1`\n- **Behavior**:\n  - Create project with authenticated user as owner\n  - Auto-create ProjectMember record with role=OWNER\n  - Return project with owner, members, task count",
+    "sortOrder": 29,
+    "description": "#### 2.3.3 Create Project\n- **Endpoint**: `POST /api/projects`\n- **Input**:\n  - `name`: required, 1-..."
+  },
+  {
+    "slug": "234-update-project",
+    "title": "2.3.4 Update Project",
+    "content": "#### 2.3.4 Update Project\n- **Endpoint**: `PUT /api/projects/:id`\n- **Requires**: OWNER or ADMIN role on the project\n- **Updatable fields**: name, description, color\n- **Returns**: Updated project with full includes",
+    "sortOrder": 30,
+    "description": "#### 2.3.4 Update Project\n- **Endpoint**: `PUT /api/projects/:id`\n- **Requires**: OWNER or ADMIN rol..."
+  },
+  {
+    "slug": "235-delete-project",
+    "title": "2.3.5 Delete Project",
+    "content": "#### 2.3.5 Delete Project\n- **Endpoint**: `DELETE /api/projects/:id`\n- **Requires**: OWNER role only\n- **Behavior**: Cascade deletes all tasks and project members\n- **Returns**: 204 No Content",
+    "sortOrder": 31,
+    "description": "#### 2.3.5 Delete Project\n- **Endpoint**: `DELETE /api/projects/:id`\n- **Requires**: OWNER role only..."
+  },
+  {
+    "slug": "236-frontend-projects-page",
+    "title": "2.3.6 Frontend Projects Page",
+    "content": "#### 2.3.6 Frontend Projects Page\n- Grid layout (responsive 1-3 columns)\n- Project cards showing: color indicator, name, description preview, task count, member count\n- Create/edit modal with color picker (predefined palette + hex input)\n- Delete with confirmation dialog\n- Click-through to project detail\n\n---",
+    "sortOrder": 32,
+    "description": "#### 2.3.6 Frontend Projects Page\n- Grid layout (responsive 1-3 columns)\n- Project cards showing: co..."
+  },
+  {
+    "slug": "24-team-member-management",
+    "title": "2.4 Team / Member Management",
+    "content": "### 2.4 Team / Member Management\n\n**Source: saas-2**",
+    "sortOrder": 33,
+    "description": "### 2.4 Team / Member Management\n\n**Source: saas-2**..."
+  },
+  {
+    "slug": "241-add-member",
+    "title": "2.4.1 Add Member",
+    "content": "#### 2.4.1 Add Member\n- **Endpoint**: `POST /api/projects/:id/members`\n- **Requires**: OWNER or ADMIN role on the project\n- **Input**:\n  - `email`: valid email of an existing user\n  - `role`: optional, one of `ADMIN`, `MEMBER`, `VIEWER` (default: `MEMBER`)\n- **Validation**:\n  - Target user must exist (404 if not found)\n  - Target user must not already be a member (409 if duplicate)\n- **Returns**: Created membership with user info (201)",
+    "sortOrder": 34,
+    "description": "#### 2.4.1 Add Member\n- **Endpoint**: `POST /api/projects/:id/members`\n- **Requires**: OWNER or ADMI..."
+  },
+  {
+    "slug": "242-remove-member",
+    "title": "2.4.2 Remove Member",
+    "content": "#### 2.4.2 Remove Member\n- **Endpoint**: `DELETE /api/projects/:id/members/:userId`\n- **Requires**: OWNER or ADMIN role\n- **Constraints**: Cannot remove the project OWNER\n- **Returns**: 204 No Content",
+    "sortOrder": 35,
+    "description": "#### 2.4.2 Remove Member\n- **Endpoint**: `DELETE /api/projects/:id/members/:userId`\n- **Requires**: ..."
+  },
+  {
+    "slug": "243-role-definitions",
+    "title": "2.4.3 Role Definitions",
+    "content": "#### 2.4.3 Role Definitions\n| Role | Permissions |\n|------|-------------|\n| OWNER | Full control. Delete project. Add/remove any member. CRUD all tasks. |\n| ADMIN | Update project. Add/remove members (except owner). CRUD all tasks. |\n| MEMBER | Create tasks. Update/delete own tasks. |\n| VIEWER | Read-only access to project and tasks. |",
+    "sortOrder": 36,
+    "description": "#### 2.4.3 Role Definitions\n| Role | Permissions |\n|------|-------------|\n| OWNER | Full control. De..."
+  },
+  {
+    "slug": "244-frontend-member-management",
+    "title": "2.4.4 Frontend Member Management",
+    "content": "#### 2.4.4 Frontend Member Management\n- Member list visible in project detail view\n- Add member form (email input + role dropdown) -- OWNER/ADMIN only\n- Remove member button with confirmation -- OWNER/ADMIN only\n- Role badges displayed next to member names\n\n---",
+    "sortOrder": 37,
+    "description": "#### 2.4.4 Frontend Member Management\n- Member list visible in project detail view\n- Add member form..."
+  },
+  {
+    "slug": "25-task-management",
+    "title": "2.5 Task Management",
+    "content": "### 2.5 Task Management\n\n**Source: saas-1 (table view, creator tracking, React Query), saas-2 (Kanban, bulk status, Zod validation, filtering/sorting)**",
+    "sortOrder": 38,
+    "description": "### 2.5 Task Management\n\n**Source: saas-1 (table view, creator tracking, React Query), saas-2 (Kanba..."
+  },
+  {
+    "slug": "251-list-tasks",
+    "title": "2.5.1 List Tasks",
+    "content": "#### 2.5.1 List Tasks\n- **Endpoint**: `GET /api/tasks`\n- **Requires**: Authentication\n- **Scope**: Returns tasks from all projects where user is a member\n- **Query parameters**:\n  - `projectId`: filter by project (UUID)\n  - `status`: filter by status enum\n  - `priority`: filter by priority enum\n  - `assigneeId`: filter by assignee (UUID)\n  - `creatorId`: filter by creator (UUID)\n  - `sortBy`: field to sort on (default: `createdAt`)\n  - `order`: `asc` or `desc` (default: `desc`)\n  - `cursor`: opaque cursor for pagination (UUID of last item)\n  - `limit`: results per page (default: 50, max: 100)\n- **Pagination**: Cursor-based pagination for scalability\n  - Response: `{ tasks: Task[], nextCursor: string | null }`\n  - When `nextCursor` is null, no more pages available\n- **Includes**: project (id, name, color), assignee (id, name, avatarUrl), creator (id, name)\n- **Frontend**: React Query with `['tasks']` query key, infinite scroll pattern, 5-minute stale time",
+    "sortOrder": 39,
+    "description": "#### 2.5.1 List Tasks\n- **Endpoint**: `GET /api/tasks`\n- **Requires**: Authentication\n- **Scope**: R..."
+  },
+  {
+    "slug": "252-get-task",
+    "title": "2.5.2 Get Task",
+    "content": "#### 2.5.2 Get Task\n- **Endpoint**: `GET /api/tasks/:id`\n- **Requires**: Authentication + project membership\n- **Returns**: Full task with project, assignee, and creator info",
+    "sortOrder": 40,
+    "description": "#### 2.5.2 Get Task\n- **Endpoint**: `GET /api/tasks/:id`\n- **Requires**: Authentication + project me..."
+  },
+  {
+    "slug": "253-create-task",
+    "title": "2.5.3 Create Task",
+    "content": "#### 2.5.3 Create Task\n- **Endpoint**: `POST /api/tasks`\n- **Validation (Zod)**:\n  - `title`: string, 1-200 characters, required\n  - `description`: string, max 2000 characters, optional\n  - `projectId`: UUID, required\n  - `assigneeId`: UUID, optional/nullable\n  - `status`: enum (TODO, IN_PROGRESS, IN_REVIEW, DONE), optional (default: TODO)\n  - `priority`: enum (LOW, MEDIUM, HIGH, URGENT), optional (default: MEDIUM)\n  - `dueDate`: ISO 8601 datetime string, optional/nullable\n- **Authorization**: User must be a member of the target project\n- **Assignee check**: If assigneeId provided, verify they are a project member\n- **Creator tracking**: Set `creatorId` to the authenticated user\n- **Returns**: Created task with includes (201)",
+    "sortOrder": 41,
+    "description": "#### 2.5.3 Create Task\n- **Endpoint**: `POST /api/tasks`\n- **Validation (Zod)**:\n  - `title`: string..."
+  },
+  {
+    "slug": "254-update-task",
+    "title": "2.5.4 Update Task",
+    "content": "#### 2.5.4 Update Task\n- **Endpoint**: `PUT /api/tasks/:id`\n- **Validation**: Same as create, but all fields optional (partial update). `projectId` excluded from updates.\n- **Authorization**:\n  - User must be a member of the task's project\n  - OWNER and ADMIN roles can update any task in the project\n  - MEMBER role can only update tasks they created (where `creatorId` matches authenticated user)\n  - VIEWER role cannot update tasks\n- **Assignee check**: If changing assignee, verify new assignee is a project member\n- **Returns**: Updated task with includes",
+    "sortOrder": 42,
+    "description": "#### 2.5.4 Update Task\n- **Endpoint**: `PUT /api/tasks/:id`\n- **Validation**: Same as create, but al..."
+  },
+  {
+    "slug": "255-delete-task",
+    "title": "2.5.5 Delete Task",
+    "content": "#### 2.5.5 Delete Task\n- **Endpoint**: `DELETE /api/tasks/:id`\n- **Authorization**:\n  - OWNER and ADMIN roles can delete any task in the project\n  - MEMBER role can only delete tasks they created (where `creatorId` matches authenticated user)\n  - VIEWER role cannot delete tasks\n- **Returns**: 204 No Content",
+    "sortOrder": 43,
+    "description": "#### 2.5.5 Delete Task\n- **Endpoint**: `DELETE /api/tasks/:id`\n- **Authorization**:\n  - OWNER and AD..."
+  },
+  {
+    "slug": "256-bulk-status-update",
+    "title": "2.5.6 Bulk Status Update",
+    "content": "#### 2.5.6 Bulk Status Update\n- **Endpoint**: `PATCH /api/tasks/bulk-status`\n- **Input (Zod)**:\n  - `taskIds`: array of UUIDs\n  - `status`: TaskStatus enum value\n- **Authorization**: Verify membership for each task's project\n- **Returns**: `{ updated: <count> }`\n- **Use case**: Drag-and-drop in Kanban view",
+    "sortOrder": 44,
+    "description": "#### 2.5.6 Bulk Status Update\n- **Endpoint**: `PATCH /api/tasks/bulk-status`\n- **Input (Zod)**:\n  - ..."
+  },
+  {
+    "slug": "257-frontend-table-view",
+    "title": "2.5.7 Frontend: Table View",
+    "content": "#### 2.5.7 Frontend: Table View (from saas-1)\n- Full-width table with columns: Task (title + description preview), Status, Priority, Project, Actions\n- **Inline status editing**: dropdown selector directly in the table row, color-coded by status\n- Priority badges: color-coded (red=URGENT, orange=HIGH, blue=MEDIUM, gray=LOW)\n- Actions column: Edit (opens modal), Delete\n- Empty state with CTA to create first task\n- React Query mutations with cache invalidation on create/update/delete",
+    "sortOrder": 45,
+    "description": "#### 2.5.7 Frontend: Table View (from saas-1)\n- Full-width table with columns: Task (title + descrip..."
+  },
+  {
+    "slug": "258-frontend-kanban-board-view",
+    "title": "2.5.8 Frontend: Kanban Board View",
+    "content": "#### 2.5.8 Frontend: Kanban Board View (from saas-2)\n- 4-column layout: TODO, IN_PROGRESS, IN_REVIEW, DONE\n- Column headers with status badge and task count\n- Task cards showing: title, description (2-line clamp), priority indicator, due date, assignee avatar\n- Minimum column height for visual consistency\n- **Drag-and-drop**: Implement using `@dnd-kit/core` (modern, accessible, TypeScript-first)\n- Dragging a card to a different column triggers bulk status update API call\n- Visual feedback during drag (card elevation, drop zone highlighting)",
+    "sortOrder": 46,
+    "description": "#### 2.5.8 Frontend: Kanban Board View (from saas-2)\n- 4-column layout: TODO, IN_PROGRESS, IN_REVIEW..."
+  },
+  {
+    "slug": "259-frontend-view-toggle",
+    "title": "2.5.9 Frontend: View Toggle",
+    "content": "#### 2.5.9 Frontend: View Toggle\n- Toggle control in the task view header (Table / Kanban)\n- User preference persisted (localStorage or Zustand)\n- Both views share the same React Query cache and mutation logic",
+    "sortOrder": 47,
+    "description": "#### 2.5.9 Frontend: View Toggle\n- Toggle control in the task view header (Table / Kanban)\n- User pr..."
+  },
+  {
+    "slug": "2510-task-modal",
+    "title": "2.5.10 Task Modal",
+    "content": "#### 2.5.10 Task Modal (Create/Edit)\n- Modal overlay with form fields:\n  - Title (text input, required)\n  - Description (textarea, 3 rows)\n  - Status (dropdown: TODO, IN_PROGRESS, IN_REVIEW, DONE)\n  - Priority (dropdown: LOW, MEDIUM, HIGH, URGENT)\n  - Project (dropdown populated from user's projects where role is OWNER, ADMIN, or MEMBER)\n  - Assignee (dropdown populated from project members -- updates when project changes)\n  - Due date (date picker)\n- Submit creates or updates depending on context\n- Close on backdrop click or Escape key",
+    "sortOrder": 48,
+    "description": "#### 2.5.10 Task Modal (Create/Edit)\n- Modal overlay with form fields:\n  - Title (text input, requir..."
+  },
+  {
+    "slug": "2511-recurring-tasks",
+    "title": "2.5.11 Recurring Tasks",
+    "content": "#### 2.5.11 Recurring Tasks\n\n**Status**: ✅ Implemented (Sprint 3)",
+    "sortOrder": 49,
+    "description": "#### 2.5.11 Recurring Tasks\n\n**Status**: ✅ Implemented (Sprint 3)..."
+  },
+  {
+    "slug": "overview",
+    "title": "Overview",
+    "content": "##### Overview\n- **Purpose**: Automate creation of repeating tasks (daily standups, weekly reports, monthly bills)\n- **Recurrence patterns**: Daily, Weekly, Monthly, Custom intervals\n- **Generation**: Scheduled job creates next occurrence when current task is completed",
+    "sortOrder": 50,
+    "description": "##### Overview\n- **Purpose**: Automate creation of repeating tasks (daily standups, weekly reports, ..."
+  },
+  {
+    "slug": "endpoints",
+    "title": "Endpoints",
+    "content": "##### Endpoints\n- **Set recurrence**: `PUT /api/tasks/:id/recurrence`\n  - **Requires**: Authentication + task modification permission (OWNER/ADMIN or task creator if MEMBER)\n  - **Input (Zod)**:\n    ```typescript\n    {\n      pattern: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'CUSTOM']);\n      interval: z.number().min(1).optional();  // e.g., every 2 weeks\n      daysOfWeek?: z.array(z.number().min(0).max(6));  // [1,3,5] for Mon/Wed/Fri\n      dayOfMonth?: z.number().min(1).max(31);  // 15 for 15th of month\n    }\n    ```\n  - **Returns**: Recurrence object with `nextOccurrence` date\n\n- **Remove recurrence**: `DELETE /api/tasks/:id/recurrence`\n  - **Requires**: Same authorization as setting recurrence\n  - **Returns**: 204 No Content\n\n- **Complete and create next**: `POST /api/tasks/:id/complete-recurring`\n  - **Behavior**: Marks current task as DONE, creates next occurrence immediately\n  - **Returns**: New task object (201)",
+    "sortOrder": 51,
+    "description": "##### Endpoints\n- **Set recurrence**: `PUT /api/tasks/:id/recurrence`\n  - **Requires**: Authenticati..."
+  },
+  {
+    "slug": "database-schema",
+    "title": "Database Schema",
+    "content": "##### Database Schema\n```prisma\nmodel Recurrence {\n  id                String   @id @default(uuid())\n  taskId            String   @unique\n  task              Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)\n  pattern           RecurrencePattern\n  interval          Int      @default(1)\n  daysOfWeek        Int[]    @default([])\n  dayOfMonth        Int?\n  nextOccurrence    DateTime\n  createdAt         DateTime @default(now())\n}\n\nenum RecurrencePattern {\n  DAILY\n  WEEKLY\n  MONTHLY\n  CUSTOM\n}\n```",
+    "sortOrder": 52,
+    "description": "##### Database Schema\n```prisma\nmodel Recurrence {\n  id                String   @id @default(uuid())..."
+  },
+  {
+    "slug": "recurrence-calculation-rules",
+    "title": "Recurrence Calculation Rules",
+    "content": "##### Recurrence Calculation Rules\n- **DAILY**: Next occurrence = current date + interval days\n- **WEEKLY**: Next occurrence = next specified day of week (e.g., every Monday)\n- **MONTHLY**: Next occurrence = same day next month (e.g., 15th of every month)\n- **CUSTOM**: Complex rules (e.g., last Friday of every month) - future enhancement",
+    "sortOrder": 53,
+    "description": "##### Recurrence Calculation Rules\n- **DAILY**: Next occurrence = current date + interval days\n- **W..."
+  },
+  {
+    "slug": "scheduled-job",
+    "title": "Scheduled Job",
+    "content": "##### Scheduled Job\n- **Cron schedule**: Runs daily at 6 AM UTC\n- **Logic**:\n  1. Find all recurrences where `nextOccurrence <= today`\n  2. For each recurrence, create new task instance (copy title, description, priority, etc.)\n  3. Update `nextOccurrence` to next date based on pattern\n  4. Link new task to recurrence for tracking\n- **Technology**: `node-cron` implemented in `backend/src/lib/scheduler.ts`\n- **Reliability**: Logs all generation attempts with error handling\n- **Manual Trigger**: `POST /api/recurring-tasks/:id/generate` endpoint available",
+    "sortOrder": 54,
+    "description": "##### Scheduled Job\n- **Cron schedule**: Runs daily at 6 AM UTC\n- **Logic**:\n  1. Find all recurrenc..."
+  },
+  {
+    "slug": "frontend-features",
+    "title": "Frontend Features",
+    "content": "##### Frontend Features\n- **Recurrence picker**: Implemented in `RecurrencePickerModal.tsx`\n  - \"Does not repeat\" (default)\n  - \"Daily\"\n  - \"Weekly on {day}\" with day selection\n  - \"Monthly on day {n}\" with date picker\n  - Custom intervals supported\n- **Visual indicator**: Recurring task badge with Repeat icon on task cards and table rows\n- **Recurrence info**: Shows pattern in task detail (e.g., \"Repeats weekly on Monday\")\n- **Full CRUD**: Create, read, update, delete recurring task definitions via API",
+    "sortOrder": 55,
+    "description": "##### Frontend Features\n- **Recurrence picker**: Implemented in `RecurrencePickerModal.tsx`\n  - \"Doe..."
+  },
+  {
+    "slug": "authorization",
+    "title": "Authorization",
+    "content": "##### Authorization\n- **Create/Update recurrence**: OWNER/ADMIN can set on any task, MEMBER can set on own tasks\n- **View recurrence**: Anyone with task access\n- **Delete recurrence**: Same as create/update",
+    "sortOrder": 56,
+    "description": "##### Authorization\n- **Create/Update recurrence**: OWNER/ADMIN can set on any task, MEMBER can set ..."
+  },
+  {
+    "slug": "2512-task-dependencies",
+    "title": "2.5.12 Task Dependencies",
+    "content": "#### 2.5.12 Task Dependencies\n\n**Status**: ✅ Implemented (Sprint 7)",
+    "sortOrder": 57,
+    "description": "#### 2.5.12 Task Dependencies\n\n**Status**: ✅ Implemented (Sprint 7)..."
+  },
+  {
+    "slug": "overview",
+    "title": "Overview",
+    "content": "##### Overview\n- **Purpose**: Link tasks as blockers/dependencies for project planning\n- **Use case**: Task B cannot start until Task A is complete\n- **Visualization**: Gantt chart showing critical path\n- **Auto-adjust**: Suggest new due dates when blocker due date shifts",
+    "sortOrder": 58,
+    "description": "##### Overview\n- **Purpose**: Link tasks as blockers/dependencies for project planning\n- **Use case*..."
+  },
+  {
+    "slug": "endpoints",
+    "title": "Endpoints",
+    "content": "##### Endpoints\n- **Add dependency**: `POST /api/tasks/:id/dependencies`\n  - **Requires**: Authentication + task modification permission\n  - **Input**: `{ dependsOnId: string }` (UUID of blocking task)\n  - **Validation**:\n    - Blocking task must be in same project\n    - Prevents circular dependencies (A → B → A)\n  - **Returns**: Created dependency (201)\n\n- **List dependencies**: `GET /api/tasks/:id/dependencies`\n  - **Returns**:\n    ```typescript\n    {\n      blockedBy: Task[];  // Tasks that must complete first\n      blocking: Task[];   // Tasks waiting on this one\n    }\n    ```\n\n- **Remove dependency**: `DELETE /api/tasks/:id/dependencies/:dependencyId`\n  - **Requires**: Same authorization as adding\n  - **Returns**: 204 No Content\n\n- **Get critical path**: `GET /api/projects/:id/critical-path`\n  - **Requires**: Project membership\n  - **Returns**: Ordered sequence of tasks representing longest path\n  - **Algorithm**: Topological sort + longest path calculation",
+    "sortOrder": 59,
+    "description": "##### Endpoints\n- **Add dependency**: `POST /api/tasks/:id/dependencies`\n  - **Requires**: Authentic..."
+  },
+  {
+    "slug": "database-schema",
+    "title": "Database Schema",
+    "content": "##### Database Schema\n```prisma\nmodel TaskDependency {\n  id            String   @id @default(uuid())\n  taskId        String   // The dependent task\n  task          Task     @relation(\"DependentOn\", fields: [taskId], references: [id], onDelete: Cascade)\n  dependsOnId   String   // The blocker task\n  dependsOn     Task     @relation(\"Blocks\", fields: [dependsOnId], references: [id], onDelete: Cascade)\n  createdAt     DateTime @default(now())\n\n  @@unique([taskId, dependsOnId])\n}\n\nmodel Task {\n  // ... existing fields\n  dependsOn    TaskDependency[] @relation(\"DependentOn\")\n  blocks       TaskDependency[] @relation(\"Blocks\")\n}\n```",
+    "sortOrder": 60,
+    "description": "##### Database Schema\n```prisma\nmodel TaskDependency {\n  id            String   @id @default(uuid())..."
+  },
+  {
+    "slug": "circular-dependency-prevention",
+    "title": "Circular Dependency Prevention",
+    "content": "##### Circular Dependency Prevention\n- **Validation**: Before creating dependency, check if adding would create cycle\n- **Algorithm**: Depth-first search from new dependent task\n  - If we can reach the blocking task, cycle would be created\n  - Return 400 error: \"Cannot create dependency: would create circular dependency\"",
+    "sortOrder": 61,
+    "description": "##### Circular Dependency Prevention\n- **Validation**: Before creating dependency, check if adding w..."
+  },
+  {
+    "slug": "frontend-features",
+    "title": "Frontend Features",
+    "content": "##### Frontend Features\n- **Dependency picker**: Implemented in `DependencyPicker.tsx`\n  - Search tasks in same project\n  - Show current blockers and blocked tasks\n  - Visual warning icon if task has unresolved blockers\n- **Dependency list**: Implemented in `DependencyList.tsx`\n  - Shows all dependencies with task details\n  - Remove dependency action\n  - Color-coded by status\n- **Gantt chart view**: Not implemented (future enhancement)\n- **Dependency indicators**:\n  - Task detail shows blockers and dependent tasks\n  - Hook `useTaskDependencies.ts` manages dependency state",
+    "sortOrder": 62,
+    "description": "##### Frontend Features\n- **Dependency picker**: Implemented in `DependencyPicker.tsx`\n  - Search ta..."
+  },
+  {
+    "slug": "auto-adjust-due-dates",
+    "title": "Auto-adjust Due Dates",
+    "content": "##### Auto-adjust Due Dates (Deferred)\n- **Trigger**: When blocker's due date changes (Deferred to future implementation)\n- **Behavior**:\n  1. Calculate slack time between blocker and dependent\n  2. If blocker's new date pushes into slack, suggest adjustment\n  3. Show notification: \"Task B's due date may need adjustment (blocker moved)\"\n  4. User can accept/reject suggestion\n- **Cascade**: If dependent is also blocking other tasks, cascade suggestion",
+    "sortOrder": 63,
+    "description": "##### Auto-adjust Due Dates (Deferred)\n- **Trigger**: When blocker's due date changes (Deferred to f..."
+  },
+  {
+    "slug": "authorization",
+    "title": "Authorization",
+    "content": "##### Authorization\n- **Add/Remove dependencies**: OWNER/ADMIN can modify any task dependencies, MEMBER can modify own task dependencies\n- **View dependencies**: Anyone with project access can view dependency graph",
+    "sortOrder": 64,
+    "description": "##### Authorization\n- **Add/Remove dependencies**: OWNER/ADMIN can modify any task dependencies, MEM..."
+  },
+  {
+    "slug": "critical-path-calculation",
+    "title": "Critical Path Calculation",
+    "content": "##### Critical Path Calculation\n- **Status**: Fully implemented.\n- **Current Implementation**: Topological sort + longest path calculation available at `GET /api/projects/:id/critical-path`.\n- **Future Enhancement**: Visual Gantt chart integration.\n\n---",
+    "sortOrder": 65,
+    "description": "##### Critical Path Calculation\n- **Status**: Fully implemented.\n- **Current Implementation**: Topol..."
+  },
+  {
+    "slug": "26-dashboard",
+    "title": "2.6 Dashboard",
+    "content": "### 2.6 Dashboard\n\n**Source: saas-1 (statistics cards, recent tasks), saas-2 (project-centric overview)**",
+    "sortOrder": 66,
+    "description": "### 2.6 Dashboard\n\n**Source: saas-1 (statistics cards, recent tasks), saas-2 (project-centric overvi..."
+  },
+  {
+    "slug": "261-statistics-cards",
+    "title": "2.6.1 Statistics Cards",
+    "content": "#### 2.6.1 Statistics Cards\n- Total Tasks (count of all user-accessible tasks)\n- Completed (count where status=DONE)\n- In Progress (count where status=IN_PROGRESS)\n- Urgent (count where priority=URGENT)",
+    "sortOrder": 67,
+    "description": "#### 2.6.1 Statistics Cards\n- Total Tasks (count of all user-accessible tasks)\n- Completed (count wh..."
+  },
+  {
+    "slug": "262-recent-tasks",
+    "title": "2.6.2 Recent Tasks",
+    "content": "#### 2.6.2 Recent Tasks\n- Grid of 5 most recent tasks\n- Shows title, status badge, priority badge, project name",
+    "sortOrder": 68,
+    "description": "#### 2.6.2 Recent Tasks\n- Grid of 5 most recent tasks\n- Shows title, status badge, priority badge, p..."
+  },
+  {
+    "slug": "263-recent-projects",
+    "title": "2.6.3 Recent Projects",
+    "content": "#### 2.6.3 Recent Projects\n- List of 5 most recent projects\n- Shows name, color indicator, task count\n\n---",
+    "sortOrder": 69,
+    "description": "#### 2.6.3 Recent Projects\n- List of 5 most recent projects\n- Shows name, color indicator, task coun..."
+  },
+  {
+    "slug": "27-navigation-layout",
+    "title": "2.7 Navigation & Layout",
+    "content": "### 2.7 Navigation & Layout\n\n**Source: saas-1 (sidebar layout), saas-2 (navbar with user menu)**",
+    "sortOrder": 70,
+    "description": "### 2.7 Navigation & Layout\n\n**Source: saas-1 (sidebar layout), saas-2 (navbar with user menu)**..."
+  },
+  {
+    "slug": "271-layout-structure",
+    "title": "2.7.1 Layout Structure",
+    "content": "#### 2.7.1 Layout Structure\n- Sidebar navigation with links: Dashboard, Tasks, Projects\n- Active route highlighting\n- User section showing avatar initial and name\n- User menu: Profile settings, Logout",
+    "sortOrder": 71,
+    "description": "#### 2.7.1 Layout Structure\n- Sidebar navigation with links: Dashboard, Tasks, Projects\n- Active rou..."
+  },
+  {
+    "slug": "272-protected-routes",
+    "title": "2.7.2 Protected Routes",
+    "content": "#### 2.7.2 Protected Routes\n- All routes except `/login` and `/register` require authentication\n- Unauthenticated users redirected to `/login`\n- Authenticated users on `/login` or `/register` redirected to `/`\n\n---",
+    "sortOrder": 72,
+    "description": "#### 2.7.2 Protected Routes\n- All routes except `/login` and `/register` require authentication\n- Un..."
+  },
+  {
+    "slug": "28-health-check",
+    "title": "2.8 Health Check",
+    "content": "### 2.8 Health Check\n\n- **Endpoint**: `GET /health`\n- **Returns**: `{ status: 'ok', timestamp: <ISO string> }`\n- **No authentication required**\n\n---",
+    "sortOrder": 73,
+    "description": "### 2.8 Health Check\n\n- **Endpoint**: `GET /health`\n- **Returns**: `{ status: 'ok', timestamp: <ISO ..."
+  },
+  {
+    "slug": "29-notifications-system",
+    "title": "2.9 Notifications System",
+    "content": "### 2.9 Notifications System\n\n**Status**: ✅ Implemented (Sprint 1)\n**Backend**: `/api/notifications`",
+    "sortOrder": 74,
+    "description": "### 2.9 Notifications System\n\n**Status**: ✅ Implemented (Sprint 1)\n**Backend**: `/api/notifications`..."
+  },
+  {
+    "slug": "291-list-notifications",
+    "title": "2.9.1 List Notifications",
+    "content": "#### 2.9.1 List Notifications\n- **Endpoint**: `GET /api/notifications`\n- **Requires**: Authentication\n- **Returns**: Array of notifications for the authenticated user\n- **Scope**: User only sees their own notifications\n- **Ordering**: Most recent first (`createdAt desc`)\n- **Includes**: Related task/project information",
+    "sortOrder": 75,
+    "description": "#### 2.9.1 List Notifications\n- **Endpoint**: `GET /api/notifications`\n- **Requires**: Authenticatio..."
+  },
+  {
+    "slug": "292-notification-types",
+    "title": "2.9.2 Notification Types",
+    "content": "#### 2.9.2 Notification Types\n- **Task Assignment**: When user is assigned to a task\n- **Task Status Change**: When a task user is involved in changes status\n- **Project Invitation**: When user is added to a project\n- **Comment Mention**: When user is @mentioned in a comment (future)\n- **Due Date Reminder**: When task due date is approaching (future)",
+    "sortOrder": 76,
+    "description": "#### 2.9.2 Notification Types\n- **Task Assignment**: When user is assigned to a task\n- **Task Status..."
+  },
+  {
+    "slug": "293-mark-as-read",
+    "title": "2.9.3 Mark as Read",
+    "content": "#### 2.9.3 Mark as Read\n- **Endpoint**: `POST /api/notifications/mark-read/:id`\n- **Requires**: Authentication + notification ownership\n- **Behavior**: Updates notification read status\n- **Returns**: Updated notification (200)",
+    "sortOrder": 77,
+    "description": "#### 2.9.3 Mark as Read\n- **Endpoint**: `POST /api/notifications/mark-read/:id`\n- **Requires**: Auth..."
+  },
+  {
+    "slug": "294-delete-notification",
+    "title": "2.9.4 Delete Notification",
+    "content": "#### 2.9.4 Delete Notification\n- **Endpoint**: `DELETE /api/notifications/:id`\n- **Requires**: Authentication + notification ownership\n- **Behavior**: Removes notification\n- **Returns**: 204 No Content",
+    "sortOrder": 78,
+    "description": "#### 2.9.4 Delete Notification\n- **Endpoint**: `DELETE /api/notifications/:id`\n- **Requires**: Authe..."
+  },
+  {
+    "slug": "295-frontend-integration",
+    "title": "2.9.5 Frontend Integration",
+    "content": "#### 2.9.5 Frontend Integration\n- Notification bell icon in navigation bar\n- Unread count badge\n- Dropdown list showing recent notifications\n- Auto-refresh every 30 seconds (polling)\n- Click notification navigates to related task/project\n\n---",
+    "sortOrder": 79,
+    "description": "#### 2.9.5 Frontend Integration\n- Notification bell icon in navigation bar\n- Unread count badge\n- Dr..."
+  },
+  {
+    "slug": "210-analytics-insights",
+    "title": "2.10 Analytics & Insights",
+    "content": "### 2.10 Analytics & Insights\n\n**Status**: ✅ Partially Implemented (Sprint 2)\n**Backend**: `/api/analytics`",
+    "sortOrder": 80,
+    "description": "### 2.10 Analytics & Insights\n\n**Status**: ✅ Partially Implemented (Sprint 2)\n**Backend**: `/api/ana..."
+  },
+  {
+    "slug": "2101-productivity-insights",
+    "title": "2.10.1 Productivity Insights",
+    "content": "#### 2.10.1 Productivity Insights\n- **Endpoint**: `GET /api/analytics/insights`\n- **Requires**: Authentication\n- **Returns**: Velocity metrics, patterns, and contextual insights\n- **Response Structure**:\n  ```typescript\n  {\n    velocity: {\n      thisWeek: number;        // Tasks completed in last 7 days\n      lastWeek: number;        // Tasks completed in previous 7 days\n      changePercent: number;   // % change week-over-week\n    };\n    patterns: {\n      mostProductiveDay: string;  // Day of week (e.g., \"Tuesday\")\n      tasksAnalyzed: number;      // Sample size for pattern detection\n    };\n    insight: string;  // Human-readable insight message\n  }\n  ```",
+    "sortOrder": 81,
+    "description": "#### 2.10.1 Productivity Insights\n- **Endpoint**: `GET /api/analytics/insights`\n- **Requires**: Auth..."
+  },
+  {
+    "slug": "2102-insight-generation",
+    "title": "2.10.2 Insight Generation",
+    "content": "#### 2.10.2 Insight Generation\n- **Velocity-based insights**:\n  - \"+30% faster this week\" (when changePercent >= 20)\n  - \"A bit slower this week\" (when changePercent <= -20)\n  - \"Consistency is key\" (stable velocity)\n- **Pattern-based insights**:\n  - \"You're most productive on {day}s lately\"\n  - Calculated from last 2 weeks of completed tasks\n- **Zero-state insight**:\n  - \"Complete some tasks to unlock insights!\" (no completed tasks)",
+    "sortOrder": 82,
+    "description": "#### 2.10.2 Insight Generation\n- **Velocity-based insights**:\n  - \"+30% faster this week\" (when chan..."
+  },
+  {
+    "slug": "2103-creator-accountability-dashboard",
+    "title": "2.10.3 Creator Accountability Dashboard",
+    "content": "#### 2.10.3 Creator Accountability Dashboard\n\n**Status**: ✅ Implemented (Sprint 7)\n\n- **Endpoint**: `GET /api/analytics/creator-metrics?projectId=xxx`\n- **Requires**: Authentication + OWNER or ADMIN role on specified project\n- **Returns**: Creator leaderboard and delegation metrics\n- **Response Structure**:\n  ```typescript\n  {\n    creators: Array<{\n      user: { id, name, avatarUrl };\n      tasksCreated: number;\n      selfAssigned: number;\n      delegated: number;\n      unassigned: number;\n      delegationRatio: number;  // 0.0 to 1.0\n      badge: 'delegator' | 'doer' | 'balanced' | 'new';\n    }>;\n    bottlenecks: Array<{ userId, taskCount, reason }>;\n  }\n  ```\n- **Use case**: Identify bottlenecks, encourage delegation balance, track team productivity patterns\n- **Authorization**: Only project OWNER/ADMIN can view creator metrics\n- **Frontend**:\n  - Full page at `/creator-dashboard` (`CreatorDashboardPage.tsx`)\n  - Creator cards with badges (Delegator, Doer, Balanced, New)\n  - Delegation bar visualizations showing self/delegated/unassigned ratio\n  - Bottleneck alerts for overloaded creators\n- **Tests**: 9 passing tests in `creator-metrics.test.ts`",
+    "sortOrder": 83,
+    "description": "#### 2.10.3 Creator Accountability Dashboard\n\n**Status**: ✅ Implemented (Sprint 7)\n\n- **Endpoint**: ..."
+  },
+  {
+    "slug": "2104-future-analytics",
+    "title": "2.10.4 Future Analytics",
+    "content": "#### 2.10.4 Future Analytics\n- **Time-based patterns**: Morning vs. afternoon productivity\n- **Completion time estimates**: Predict task duration based on history\n- **Burnout risk detection**: Warn when user is over-assigned\n- **Team velocity trends**: Track team performance over time\n\n---",
+    "sortOrder": 84,
+    "description": "#### 2.10.4 Future Analytics\n- **Time-based patterns**: Morning vs. afternoon productivity\n- **Compl..."
+  },
+  {
+    "slug": "211-user-preferences",
+    "title": "2.11 User Preferences",
+    "content": "### 2.11 User Preferences\n\n**Status**: ✅ Implemented (Sprint 2)",
+    "sortOrder": 85,
+    "description": "### 2.11 User Preferences\n\n**Status**: ✅ Implemented (Sprint 2)..."
+  },
+  {
+    "slug": "2111-color-themes",
+    "title": "2.11.1 Color Themes",
+    "content": "#### 2.11.1 Color Themes\n- **Endpoint**: `PUT /api/auth/profile` (extend existing)\n- **Supported Themes**:\n  - **Indigo** (default): Primary blue-indigo (#6366f1)\n  - **Purple**: Primary purple (#a855f7)\n  - **Rose**: Primary pink-rose (#f43f5e)\n  - **Emerald**: Primary green-emerald (#10b981)\n  - **Amber**: Primary orange-amber (#f59e0b)\n- **Implementation**:\n  - CSS Variables: Each theme defines `--color-primary`, `--color-primary-dark`, `--color-primary-light`\n  - Theme File: `frontend/src/lib/themes.ts` with theme definitions\n  - Applied globally via CSS variable overrides on `:root`\n- **Storage**: User model `theme` field (backend), localStorage (frontend fallback)\n- **Frontend**: Theme picker dropdown in Profile settings page\n- **Customization Power**: 5 themes × 5 layouts = 25 UI combinations\n- **Validation (Zod)**:\n  ```typescript\n  theme: z.enum(['indigo', 'purple', 'rose', 'emerald', 'amber']).optional()\n  ```",
+    "sortOrder": 86,
+    "description": "#### 2.11.1 Color Themes\n- **Endpoint**: `PUT /api/auth/profile` (extend existing)\n- **Supported The..."
+  },
+  {
+    "slug": "2112-layout-preferences",
+    "title": "2.11.2 Layout Preferences",
+    "content": "#### 2.11.2 Layout Preferences\n- **Storage**: Frontend only (localStorage via Zustand store with persist middleware)\n- **Supported Layouts**:\n  1. **Compact**: Minimal padding, higher information density, more tasks visible per screen\n  2. **Spacious**: Generous whitespace, comfortable reading, reduced cognitive load\n  3. **Minimal**: Collapsed sidebar by default, focus on content, distraction-free\n  4. **Split**: Side-by-side task list and detail pane (no modal for task editing)\n  5. **Dashboard-First**: Dashboard as default landing page instead of tasks\n- **Implementation**:\n  - Zustand Store: `layout.ts` with `persist` middleware\n  - CSS Classes: Applied to root element, affects all components\n  - Layout Switcher: Dropdown in Profile settings page\n- **Persistence Key**: `layout-preferences`\n- **State**: `{ layout: 'compact' | 'spacious' | 'minimal' | 'split' | 'dashboard-first' }`",
+    "sortOrder": 87,
+    "description": "#### 2.11.2 Layout Preferences\n- **Storage**: Frontend only (localStorage via Zustand store with per..."
+  },
+  {
+    "slug": "2113-density-settings",
+    "title": "2.11.3 Density Settings",
+    "content": "#### 2.11.3 Density Settings\n- **Modes**:\n  - **Comfortable**: Standard padding (default), `--spacing-scale: 1.0`\n  - **Compact**: Reduced padding, `--spacing-scale: 0.75`, more items visible\n  - **Spacious**: Increased padding, `--spacing-scale: 1.25`, easier reading\n- **Implementation**:\n  - CSS Custom Properties: `--spacing-scale`, `--font-size-base`, `--row-height`\n  - Applied to document root, affects all components globally\n  - Zustand Store: `density.ts` with localStorage persistence\n- **Affects**: Global spacing, font sizes, task card heights, table row height, gap between elements\n- **UI Component**: Gmail-style `DensityPicker` dropdown in Profile settings\n- **Storage**: Frontend only (localStorage key: `density-setting`)\n\n---",
+    "sortOrder": 88,
+    "description": "#### 2.11.3 Density Settings\n- **Modes**:\n  - **Comfortable**: Standard padding (default), `--spacin..."
+  },
+  {
+    "slug": "212-quick-actions",
+    "title": "2.12 Quick Actions",
+    "content": "### 2.12 Quick Actions\n\n**Status**: ✅ Implemented (Sprint 3)",
+    "sortOrder": 89,
+    "description": "### 2.12 Quick Actions\n\n**Status**: ✅ Implemented (Sprint 3)..."
+  },
+  {
+    "slug": "2121-command-palette",
+    "title": "2.12.1 Command Palette",
+    "content": "#### 2.12.1 Command Palette",
+    "sortOrder": 90,
+    "description": "#### 2.12.1 Command Palette..."
+  },
+  {
+    "slug": "overview",
+    "title": "Overview",
+    "content": "##### Overview\nKeyboard-first command interface inspired by Linear, Notion, and VS Code for rapid navigation and actions.",
+    "sortOrder": 91,
+    "description": "##### Overview\nKeyboard-first command interface inspired by Linear, Notion, and VS Code for rapid na..."
+  },
+  {
+    "slug": "keyboard-shortcut",
+    "title": "Keyboard Shortcut",
+    "content": "##### Keyboard Shortcut\n- **Mac**: `Cmd + K`\n- **Windows/Linux**: `Ctrl + K`\n- **Accessibility**: Focus trap when open, Escape to close",
+    "sortOrder": 92,
+    "description": "##### Keyboard Shortcut\n- **Mac**: `Cmd + K`\n- **Windows/Linux**: `Ctrl + K`\n- **Accessibility**: Fo..."
+  },
+  {
+    "slug": "features",
+    "title": "Features",
+    "content": "##### Features\n- **Search Tasks**: Real-time fuzzy search across all user's tasks by title/description\n- **Navigate Pages**: Dashboard, Tasks, Projects, Profile, Focus Mode\n- **Quick Actions**: Create task, Create project, Open settings\n- **Recent History**: Last 5 accessed tasks/projects\n- **Keyboard Navigation**: Arrow keys, Enter to select, Tab between groups",
+    "sortOrder": 93,
+    "description": "##### Features\n- **Search Tasks**: Real-time fuzzy search across all user's tasks by title/descripti..."
+  },
+  {
+    "slug": "visual-design",
+    "title": "Visual Design",
+    "content": "##### Visual Design\n- **Glassmorphism**: Frosted glass effect with backdrop blur\n- **Framer Motion**: Smooth scale-in animation on open (0.95 → 1.0)\n- **Command Groups**: Visual separation (Navigation | Tasks | Actions | Recent)\n- **Highlighted Selection**: Active item highlighted with primary color",
+    "sortOrder": 94,
+    "description": "##### Visual Design\n- **Glassmorphism**: Frosted glass effect with backdrop blur\n- **Framer Motion**..."
+  },
+  {
+    "slug": "implementation",
+    "title": "Implementation",
+    "content": "##### Implementation\n- **Component**: `CommandPalette.tsx`\n- **Hook**: `useCommandPalette.ts` (global keyboard listener)\n- **State**: Zustand store for open/close state and recent history\n- **Library**: Custom implementation (no external `cmdk` dependency)\n- **No backend changes**: Purely frontend feature using existing React Query cache",
+    "sortOrder": 95,
+    "description": "##### Implementation\n- **Component**: `CommandPalette.tsx`\n- **Hook**: `useCommandPalette.ts` (globa..."
+  },
+  {
+    "slug": "2122-command-groups",
+    "title": "2.12.2 Command Groups",
+    "content": "#### 2.12.2 Command Groups\n- **Navigation**: Dashboard, Tasks, Projects, Profile, Focus Mode\n- **Tasks**: Search all user's tasks, click to navigate to task detail\n- **Actions**: Create task, Create project, Open settings, Open shortcuts guide\n- **Recent**: Last 5 accessed tasks/projects (persisted in localStorage)\n\n---",
+    "sortOrder": 96,
+    "description": "#### 2.12.2 Command Groups\n- **Navigation**: Dashboard, Tasks, Projects, Profile, Focus Mode\n- **Tas..."
+  },
+  {
+    "slug": "213-time-tracking",
+    "title": "2.13 Time Tracking",
+    "content": "### 2.13 Time Tracking\n\n**Status**: ✅ Implemented (Sprint 4)",
+    "sortOrder": 97,
+    "description": "### 2.13 Time Tracking\n\n**Status**: ✅ Implemented (Sprint 4)..."
+  },
+  {
+    "slug": "2131-manual-entry",
+    "title": "2.13.1 Manual Entry",
+    "content": "#### 2.13.1 Manual Entry\n- **Endpoints**:\n  - `POST /api/time-entries` - Create entry (duration or start/end)\n  - `PUT /api/time-entries/:id` - Update entry\n  - `DELETE /api/time-entries/:id` - Delete entry\n  - `GET /api/time-entries` - List entries (filters: task, date range)\n  - `GET /api/time-entries/stats` - Aggregate stats\n- **Fields**: `startTime`, `endTime`, `duration` (seconds), `description`",
+    "sortOrder": 98,
+    "description": "#### 2.13.1 Manual Entry\n- **Endpoints**:\n  - `POST /api/time-entries` - Create entry (duration or s..."
+  },
+  {
+    "slug": "2132-startstop-timer",
+    "title": "2.13.2 Start/Stop Timer",
+    "content": "#### 2.13.2 Start/Stop Timer\n- **Endpoints**:\n  - `POST /api/time-entries/start` - Start timer for task\n  - `GET /api/time-entries/active` - Get running timer\n  - `POST /api/time-entries/:id/stop` - Stop timer\n- **Constraints**: Only one active timer per user at a time on tasks",
+    "sortOrder": 99,
+    "description": "#### 2.13.2 Start/Stop Timer\n- **Endpoints**:\n  - `POST /api/time-entries/start` - Start timer for t..."
+  },
+  {
+    "slug": "2132-timer-workflow",
+    "title": "2.13.2 Timer Workflow",
+    "content": "#### 2.13.2 Timer Workflow\n1. User clicks \"Start Timer\" on task\n2. Backend creates entry with `startTime = now`, `endTime = null`\n3. User clicks \"Stop Timer\"\n4. Backend updates entry with `endTime = now`, calculates `durationSeconds`\n5. Frontend displays elapsed time",
+    "sortOrder": 100,
+    "description": "#### 2.13.2 Timer Workflow\n1. User clicks \"Start Timer\" on task\n2. Backend creates entry with `start..."
+  },
+  {
+    "slug": "2133-manual-time-entry",
+    "title": "2.13.3 Manual Time Entry",
+    "content": "#### 2.13.3 Manual Time Entry\n- **Use case**: Log time retroactively\n- **Input**: Start time, end time (or duration)\n- **Validation**: End time must be after start time",
+    "sortOrder": 101,
+    "description": "#### 2.13.3 Manual Time Entry\n- **Use case**: Log time retroactively\n- **Input**: Start time, end ti..."
+  },
+  {
+    "slug": "2134-time-aggregation",
+    "title": "2.13.4 Time Aggregation",
+    "content": "#### 2.13.4 Time Aggregation\n- **Total time on task**: Sum of all `durationSeconds` for task\n- **Time estimate**: New field `Task.estimatedHours` (optional)\n- **Actual vs. estimate**: Display comparison in task detail",
+    "sortOrder": 102,
+    "description": "#### 2.13.4 Time Aggregation\n- **Total time on task**: Sum of all `durationSeconds` for task\n- **Tim..."
+  },
+  {
+    "slug": "2135-pomodoro-mode",
+    "title": "2.13.5 Pomodoro Mode",
+    "content": "#### 2.13.5 Pomodoro Mode\n- **Timer preset**: 25 minutes work, 5 minutes break\n- **Auto-stop**: Timer stops after 25 minutes\n- **Frontend**: Pomodoro toggle in timer widget",
+    "sortOrder": 103,
+    "description": "#### 2.13.5 Pomodoro Mode\n- **Timer preset**: 25 minutes work, 5 minutes break\n- **Auto-stop**: Time..."
+  },
+  {
+    "slug": "2136-calendar-view",
+    "title": "2.13.6 Calendar View",
+    "content": "#### 2.13.6 Calendar View\n- **Endpoint**: `GET /api/tasks?calendar=true&month=2026-02`\n- **Returns**: Tasks with due dates, grouped by date\n- **Frontend**:\n  - Monthly calendar showing task due dates\n  - Drag-and-drop to reschedule (updates `task.dueDate`)\n  - Week view toggle\n  - Uses `react-big-calendar` or custom implementation\n- **Visual**: Color-coded by priority, click to open task modal\n\n---",
+    "sortOrder": 104,
+    "description": "#### 2.13.6 Calendar View\n- **Endpoint**: `GET /api/tasks?calendar=true&month=2026-02`\n- **Returns**..."
+  },
+  {
+    "slug": "214-activity-logs",
+    "title": "2.14 Activity Logs",
+    "content": "### 2.14 Activity Logs\n\n**Status**: ✅ Implemented (Sprint 5)",
+    "sortOrder": 105,
+    "description": "### 2.14 Activity Logs\n\n**Status**: ✅ Implemented (Sprint 5)..."
+  },
+  {
+    "slug": "2141-endpoints",
+    "title": "2.14.1 Endpoints",
+    "content": "#### 2.14.1 Endpoints\n- `GET /api/tasks/:id/activity` - List activity history\n  - Supports pagination via `cursor` or `limit`",
+    "sortOrder": 106,
+    "description": "#### 2.14.1 Endpoints\n- `GET /api/tasks/:id/activity` - List activity history\n  - Supports paginatio..."
+  },
+  {
+    "slug": "2142-tracked-events",
+    "title": "2.14.2 Tracked Events",
+    "content": "#### 2.14.2 Tracked Events\n- **Task**: Created, Status change, Priority change, Assignee change, Due date change\n- **Comments**: Added, Edited, Deleted\n- **Dependencies**: Added, Removed\n- **Schema**:\n```prisma\nmodel ActivityLog {\n  id        String   @id @default(uuid())\n  taskId    String\n  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)\n  userId    String\n  user      User     @relation(fields: [userId], references: [id])\n  action    String   // \"TASK_CREATED\", \"STATUS_CHANGED\", etc.\n  meta      Json?    // Store old/new values { old: \"TODO\", new: \"DONE\" }\n  createdAt DateTime @default(now())\n}\n```",
+    "sortOrder": 107,
+    "description": "#### 2.14.2 Tracked Events\n- **Task**: Created, Status change, Priority change, Assignee change, Due..."
+  },
+  {
+    "slug": "2143-middleware-implementation",
+    "title": "2.14.3 Middleware Implementation",
+    "content": "#### 2.14.3 Middleware Implementation\n- **Activity logger middleware**: Intercepts PUT requests\n- **Change detection**: Compare old vs. new values\n- **Automatic logging**: Creates activity record on change\n- **Applied to**: Task update, task assignment, comment creation",
+    "sortOrder": 108,
+    "description": "#### 2.14.3 Middleware Implementation\n- **Activity logger middleware**: Intercepts PUT requests\n- **..."
+  },
+  {
+    "slug": "2144-frontend-display",
+    "title": "2.14.4 Frontend Display",
+    "content": "#### 2.14.4 Frontend Display\n- **Activity timeline**: Chronological list in task detail modal\n- **Relative timestamps**: \"2 hours ago\", \"Yesterday\"\n- **User avatars**: Show who made each change\n- **Grouping**: Collapse multiple changes by same user within 5 minutes\n\n---",
+    "sortOrder": 109,
+    "description": "#### 2.14.4 Frontend Display\n- **Activity timeline**: Chronological list in task detail modal\n- **Re..."
+  },
+  {
+    "slug": "215-comments-real-time-collaboration",
+    "title": "2.15 Comments & Real-time Collaboration",
+    "content": "### 2.15 Comments & Real-time Collaboration\n\n**Status**: ✅ Implemented (Sprint 5)",
+    "sortOrder": 110,
+    "description": "### 2.15 Comments & Real-time Collaboration\n\n**Status**: ✅ Implemented (Sprint 5)..."
+  },
+  {
+    "slug": "2511-recurring-tasks",
+    "title": "2.5.11 Recurring Tasks",
+    "content": "#### 2.5.11 Recurring Tasks\n- **Status**: ✅ Implemented (Sprint 3)\n- **Endpoints**:\n  - `POST /api/recurring-tasks` - Create recurring task\n  - `GET /api/recurring-tasks` - List recurring tasks\n  - `GET /api/recurring-tasks/:id` - Get details\n  - `DELETE /api/recurring-tasks/:id` - Delete recurring task\n  - `POST /api/recurring-tasks/:id/generate` - Manually trigger generation\n- **Logic**:\n  - `cron` job (or external trigger) calls generic logic to create tasks based on schedule\n  - Supports: Daily, Weekly, Monthly, Custom intervals\n  - Copies: Title, description, project, priority from base task",
+    "sortOrder": 111,
+    "description": "#### 2.5.11 Recurring Tasks\n- **Status**: ✅ Implemented (Sprint 3)\n- **Endpoints**:\n  - `POST /api/r..."
+  },
+  {
+    "slug": "2512-task-dependencies",
+    "title": "2.5.12 Task Dependencies",
+    "content": "#### 2.5.12 Task Dependencies\n- **Status**: ✅ Implemented (Sprint 7)\n- **Endpoints**:\n  - `POST /api/tasks/:id/dependencies` - Add dependency\n  - `GET /api/tasks/:id/dependencies` - List dependencies\n  - `DELETE /api/tasks/:id/dependencies/:depId` - Remove dependency\n- **Logic**:\n  - **Blocking**: Task A blocks Task B (B cannot be started until A is done)\n  - **Cycle Detection**: Prevent A -> B -> A loops\n  - **Visuals**: Show blockers in task detail\n  - **Graph**: Critical path calculation (future)",
+    "sortOrder": 112,
+    "description": "#### 2.5.12 Task Dependencies\n- **Status**: ✅ Implemented (Sprint 7)\n- **Endpoints**:\n  - `POST /api..."
+  },
+  {
+    "slug": "2151-comments-system",
+    "title": "2.15.1 Comments System",
+    "content": "#### 2.15.1 Comments System\n- **Endpoints**:\n  - `POST /api/tasks/:id/comments` - Add comment\n  - `GET /api/tasks/:id/comments` - List comments for task\n  - `PUT /api/comments/:id` - Edit own comment\n  - `DELETE /api/comments/:id` - Delete own comment (creator only)\n- **Authorization**: Anyone with task access can comment\n- **Features**:\n  - @mentions (notify mentioned user)\n  - Threaded replies (via `parentId`)\n  - Edit/delete own comments only",
+    "sortOrder": 113,
+    "description": "#### 2.15.1 Comments System\n- **Endpoints**:\n  - `POST /api/tasks/:id/comments` - Add comment\n  - `G..."
+  },
+  {
+    "slug": "2152-comment-database-schema",
+    "title": "2.15.2 Comment Database Schema",
+    "content": "#### 2.15.2 Comment Database Schema\n```prisma\nmodel Comment {\n  id          String   @id @default(uuid())\n  taskId      String\n  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)\n  userId      String\n  user        User     @relation(fields: [userId], references: [id])\n  content     String\n  parentId    String?  // For threaded replies\n  parent      Comment? @relation(\"CommentReplies\", fields: [parentId], references: [id])\n  replies     Comment[] @relation(\"CommentReplies\")\n  createdAt   DateTime @default(now())\n  updatedAt   DateTime @updatedAt\n}\n```",
+    "sortOrder": 114,
+    "description": "#### 2.15.2 Comment Database Schema\n```prisma\nmodel Comment {\n  id          String   @id @default(uu..."
+  },
+  {
+    "slug": "2153-mentions",
+    "title": "2.15.3 @Mentions",
+    "content": "#### 2.15.3 @Mentions\n- **Parsing**: Detect `@username` in comment content\n- **Notification**: Create notification for mentioned user\n- **Frontend**: Autocomplete dropdown when typing `@`\n- **Validation**: Only mention project members",
+    "sortOrder": 115,
+    "description": "#### 2.15.3 @Mentions\n- **Parsing**: Detect `@username` in comment content\n- **Notification**: Creat..."
+  },
+  {
+    "slug": "2154-websocket-real-time-updates",
+    "title": "2.15.4 WebSocket Real-time Updates",
+    "content": "#### 2.15.4 WebSocket Real-time Updates\n- **WebSocket endpoint**: `ws://api.example.com/ws`\n- **Authentication**: Token passed in upgrade request\n- **Events**:\n  - `task_updated`: Broadcast task changes to all subscribers\n  - `comment_added`: Real-time comment notifications\n  - `user_presence`: Show who's viewing this task\n- **Backend**: WebSocket server using `ws` library\n- **Frontend**: WebSocket client with auto-reconnect",
+    "sortOrder": 116,
+    "description": "#### 2.15.4 WebSocket Real-time Updates\n- **WebSocket endpoint**: `ws://api.example.com/ws`\n- **Auth..."
+  },
+  {
+    "slug": "2155-real-time-event-flow",
+    "title": "2.15.5 Real-time Event Flow",
+    "content": "#### 2.15.5 Real-time Event Flow\n1. User A updates task status\n2. Backend updates database\n3. Backend broadcasts `task_updated` event via WebSocket\n4. User B (viewing same task) receives event\n5. User B's frontend invalidates React Query cache, refetches task\n6. User B sees updated status without page refresh",
+    "sortOrder": 117,
+    "description": "#### 2.15.5 Real-time Event Flow\n1. User A updates task status\n2. Backend updates database\n3. Backen..."
+  },
+  {
+    "slug": "2156-presence-indicators",
+    "title": "2.15.6 Presence Indicators",
+    "content": "#### 2.15.6 Presence Indicators\n- **Show active viewers**: \"Alice and Bob are viewing this task\"\n- **Typing indicators**: \"Alice is typing...\" in comments\n- **Cursor tracking** (future): Show where collaborators are editing",
+    "sortOrder": 118,
+    "description": "#### 2.15.6 Presence Indicators\n- **Show active viewers**: \"Alice and Bob are viewing this task\"\n- *..."
+  },
+  {
+    "slug": "2157-websocket-scalability",
+    "title": "2.15.7 WebSocket Scalability",
+    "content": "#### 2.15.7 WebSocket Scalability\n- **Single server**: Direct WebSocket connections\n- **Multi-server**: Redis pub/sub for message broadcasting\n- **Reconnection**: Exponential backoff, max 3 attempts\n- **Fallback**: If WebSocket unavailable, fall back to 5-second polling\n\n---",
+    "sortOrder": 119,
+    "description": "#### 2.15.7 WebSocket Scalability\n- **Single server**: Direct WebSocket connections\n- **Multi-server..."
+  },
+  {
+    "slug": "216-custom-fields-attachments",
+    "title": "2.16 Custom Fields & Attachments",
+    "content": "### 2.16 Custom Fields & Attachments\n\n**Status**: ✅ Implemented (Sprint 6)",
+    "sortOrder": 120,
+    "description": "### 2.16 Custom Fields & Attachments\n\n**Status**: ✅ Implemented (Sprint 6)..."
+  },
+  {
+    "slug": "2161-custom-fields",
+    "title": "2.16.1 Custom Fields",
+    "content": "#### 2.16.1 Custom Fields\n- **Admin/Owner only**: Define custom fields per project\n- **Endpoints**:\n  - `POST /api/custom-fields` - Create field definition\n  - `GET /api/custom-fields` - List project fields\n  - `PUT /api/custom-fields/:id` - Update field\n  - `DELETE /api/custom-fields/:id` - Delete field\n  - `GET /api/custom-fields/task/:taskId` - Get values for task\n  - `PUT /api/custom-fields/task/:taskId` - Set values for task\n- **Field types**:\n  - **TEXT**: Single-line text input\n  - **NUMBER**: Numeric input\n  - **DATE**: Date picker\n  - **DROPDOWN**: Single-select from options\n- **Required fields**: Can be marked as required",
+    "sortOrder": 121,
+    "description": "#### 2.16.1 Custom Fields\n- **Admin/Owner only**: Define custom fields per project\n- **Endpoints**:\n..."
+  },
+  {
+    "slug": "2162-custom-field-database-schema",
+    "title": "2.16.2 Custom Field Database Schema",
+    "content": "#### 2.16.2 Custom Field Database Schema\n```prisma\nmodel CustomField {\n  id          String     @id @default(uuid())\n  projectId   String\n  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)\n  name        String\n  fieldType   FieldType\n  options     Json?      // For DROPDOWN: [\"Option 1\", \"Option 2\"]\n  required    Boolean    @default(false)\n  createdAt   DateTime   @default(now())\n}\n\nmodel FieldValue {\n  id       String      @id @default(uuid())\n  taskId   String\n  task     Task        @relation(fields: [taskId], references: [id], onDelete: Cascade)\n  fieldId  String\n  field    CustomField @relation(fields: [fieldId], references: [id], onDelete: Cascade)\n  value    Json        // Store any type of value\n}\n```",
+    "sortOrder": 122,
+    "description": "#### 2.16.2 Custom Field Database Schema\n```prisma\nmodel CustomField {\n  id          String     @id ..."
+  },
+  {
+    "slug": "2163-tags-system",
+    "title": "2.16.3 Tags System",
+    "content": "#### 2.16.3 Tags System\n- **Global tags**: Project-scoped tags\n- **Endpoints**:\n  - `GET /api/tags?projectId=xxx` - List project tags\n  - `POST /api/tags` - Create tag (name, color)\n  - `PUT /api/tags/:id` - Update tag\n  - `DELETE /api/tags/:id` - Delete tag\n  - `POST /api/tags/task/:taskId` - Add tag to task\n  - `DELETE /api/tags/task/:taskId/:tagId` - Remove tag from task\n- **Multi-select**: Tasks can have multiple tags\n- **Color-coded**: Each tag has a hex color",
+    "sortOrder": 123,
+    "description": "#### 2.16.3 Tags System\n- **Global tags**: Project-scoped tags\n- **Endpoints**:\n  - `GET /api/tags?p..."
+  },
+  {
+    "slug": "2164-file-attachments",
+    "title": "2.16.4 File Attachments",
+    "content": "#### 2.16.4 File Attachments\n- **Endpoints**:\n  - `POST /api/attachments/task/:taskId` - Upload file (multipart/form-data)\n  - `GET /api/attachments/task/:taskId` - List attachments\n  - `GET /api/attachments/:id/download` - Download file\n  - `DELETE /api/attachments/:id` - Delete file (uploader or admin only)\n- **Storage**: AWS S3, Cloudinary, or local filesystem\n- **Limits**:\n  - Max file size: 10MB per file\n  - Max files per task: 5 attachments\n  - Allowed types: Images (jpg, png), PDFs, documents (docx, xlsx)\n- **Validation**: File type whitelist, virus scanning (future)",
+    "sortOrder": 124,
+    "description": "#### 2.16.4 File Attachments\n- **Endpoints**:\n  - `POST /api/attachments/task/:taskId` - Upload file..."
+  },
+  {
+    "slug": "2165-file-attachment-database-schema",
+    "title": "2.16.5 File Attachment Database Schema",
+    "content": "#### 2.16.5 File Attachment Database Schema\n```prisma\nmodel Attachment {\n  id          String   @id @default(uuid())\n  taskId      String\n  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)\n  userId      String   // Uploader\n  user        User     @relation(fields: [userId], references: [id])\n  filename    String\n  mimeType    String\n  size        Int      // bytes\n  storageKey  String   // S3 key or local path\n  uploadedAt  DateTime @default(now())\n}\n```",
+    "sortOrder": 125,
+    "description": "#### 2.16.5 File Attachment Database Schema\n```prisma\nmodel Attachment {\n  id          String   @id ..."
+  },
+  {
+    "slug": "2166-frontend-features",
+    "title": "2.16.6 Frontend Features",
+    "content": "#### 2.16.6 Frontend Features\n- **Dynamic form builder**: Render custom fields based on project config\n- **File upload widget**: Drag-and-drop or click to upload\n- **Image preview**: Inline preview for images\n- **Download button**: Download attached files\n\n---",
+    "sortOrder": 126,
+    "description": "#### 2.16.6 Frontend Features\n- **Dynamic form builder**: Render custom fields based on project conf..."
+  },
+  {
+    "slug": "217-cli-tool",
+    "title": "2.17 CLI Tool",
+    "content": "### 2.17 CLI Tool\n\n**Status**: ✅ Implemented (Sprint 8)",
+    "sortOrder": 127,
+    "description": "### 2.17 CLI Tool\n\n**Status**: ✅ Implemented (Sprint 8)..."
+  },
+  {
+    "slug": "2171-installation",
+    "title": "2.17.1 Installation",
+    "content": "#### 2.17.1 Installation\n- **Package**: `taskman-cli` in `cli/` directory\n- **Global install**: `cd cli && npm install && npm run build && npm link`\n- **Requirements**: Node.js 20+, TaskMan backend running, valid API key",
+    "sortOrder": 128,
+    "description": "#### 2.17.1 Installation\n- **Package**: `taskman-cli` in `cli/` directory\n- **Global install**: `cd ..."
+  },
+  {
+    "slug": "2172-authentication",
+    "title": "2.17.2 Authentication",
+    "content": "#### 2.17.2 Authentication\n- **Storage**: Config file at `~/.config/taskman-cli/config.json`\n- **Login**: `taskman login` prompts for API URL and API key\n- **Validation**: Tests credentials with `GET /api/auth/me`",
+    "sortOrder": 129,
+    "description": "#### 2.17.2 Authentication\n- **Storage**: Config file at `~/.config/taskman-cli/config.json`\n- **Log..."
+  },
+  {
+    "slug": "2173-commands-implemented",
+    "title": "2.17.3 Commands Implemented",
+    "content": "#### 2.17.3 Commands Implemented\n| Command | Description | Example |\n|---------|-------------|---------|\n| `taskman login` | Configure API credentials | `taskman login` |\n| `taskman create <title>` | Create new task | `taskman create \"Fix bug\" --priority HIGH` |\n| `taskman list` | List tasks with filters | `taskman list --status TODO` |\n| `taskman show <id>` | Show task details | `taskman show abc12345` |\n| `taskman update <id>` | Update task fields | `taskman update abc12345 --status DONE` |\n| `taskman complete <id>` | Mark task as done | `taskman complete abc12345` |\n| `taskman projects` | List all projects | `taskman projects` |",
+    "sortOrder": 130,
+    "description": "#### 2.17.3 Commands Implemented\n| Command | Description | Example |\n|---------|-------------|------..."
+  },
+  {
+    "slug": "2174-create-options",
+    "title": "2.17.4 Create Options",
+    "content": "#### 2.17.4 Create Options\n```bash\ntaskman create \"Task title\"\n  -p, --project <id>          Project ID\n  -d, --description <text>    Task description\n  --priority <level>          LOW, MEDIUM, HIGH, URGENT (default: MEDIUM)\n  --due <date>                Due date (YYYY-MM-DD, \"tomorrow\", \"next week\")\n  -a, --assignee <id>         Assignee user ID\n```",
+    "sortOrder": 131,
+    "description": "#### 2.17.4 Create Options\n```bash\ntaskman create \"Task title\"\n  -p, --project <id>          Project..."
+  },
+  {
+    "slug": "2175-list-filters",
+    "title": "2.17.5 List Filters",
+    "content": "#### 2.17.5 List Filters\n```bash\ntaskman list\n  -p, --project <name>        Filter by project name\n  -s, --status <status>       TODO, IN_PROGRESS, IN_REVIEW, DONE\n  -a, --assignee <email>      Filter by assignee email\n  --priority <priority>       LOW, MEDIUM, HIGH, URGENT\n  --limit <number>            Limit results (default: 20)\n```",
+    "sortOrder": 132,
+    "description": "#### 2.17.5 List Filters\n```bash\ntaskman list\n  -p, --project <name>        Filter by project name\n ..."
+  },
+  {
+    "slug": "2176-output-formatting",
+    "title": "2.17.6 Output Formatting",
+    "content": "#### 2.17.6 Output Formatting\n- **Table format**: ASCII table using `cli-table3`\n- **Color-coded**:\n  - Status: ✓ DONE (green), ◐ IN_PROGRESS (cyan), ○ TODO (white)\n  - Priority: URGENT (red), HIGH (yellow), MEDIUM (blue), LOW (gray)\n- **Short IDs**: Display first 8 characters of UUID\n- **Relative dates**: \"2 days ago\" using `date-fns`",
+    "sortOrder": 133,
+    "description": "#### 2.17.6 Output Formatting\n- **Table format**: ASCII table using `cli-table3`\n- **Color-coded**:\n..."
+  },
+  {
+    "slug": "2177-shell-completion",
+    "title": "2.17.7 Shell Completion",
+    "content": "#### 2.17.7 Shell Completion\n- **Bash**: Source `cli/completions/taskman.bash` in `~/.bashrc`\n- **Zsh**: Copy `cli/completions/taskman.zsh` to `~/.zsh/completions/_taskman`\n- **Features**: Command completion, option completion, status/priority value completion\n\n---",
+    "sortOrder": 134,
+    "description": "#### 2.17.7 Shell Completion\n- **Bash**: Source `cli/completions/taskman.bash` in `~/.bashrc`\n- **Zs..."
+  },
+  {
+    "slug": "218-public-api",
+    "title": "2.18 Public API",
+    "content": "### 2.18 Public API\n\n**Status**: ✅ Implemented (Sprint 8)",
+    "sortOrder": 135,
+    "description": "### 2.18 Public API\n\n**Status**: ✅ Implemented (Sprint 8)..."
+  },
+  {
+    "slug": "2181-api-key-authentication",
+    "title": "2.18.1 API Key Authentication",
+    "content": "#### 2.18.1 API Key Authentication\n- **Generate key**: `POST /api/auth/api-keys` (requires auth)\n- **List keys**: `GET /api/auth/api-keys`\n- **Revoke key**: `DELETE /api/auth/api-keys/:id`\n- **Header format**: `X-API-Key: <api_key>`\n- **Security**: Keys hashed in database (bcrypt), never stored plain text",
+    "sortOrder": 136,
+    "description": "#### 2.18.1 API Key Authentication\n- **Generate key**: `POST /api/auth/api-keys` (requires auth)\n- *..."
+  },
+  {
+    "slug": "2182-api-key-database-schema",
+    "title": "2.18.2 API Key Database Schema",
+    "content": "#### 2.18.2 API Key Database Schema\n```prisma\nmodel ApiKey {\n  id          String   @id @default(uuid())\n  userId      String\n  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n  name        String   // \"Production\", \"Testing\", \"CI/CD\"\n  key         String   @unique  // bcrypt hashed\n  lastUsedAt  DateTime?\n  createdAt   DateTime @default(now())\n}\n```",
+    "sortOrder": 137,
+    "description": "#### 2.18.2 API Key Database Schema\n```prisma\nmodel ApiKey {\n  id          String   @id @default(uui..."
+  },
+  {
+    "slug": "2183-rate-limiting",
+    "title": "2.18.3 Rate Limiting",
+    "content": "#### 2.18.3 Rate Limiting\n- **Per API key**: 1000 requests/hour\n- **Headers**:\n  - `X-RateLimit-Limit: 1000`\n  - `X-RateLimit-Remaining: 750`\n  - `X-RateLimit-Reset: 1643673600` (Unix timestamp)\n- **429 response**: When rate limit exceeded\n- **Sliding window**: Redis-based rate limiting",
+    "sortOrder": 138,
+    "description": "#### 2.18.3 Rate Limiting\n- **Per API key**: 1000 requests/hour\n- **Headers**:\n  - `X-RateLimit-Limi..."
+  },
+  {
+    "slug": "2184-api-documentation",
+    "title": "2.18.4 API Documentation",
+    "content": "#### 2.18.4 API Documentation\n- **OpenAPI spec**: Auto-generated from route definitions\n- **Documentation URL**: `/api/docs` (Swagger UI)\n- **Postman collection**: Exportable collection for testing\n- **TypeScript SDK**: Auto-generated client library",
+    "sortOrder": 139,
+    "description": "#### 2.18.4 API Documentation\n- **OpenAPI spec**: Auto-generated from route definitions\n- **Document..."
+  },
+  {
+    "slug": "2185-available-endpoints",
+    "title": "2.18.5 Available Endpoints",
+    "content": "#### 2.18.5 Available Endpoints\n- All existing endpoints available via API key auth\n- Same authorization rules apply (project membership, role-based)\n- No behavioral differences from cookie auth\n\n---",
+    "sortOrder": 140,
+    "description": "#### 2.18.5 Available Endpoints\n- All existing endpoints available via API key auth\n- Same authoriza..."
+  },
+  {
+    "slug": "219-webhooks",
+    "title": "2.19 Webhooks",
+    "content": "### 2.19 Webhooks\n\n**Status**: ✅ Implemented (Sprint 8)",
+    "sortOrder": 141,
+    "description": "### 2.19 Webhooks\n\n**Status**: ✅ Implemented (Sprint 8)..."
+  },
+  {
+    "slug": "2191-webhook-configuration",
+    "title": "2.19.1 Webhook Configuration",
+    "content": "#### 2.19.1 Webhook Configuration\n- **Endpoints**:\n  - `POST /api/webhooks` - Create webhook\n  - `GET /api/webhooks` - List user's webhooks\n  - `PUT /api/webhooks/:id` - Update webhook\n  - `DELETE /api/webhooks/:id` - Delete webhook\n- **Configuration**:\n  - `url`: Target URL to POST events\n  - `events`: Array of event types to subscribe\n  - `active`: Boolean to enable/disable",
+    "sortOrder": 142,
+    "description": "#### 2.19.1 Webhook Configuration\n- **Endpoints**:\n  - `POST /api/webhooks` - Create webhook\n  - `GE..."
+  },
+  {
+    "slug": "2192-webhook-events",
+    "title": "2.19.2 Webhook Events",
+    "content": "#### 2.19.2 Webhook Events\n| Event | Trigger |\n|-------|---------|\n| `task.created` | New task created |\n| `task.updated` | Task fields updated |\n| `task.completed` | Task status changed to DONE |\n| `task.deleted` | Task deleted |\n| `project.created` | New project created |\n| `project.updated` | Project updated |\n| `comment.added` | Comment added to task |",
+    "sortOrder": 143,
+    "description": "#### 2.19.2 Webhook Events\n| Event | Trigger |\n|-------|---------|\n| `task.created` | New task creat..."
+  },
+  {
+    "slug": "2193-webhook-payload",
+    "title": "2.19.3 Webhook Payload",
+    "content": "#### 2.19.3 Webhook Payload\n```json\n{\n  \"event\": \"task.created\",\n  \"timestamp\": \"2026-02-06T12:00:00Z\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"title\": \"Buy milk\",\n    \"status\": \"TODO\",\n    \"priority\": \"HIGH\",\n    \"projectId\": \"uuid\",\n    \"creatorId\": \"uuid\"\n  }\n}\n```",
+    "sortOrder": 144,
+    "description": "#### 2.19.3 Webhook Payload\n```json\n{\n  \"event\": \"task.created\",\n  \"timestamp\": \"2026-02-06T12:00:00..."
+  },
+  {
+    "slug": "2194-hmac-signature",
+    "title": "2.19.4 HMAC Signature",
+    "content": "#### 2.19.4 HMAC Signature\n- **Header**: `X-Webhook-Signature: sha256=<signature>`\n- **Algorithm**: HMAC-SHA256\n- **Key**: Webhook secret\n- **Payload**: Raw JSON body\n- **Verification**:\n  ```typescript\n  const signature = crypto\n    .createHmac('sha256', webhook.secret)\n    .update(rawBody)\n    .digest('hex');\n  ```",
+    "sortOrder": 145,
+    "description": "#### 2.19.4 HMAC Signature\n- **Header**: `X-Webhook-Signature: sha256=<signature>`\n- **Algorithm**: ..."
+  },
+  {
+    "slug": "2195-retry-logic",
+    "title": "2.19.5 Retry Logic",
+    "content": "#### 2.19.5 Retry Logic\n- **Attempts**: 3 retries with exponential backoff\n- **Backoff**: 1s, 5s, 25s\n- **Failure logging**: Store failed attempts in `webhook_logs` table\n- **Disable on repeated failures**: Auto-disable after 10 consecutive failures",
+    "sortOrder": 146,
+    "description": "#### 2.19.5 Retry Logic\n- **Attempts**: 3 retries with exponential backoff\n- **Backoff**: 1s, 5s, 25..."
+  },
+  {
+    "slug": "2196-webhook-logs",
+    "title": "2.19.6 Webhook Logs",
+    "content": "#### 2.19.6 Webhook Logs\n- **Endpoint**: `GET /api/webhooks/:id/logs`\n- **Returns**: Last 100 delivery attempts\n- **Log fields**: `timestamp`, `event`, `responseCode`, `error`, `payload`\n- **Use case**: Debug webhook delivery issues\n\n---",
+    "sortOrder": 147,
+    "description": "#### 2.19.6 Webhook Logs\n- **Endpoint**: `GET /api/webhooks/:id/logs`\n- **Returns**: Last 100 delive..."
+  },
+  {
+    "slug": "220-natural-language-task-creation",
+    "title": "2.20 Natural Language Task Creation",
+    "content": "### 2.20 Natural Language Task Creation\n\n**Status**: ✅ Implemented (Sprint 9)",
+    "sortOrder": 148,
+    "description": "### 2.20 Natural Language Task Creation\n\n**Status**: ✅ Implemented (Sprint 9)..."
+  },
+  {
+    "slug": "2201-smart-quick-add-bar",
+    "title": "2.20.1 Smart Quick-Add Bar",
+    "content": "#### 2.20.1 Smart Quick-Add Bar\n- **Frontend**: Implemented in `SmartTaskInput.tsx` component\n- **Placeholder**: \"Buy milk tomorrow high priority in Project X\"\n- **Parsing**: Real-time extraction of structured data from natural language\n- **Libraries**: `chrono-node` (dates), `compromise` (NLP) - both installed and configured\n- **Parser**: `frontend/src/lib/nlpParser.ts` with comprehensive test suite",
+    "sortOrder": 149,
+    "description": "#### 2.20.1 Smart Quick-Add Bar\n- **Frontend**: Implemented in `SmartTaskInput.tsx` component\n- **Pl..."
+  },
+  {
+    "slug": "2202-parsing-examples",
+    "title": "2.20.2 Parsing Examples",
+    "content": "#### 2.20.2 Parsing Examples\n| Input | Parsed Output |\n|-------|---------------|\n| \"Buy milk tomorrow\" | title=\"Buy milk\", dueDate=tomorrow |\n| \"Meeting at 3pm\" | title=\"Meeting\", dueDate=today 3pm |\n| \"urgent task in Project X\" | title=\"task\", priority=URGENT, project=\"Project X\" |\n| \"Call client on Friday\" | title=\"Call client\", dueDate=Friday |\n| \"Fix bug #123 high priority\" | title=\"Fix bug #123\", priority=HIGH |",
+    "sortOrder": 150,
+    "description": "#### 2.20.2 Parsing Examples\n| Input | Parsed Output |\n|-------|---------------|\n| \"Buy milk tomorro..."
+  },
+  {
+    "slug": "2203-pattern-detection",
+    "title": "2.20.3 Pattern Detection",
+    "content": "#### 2.20.3 Pattern Detection\n- **Dates**: \"tomorrow\", \"Friday\", \"in 3 days\", \"2026-02-15\"\n- **Times**: \"at 3pm\", \"9:30am\", \"15:00\"\n- **Projects**: \"in Project X\", \"#ProjectName\"\n- **Priority**: \"urgent\", \"high\", \"low\" (case-insensitive)\n- **Assignee**: \"@Alice\", \"assigned to Bob\"",
+    "sortOrder": 151,
+    "description": "#### 2.20.3 Pattern Detection\n- **Dates**: \"tomorrow\", \"Friday\", \"in 3 days\", \"2026-02-15\"\n- **Times..."
+  },
+  {
+    "slug": "2204-date-parsing-library",
+    "title": "2.20.4 Date Parsing Library",
+    "content": "#### 2.20.4 Date Parsing Library (chrono-node)\n```typescript\nimport * as chrono from 'chrono-node';\n\nconst results = chrono.parse(\"Meeting tomorrow at 3pm\");\n// results[0].start.date() => Date object for tomorrow 3pm\n```",
+    "sortOrder": 152,
+    "description": "#### 2.20.4 Date Parsing Library (chrono-node)\n```typescript\nimport * as chrono from 'chrono-node';\n..."
+  },
+  {
+    "slug": "2205-nlp-library",
+    "title": "2.20.5 NLP Library",
+    "content": "#### 2.20.5 NLP Library (compromise)\n```typescript\nimport nlp from 'compromise';\n\nconst doc = nlp(\"urgent task\");\nconst priority = doc.match('(urgent|high|low|medium)').text();\n// priority => \"urgent\"\n```",
+    "sortOrder": 153,
+    "description": "#### 2.20.5 NLP Library (compromise)\n```typescript\nimport nlp from 'compromise';\n\nconst doc = nlp(\"u..."
+  },
+  {
+    "slug": "2206-fallback-behavior",
+    "title": "2.20.6 Fallback Behavior",
+    "content": "#### 2.20.6 Fallback Behavior\n- **Unparseable input**: Creates task with full input as title (graceful degradation)\n- **Ambiguous dates**: Uses chrono-node's best-guess with forwardDate option\n- **Invalid project**: Auto-matches project by name similarity\n- **Partial parsing**: Shows real-time preview with parsed fields as badges",
+    "sortOrder": 154,
+    "description": "#### 2.20.6 Fallback Behavior\n- **Unparseable input**: Creates task with full input as title (gracef..."
+  },
+  {
+    "slug": "2207-frontend-preview",
+    "title": "2.20.7 Frontend Preview",
+    "content": "#### 2.20.7 Frontend Preview\n- **Real-time parsing**: Shows extracted fields as user types with 150ms debounce\n- **Visual feedback**: Badge pills showing parsed date, priority, and project\n- **Edit before create**: Parsed values pre-fill form fields, fully editable\n- **Keyboard shortcuts**: Enter to submit, Escape to cancel\n- **Component**: Full implementation in `SmartTaskInput.tsx` with Framer Motion animations\n- **Tests**: Comprehensive test suite in `frontend/src/lib/__tests__/nlpParser.test.ts`\n\n---",
+    "sortOrder": 155,
+    "description": "#### 2.20.7 Frontend Preview\n- **Real-time parsing**: Shows extracted fields as user types with 150m..."
+  },
+  {
+    "slug": "221-focus-mode",
+    "title": "2.21 Focus Mode",
+    "content": "### 2.21 Focus Mode\n\n**Status**: ✅ Implemented (Sprint 7)",
+    "sortOrder": 156,
+    "description": "### 2.21 Focus Mode\n\n**Status**: ✅ Implemented (Sprint 7)..."
+  },
+  {
+    "slug": "2212-frontend-implementation",
+    "title": "2.21.2 Frontend Implementation",
+    "content": "#### 2.21.2 Frontend Implementation\n- **Route**: `/focus`\n- **Component**: `FocusPage.tsx`\n- **Data Source**: Top 3 tasks sorted by priority (URGENT → HIGH → MEDIUM → LOW)\n- **Filtering**: Excludes DONE tasks",
+    "sortOrder": 157,
+    "description": "#### 2.21.2 Frontend Implementation\n- **Route**: `/focus`\n- **Component**: `FocusPage.tsx`\n- **Data ..."
+  },
+  {
+    "slug": "2213-behavior",
+    "title": "2.21.3 Behavior",
+    "content": "#### 2.21.3 Behavior\n- Displays top 3 tasks in large card format\n- Mark-as-done with animation and confetti celebration\n- Completion counter (\"2 of 3 tasks completed\")\n- Back to dashboard navigation\n- Empty state when all focus tasks completed (\"Great job! All priority tasks done.\")",
+    "sortOrder": 158,
+    "description": "#### 2.21.3 Behavior\n- Displays top 3 tasks in large card format\n- Mark-as-done with animation and c..."
+  },
+  {
+    "slug": "2214-visual-design",
+    "title": "2.21.4 Visual Design",
+    "content": "#### 2.21.4 Visual Design\n- Full-screen layout with minimal chrome (no sidebar)\n- Large task cards showing title, description, priority badge, due date\n- Framer Motion slide-in animations for card entrance\n- Confetti animation on task completion via `canvas-confetti`\n- Progress indicator at top",
+    "sortOrder": 159,
+    "description": "#### 2.21.4 Visual Design\n- Full-screen layout with minimal chrome (no sidebar)\n- Large task cards s..."
+  },
+  {
+    "slug": "2215-use-cases",
+    "title": "2.21.5 Use Cases",
+    "content": "#### 2.21.5 Use Cases\n- Deep work sessions without distractions\n- Focus on critical tasks only\n- Alternative view for overwhelmed users\n- Morning ritual: tackle top 3 priorities\n\n---",
+    "sortOrder": 160,
+    "description": "#### 2.21.5 Use Cases\n- Deep work sessions without distractions\n- Focus on critical tasks only\n- Alt..."
+  },
+  {
+    "slug": "222-uiux-design-system",
+    "title": "2.22 UI/UX Design System",
+    "content": "### 2.22 UI/UX Design System\n\n**Status**: ✅ Implemented (Sprints 2-6)",
+    "sortOrder": 161,
+    "description": "### 2.22 UI/UX Design System\n\n**Status**: ✅ Implemented (Sprints 2-6)..."
+  },
+  {
+    "slug": "2221-glassmorphism",
+    "title": "2.22.1 Glassmorphism",
+    "content": "#### 2.22.1 Glassmorphism\n- **Description**: Frosted glass visual effect on modals, cards, and panels\n- **Implementation**: \n  - CSS utility classes: `glass-card`, `glass-card-dark`\n  - `backdrop-filter: blur(10px)` for blur effect\n  - Semi-transparent backgrounds (`bg-white/80`, `bg-gray-900/80`)\n  - Subtle borders with low opacity\n- **Components Using Glass**: Modals, Command Palette, Notification Center, Task detail panels",
+    "sortOrder": 162,
+    "description": "#### 2.22.1 Glassmorphism\n- **Description**: Frosted glass visual effect on modals, cards, and panel..."
+  },
+  {
+    "slug": "2222-micro-interactions",
+    "title": "2.22.2 Micro-interactions",
+    "content": "#### 2.22.2 Micro-interactions\n- **Button Hover**: \n  - Scale transform (`scale-105`) on hover\n  - Shadow increase for depth perception\n  - Smooth transition (200ms)\n- **Task Completion**: \n  - Confetti animation via `canvas-confetti` library\n  - Celebration trigger on status change to DONE\n  - Optional sound effect (future enhancement)\n- **Modal Animations**: \n  - Scale and fade-in on open (0.95 → 1.0 scale)\n  - Fade-out on close\n  - Backdrop fade (0 → 0.5 opacity)\n- **Drag Indicators**: \n  - Pulse animation on draggable items\n  - Visual feedback during drag (elevation, opacity)",
+    "sortOrder": 163,
+    "description": "#### 2.22.2 Micro-interactions\n- **Button Hover**: \n  - Scale transform (`scale-105`) on hover\n  - S..."
+  },
+  {
+    "slug": "2223-framer-motion-integration",
+    "title": "2.22.3 Framer Motion Integration",
+    "content": "#### 2.22.3 Framer Motion Integration\n- **Library**: `framer-motion` for declarative animations\n- **Page Transitions**: \n  - Fade + slide animations between routes\n  - `AnimatePresence` component wrapping route changes\n  - Exit animations before unmount\n- **Modal Variants**:\n  ```typescript\n  modalOverlay: { hidden: { opacity: 0 }, visible: { opacity: 1 } }\n  modalContent: { hidden: { scale: 0.95, opacity: 0 }, visible: { scale: 1, opacity: 1 } }\n  ```\n- **Task Card Hover**: \n  - Translate Y (-4px) on hover\n  - Shadow expansion\n  - Smooth spring animation\n- **Table Rows**: \n  - Fade-in with stagger effect\n  - Each row delays by 50ms for cascading appearance",
+    "sortOrder": 164,
+    "description": "#### 2.22.3 Framer Motion Integration\n- **Library**: `framer-motion` for declarative animations\n- **..."
+  },
+  {
+    "slug": "2224-skeleton-loading-states",
+    "title": "2.22.4 Skeleton Loading States",
+    "content": "#### 2.22.4 Skeleton Loading States\n- **Purpose**: Content placeholders while data loads, reducing perceived loading time\n- **Components**: \n  - `DashboardSkeleton`: Grid of stat cards and task placeholders\n  - `TableSkeleton`: Table structure with shimmer rows\n  - `KanbanSkeleton`: Column structure with card placeholders\n  - `ProjectCardSkeleton`: Project grid placeholders\n- **Pattern**: \n  - Gray rectangles matching content dimensions\n  - `animate-pulse` CSS animation for shimmer effect\n  - Dark mode support (different gray shades)\n- **View-Aware Loading**: Renders appropriate skeleton based on active view (table vs kanban)\n- **Implementation**: `Skeletons.tsx` component library",
+    "sortOrder": 165,
+    "description": "#### 2.22.4 Skeleton Loading States\n- **Purpose**: Content placeholders while data loads, reducing p..."
+  },
+  {
+    "slug": "2225-empty-states",
+    "title": "2.22.5 Empty States",
+    "content": "#### 2.22.5 Empty States\n- **Purpose**: Encourage first-time actions with friendly messaging and visuals\n- **Components**: \n  - `EmptyTasksState`: No tasks illustration\n  - `EmptyProjectsState`: No projects illustration\n  - `EmptyCalendarState`: Empty calendar illustration\n  - `EmptyTimeEntriesState`: No time entries illustration\n- **Pattern**: \n  - Custom SVG illustration (simple, on-brand)\n  - Encouraging message (\"No tasks yet. Create your first one!\")\n  - Primary CTA button (e.g., \"Create Task\")\n  - Framer Motion slide-up entrance animation\n- **Tone**: Positive and action-oriented, not punishing\n- **Implementation**: `EmptyStates.tsx` (specific states) + `EmptyState.tsx` (generic wrapper)",
+    "sortOrder": 166,
+    "description": "#### 2.22.5 Empty States\n- **Purpose**: Encourage first-time actions with friendly messaging and vis..."
+  },
+  {
+    "slug": "2226-design-tokens",
+    "title": "2.22.6 Design Tokens",
+    "content": "#### 2.22.6 Design Tokens (CSS Variables)\n- **Spacing Scale**: Controlled via density settings\n  - Comfortable: `--spacing-scale: 1.0` (default)\n  - Compact: `--spacing-scale: 0.75`\n  - Spacious: `--spacing-scale: 1.25`\n- **Color Palette**: 5 themes with CSS variable overrides\n  - `--color-primary`, `--color-primary-dark`, `--color-primary-light`\n  - `--color-secondary`, `--color-accent`\n- **Typography**: \n  - Font sizes: `--font-size-base` (adjusted per density)\n  - Font families: System font stack for performance\n- **Transitions**: \n  - `--transition-base: 200ms ease-in-out`\n  - Consistent easing curves across components",
+    "sortOrder": 167,
+    "description": "#### 2.22.6 Design Tokens (CSS Variables)\n- **Spacing Scale**: Controlled via density settings\n  - C..."
+  },
+  {
+    "slug": "2227-accessibility-performance-controls",
+    "title": "2.22.7 Accessibility & Performance Controls",
+    "content": "#### 2.22.7 Accessibility & Performance Controls\n- **Component**: `AccessibilityControls`\n- **Features**:\n  - **High Contrast Mode**: Increases contrast ratios for text and borders\n  - **Performance Mode**: Disables blur effects in glassmorphism\n  - **Animation Intensity**:\n    - `normal`: Standard standard motion\n    - `reduced`: Minimal motion (respects `prefers-reduced-motion`)\n    - `performance`: Optimized for lower-end devices\n- **Implementation**:\n  - `usePerformanceAnimations` hook for adaptive animation variants\n  - `animationUtils.ts` providing `PERFORMANCE_ANIMATIONS`, `REDUCED_ANIMATIONS`, `NORMAL_ANIMATIONS` constants\n  - Auto-detection of system `prefers-reduced-motion` setting on store rehydration\n  - Persistent storage in `theme-store`\n\n---",
+    "sortOrder": 168,
+    "description": "#### 2.22.7 Accessibility & Performance Controls\n- **Component**: `AccessibilityControls`\n- **Featur..."
+  },
+  {
+    "slug": "223-data-export",
+    "title": "2.23 Data Export",
+    "content": "### 2.23 Data Export\n\n**Status**: ✅ Implemented (Sprint 9)",
+    "sortOrder": 169,
+    "description": "### 2.23 Data Export\n\n**Status**: ✅ Implemented (Sprint 9)..."
+  },
+  {
+    "slug": "2231-export-tasks-endpoint",
+    "title": "2.23.1 Export Tasks Endpoint",
+    "content": "#### 2.23.1 Export Tasks Endpoint\n- **Endpoint**: `GET /api/export/tasks`\n- **Requires**: Authentication\n- **Query Parameters**:\n  - `format`: `csv` or `json` (required)\n  - `projectId`: Filter by project UUID (optional)\n- **Returns**: File download with appropriate Content-Disposition header\n\n####2.23.2 CSV Export Format\n- **Columns**: ID, Title, Description, Status, Priority, Project Name, Assignee Name, Creator Name, Due Date, Created At, Updated At\n- **Escaping**: \n  - Commas escaped with quotes\n  - Quotes escaped as double-quotes (`\"\"`)\n  - Newlines preserved in multi-line fields\n- **Headers**: \n  - `Content-Type: text/csv; charset=utf-8`\n  - `Content-Disposition: attachment; filename=\"tasks-{date}.csv\"`\n- **Encoding**: UTF-8 with BOM for Excel compatibility",
+    "sortOrder": 170,
+    "description": "#### 2.23.1 Export Tasks Endpoint\n- **Endpoint**: `GET /api/export/tasks`\n- **Requires**: Authentica..."
+  },
+  {
+    "slug": "2233-json-export-format",
+    "title": "2.23.3 JSON Export Format",
+    "content": "#### 2.23.3 JSON Export Format\n- **Schema**: Array of task objects with full nested data\n  ```json\n  [\n    {\n      \"id\": \"uuid\",\n      \"title\": \"Task title\",\n      \"description\": \"Description\",\n      \"status\": \"TODO\",\n      \"priority\": \"HIGH\",\n      \"project\": { \"id\": \"uuid\", \"name\": \"Project Name\" },\n      \"assignee\": { \"id\": \"uuid\", \"name\": \"John Doe\" },\n      \"creator\": { \"id\": \"uuid\", \"name\": \"Jane Smith\" },\n      \"dueDate\": \"2026-02-15T10:00:00Z\",\n      \"createdAt\": \"2026-02-01T08:00:00Z\"\n    }\n  ]\n  ```\n- **Headers**: \n  - `Content-Type: application/json`\n  - `Content-Disposition: attachment; filename=\"tasks-{date}.json\"`",
+    "sortOrder": 171,
+    "description": "#### 2.23.3 JSON Export Format\n- **Schema**: Array of task objects with full nested data\n  ```json\n ..."
+  },
+  {
+    "slug": "2234-frontend-ui",
+    "title": "2.23.4 Frontend UI",
+    "content": "#### 2.23.4 Frontend UI\n- **Location**: TasksPage header, next to filter controls\n- **Component**: Export dropdown with CSV/JSON options\n- **Loading State**: Shows spinner during export generation\n- **Error Handling**: Toast notification on export failure\n- **Success Feedback**: Browser triggers file download",
+    "sortOrder": 172,
+    "description": "#### 2.23.4 Frontend UI\n- **Location**: TasksPage header, next to filter controls\n- **Component**: E..."
+  },
+  {
+    "slug": "2235-authorization",
+    "title": "2.23.5 Authorization",
+    "content": "#### 2.23.5 Authorization\n- Users can only export tasks from projects they are members of\n- Export respects role-based permissions (VIEWER, MEMBER, ADMIN, OWNER)\n- Project filtering validates user has access to specified project",
+    "sortOrder": 173,
+    "description": "#### 2.23.5 Authorization\n- Users can only export tasks from projects they are members of\n- Export r..."
+  },
+  {
+    "slug": "2236-performance-considerations",
+    "title": "2.23.6 Performance Considerations",
+    "content": "#### 2.23.6 Performance Considerations\n- **Pagination**: Large exports (>1000 tasks) streamed in chunks\n- **Timeout**: 30-second request timeout for large datasets\n- **Future Enhancement**: Background job for very large exports with email delivery\n\n---",
+    "sortOrder": 174,
+    "description": "#### 2.23.6 Performance Considerations\n- **Pagination**: Large exports (>1000 tasks) streamed in chu..."
+  },
+  {
+    "slug": "224-keyboard-shortcuts-system",
+    "title": "2.24 Keyboard Shortcuts System",
+    "content": "### 2.24 Keyboard Shortcuts System\n\n**Status**: ✅ Implemented (Sprint 9)",
+    "sortOrder": 175,
+    "description": "### 2.24 Keyboard Shortcuts System\n\n**Status**: ✅ Implemented (Sprint 9)..."
+  },
+  {
+    "slug": "2241-shortcuts-guide-modal",
+    "title": "2.24.1 Shortcuts Guide Modal",
+    "content": "#### 2.24.1 Shortcuts Guide Modal\n- **Trigger**: `?` key from any page\n- **Component**: `KeyboardShortcutsModal`\n- **Layout**: Grouped shortcuts in card-based layout\n- **Dismissal**: Escape key or click outside modal",
+    "sortOrder": 176,
+    "description": "#### 2.24.1 Shortcuts Guide Modal\n- **Trigger**: `?` key from any page\n- **Component**: `KeyboardSho..."
+  },
+  {
+    "slug": "2242-shortcut-groups",
+    "title": "2.24.2 Shortcut Groups",
+    "content": "#### 2.24.2 Shortcut Groups",
+    "sortOrder": 177,
+    "description": "#### 2.24.2 Shortcut Groups..."
+  },
+  {
+    "slug": "navigation",
+    "title": "Navigation",
+    "content": "##### Navigation\n- **Dashboard**: `g` then `d` - Navigate to dashboard\n- **Tasks**: `g` then `t` - Navigate to tasks page\n- **Projects**: `g` then `p` - Navigate to projects page\n- **Profile**: `g` then `s` - Navigate to settings/profile",
+    "sortOrder": 178,
+    "description": "##### Navigation\n- **Dashboard**: `g` then `d` - Navigate to dashboard\n- **Tasks**: `g` then `t` - N..."
+  },
+  {
+    "slug": "command-palette",
+    "title": "Command Palette",
+    "content": "##### Command Palette\n- **Open**: `Cmd+K` (Mac) / `Ctrl+K` (Windows/Linux)",
+    "sortOrder": 179,
+    "description": "##### Command Palette\n- **Open**: `Cmd+K` (Mac) / `Ctrl+K` (Windows/Linux)..."
+  },
+  {
+    "slug": "tasks",
+    "title": "Tasks",
+    "content": "##### Tasks\n- **New Task**: `n` - Open create task modal\n- **Focus Mode**: `f` - Navigate to focus mode",
+    "sortOrder": 180,
+    "description": "##### Tasks\n- **New Task**: `n` - Open create task modal\n- **Focus Mode**: `f` - Navigate to focus m..."
+  },
+  {
+    "slug": "2243-platform-detection",
+    "title": "2.24.3 Platform Detection",
+    "content": "#### 2.24.3 Platform Detection\n- **Mac**: Shows `⌘` symbol for Cmd, `⌥` for Option\n- **Windows/Linux**: Shows `Ctrl`, `Alt` text\n- **Implementation**: User-agent detection in `useCommandPalette` hook\n- **Future Enhancement**: Detect physical keyboard layout",
+    "sortOrder": 181,
+    "description": "#### 2.24.3 Platform Detection\n- **Mac**: Shows `⌘` symbol for Cmd, `⌥` for Option\n- **Windows/Linux..."
+  },
+  {
+    "slug": "2244-global-registration",
+    "title": "2.24.4 Global Registration",
+    "content": "#### 2.24.4 Global Registration\n- **Event Listener**: Attached to `document` on app mount\n- **Zustand Store**: Manages shortcut registry and modal state\n- **Prevent Default**: Prevents browser shortcuts (e.g., `Cmd+K` search)\n- **Scope Awareness**: Some shortcuts only active on specific pages",
+    "sortOrder": 182,
+    "description": "#### 2.24.4 Global Registration\n- **Event Listener**: Attached to `document` on app mount\n- **Zustan..."
+  },
+  {
+    "slug": "2245-visual-design",
+    "title": "2.24.5 Visual Design",
+    "content": "#### 2.24.5 Visual Design\n- **Keyboard Key Badges**: \n  - Rounded corners (`rounded-md`)\n  - Border for definition\n  - Monospace font for key labels\n  - Subtle background (`bg-gray-100` light, `bg-gray-800` dark)\n- **Grouping**: Clear section headers with dividers\n- **Typography**: Descriptive labels next to key badges\n- **Accessibility**: Full keyboard navigation within modal",
+    "sortOrder": 183,
+    "description": "#### 2.24.5 Visual Design\n- **Keyboard Key Badges**: \n  - Rounded corners (`rounded-md`)\n  - Border ..."
+  },
+  {
+    "slug": "225-pagination-system",
+    "title": "2.25 Pagination System",
+    "content": "### 2.25 Pagination System\n\n**Status**: ✅ Implemented (Sprint 8)",
+    "sortOrder": 184,
+    "description": "### 2.25 Pagination System\n\n**Status**: ✅ Implemented (Sprint 8)..."
+  },
+  {
+    "slug": "2251-backend-implementation",
+    "title": "2.25.1 Backend Implementation",
+    "content": "#### 2.25.1 Backend Implementation\n- **Pattern**: Offset-based pagination using `skip`/`take`\n- **Endpoints**: `GET /api/tasks`, `GET /api/projects`\n- **Query Parameters**:\n  - `page`: Page number (1-indexed, optional)\n  - `limit`: Items per page (default: 20, max: 100)\n- **Calculation**: \n  - `skip = (page - 1) * limit`\n  - `take = limit`",
+    "sortOrder": 185,
+    "description": "#### 2.25.1 Backend Implementation\n- **Pattern**: Offset-based pagination using `skip`/`take`\n- **En..."
+  },
+  {
+    "slug": "2252-backward-compatibility",
+    "title": "2.25.2 Backward Compatibility",
+    "content": "#### 2.25.2 Backward Compatibility\n- **Without `page` param**: Returns raw array (original behavior)\n  ```json\n  [ { task1 }, { task2 }, ... ]\n  ```\n- **With `page` param**: Returns envelope with pagination metadata\n  ```json\n  {\n    \"data\": [ { task1 }, { task2 }, ... ],\n    \"pagination\": {\n      \"page\": 2,\n      \"limit\": 20,\n      \"total\": 87,\n      \"totalPages\": 5\n    }\n  }\n  ```",
+    "sortOrder": 186,
+    "description": "#### 2.25.2 Backward Compatibility\n- **Without `page` param**: Returns raw array (original behavior)..."
+  },
+  {
+    "slug": "2253-pagination-metadata",
+    "title": "2.25.3 Pagination Metadata",
+    "content": "#### 2.25.3 Pagination Metadata\n- **page**: Current page number\n- **limit**: Items per page\n- **total**: Total count of items matching filters\n- **totalPages**: Calculated as `Math.ceil(total / limit)`",
+    "sortOrder": 187,
+    "description": "#### 2.25.3 Pagination Metadata\n- **page**: Current page number\n- **limit**: Items per page\n- **tota..."
+  },
+  {
+    "slug": "2254-frontend-component",
+    "title": "2.25.4 Frontend Component",
+    "content": "#### 2.25.4 Frontend Component\n- **Component**: `Pagination.tsx`\n- **Features**:\n  - Page number buttons (max 7 visible)\n  - Previous / Next navigation buttons\n  - Ellipsis for large page counts (e.g., `1 ... 5 6 7 ... 20`)\n  - \"Showing X-Y of Z results\" text\n  - Disabled states for first page (no prev) and last page (no next)\n- **Styling**: Matches existing button/badge design system",
+    "sortOrder": 188,
+    "description": "#### 2.25.4 Frontend Component\n- **Component**: `Pagination.tsx`\n- **Features**:\n  - Page number but..."
+  },
+  {
+    "slug": "2255-auto-reset-behavior",
+    "title": "2.25.5 Auto-Reset Behavior",
+    "content": "#### 2.25.5 Auto-Reset Behavior\n- **On Filter Change**: Page resets to 1 when user changes filters\n- **React Query**: Page stored in query params, synced with URL\n- **User Experience**: Prevents empty pages after filtering",
+    "sortOrder": 189,
+    "description": "#### 2.25.5 Auto-Reset Behavior\n- **On Filter Change**: Page resets to 1 when user changes filters\n-..."
+  },
+  {
+    "slug": "2256-limit-clamping",
+    "title": "2.25.6 Limit Clamping",
+    "content": "#### 2.25.6 Limit Clamping\n- **Validation**: Backend clamps `limit` to range `[1, 100]`\n- **Error Handling**: Returns 400 Bad Request if limit invalid\n- **Frontend**: Dropdown with preset options (10, 20, 50, 100)",
+    "sortOrder": 190,
+    "description": "#### 2.25.6 Limit Clamping\n- **Validation**: Backend clamps `limit` to range `[1, 100]`\n- **Error Ha..."
+  },
+  {
+    "slug": "2257-performance-considerations",
+    "title": "2.25.7 Performance Considerations",
+    "content": "#### 2.25.7 Performance Considerations\n- **Database Indexes**: Ensure indexed columns for sort fields to optimize `OFFSET` queries\n- **Future Enhancement**: Cursor-based pagination for very large datasets\n- **Count Query**: Separate count query for total (can be cached)\n\n---",
+    "sortOrder": 191,
+    "description": "#### 2.25.7 Performance Considerations\n- **Database Indexes**: Ensure indexed columns for sort field..."
+  },
+  {
+    "slug": "3-data-model",
+    "title": "3. Data Model",
+    "content": "## 3. Data Model",
+    "sortOrder": 192,
+    "description": "## 3. Data Model..."
+  },
+  {
+    "slug": "31-merged-prisma-schema",
+    "title": "3.1 Merged Prisma Schema",
+    "content": "### 3.1 Merged Prisma Schema\n\n```prisma\ngenerator client {\n  provider = \"prisma-client-js\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel User {\n  id           String   @id @default(uuid())\n  email        String   @unique\n  passwordHash String   @map(\"password_hash\")\n  name         String\n  avatarUrl    String?  @map(\"avatar_url\")\n  createdAt    DateTime @default(now()) @map(\"created_at\")\n\n  ownedProjects  Project[]       @relation(\"ProjectOwner\")\n  projectMembers ProjectMember[]\n  assignedTasks  Task[]          @relation(\"TaskAssignee\")\n  createdTasks   Task[]          @relation(\"TaskCreator\")\n  notifications  Notification[]\n  timeEntries    TimeEntry[]\n  recurringTasks RecurringTask[]\n  comments       Comment[]\n  activityLogs   ActivityLog[]\n  attachments    Attachment[]\n  apiKeys        ApiKey[]\n  webhooks       Webhook[]\n\n  @@map(\"users\")\n}\n\nmodel Project {\n  id          String   @id @default(uuid())\n  name        String\n  description String?\n  color       String   @default(\"#6366f1\")\n  ownerId     String   @map(\"owner_id\")\n  createdAt   DateTime @default(now()) @map(\"created_at\")\n\n  owner          User            @relation(\"ProjectOwner\", fields: [ownerId], references: [id], onDelete: Cascade)\n  members        ProjectMember[]\n  tasks          Task[]\n  recurringTasks RecurringTask[]\n  tags           Tag[]\n  customFields   CustomFieldDefinition[]\n\n  @@map(\"projects\")\n}\n\nmodel Task {\n  id              String     @id @default(uuid())\n  title           String\n  description     String?\n  status          TaskStatus @default(TODO)\n  priority        Priority   @default(MEDIUM)\n  dueDate         DateTime?  @map(\"due_date\")\n  recurringTaskId String?    @map(\"recurring_task_id\")\n  isRecurring     Boolean    @default(false) @map(\"is_recurring\")\n  createdAt       DateTime   @default(now()) @map(\"created_at\")\n  updatedAt       DateTime   @updatedAt @map(\"updated_at\")\n\n  projectId String  @map(\"project_id\")\n  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)\n\n  assigneeId String? @map(\"assignee_id\")\n  assignee   User?   @relation(\"TaskAssignee\", fields: [assigneeId], references: [id], onDelete: SetNull)\n\n  creatorId      String         @map(\"creator_id\")\n  creator        User           @relation(\"TaskCreator\", fields: [creatorId], references: [id], onDelete: Cascade)\n  recurringTask     RecurringTask?  @relation(\"GeneratedTasks\", fields: [recurringTaskId], references: [id], onDelete: SetNull)\n  baseForRecurring  RecurringTask[] @relation(\"BaseTask\")\n  timeEntries       TimeEntry[]\n  comments          Comment[]\n  activityLogs      ActivityLog[]\n  tags              TaskTag[]\n  customFieldValues CustomFieldValue[]\n  attachments       Attachment[]\n  dependsOn         TaskDependency[] @relation(\"DependentOn\")\n  dependedOnBy      TaskDependency[] @relation(\"DependsOnTask\")\n\n  @@index([projectId])\n  @@index([assigneeId])\n  @@index([status])\n  @@index([creatorId])\n  @@index([recurringTaskId])\n  @@map(\"tasks\")\n}\n\nmodel TaskDependency {\n  id          String   @id @default(uuid())\n  taskId      String   @map(\"task_id\")\n  dependsOnId String   @map(\"depends_on_id\")\n  createdAt   DateTime @default(now()) @map(\"created_at\")\n\n  task      Task @relation(\"DependentOn\", fields: [taskId], references: [id], onDelete: Cascade)\n  dependsOn Task @relation(\"DependsOnTask\", fields: [dependsOnId], references: [id], onDelete: Cascade)\n\n  @@unique([taskId, dependsOnId])\n  @@index([taskId])\n  @@index([dependsOnId])\n  @@map(\"task_dependencies\")\n}\n\nmodel ProjectMember {\n  projectId String      @map(\"project_id\")\n  userId    String      @map(\"user_id\")\n  role      ProjectRole @default(MEMBER)\n  joinedAt  DateTime    @default(now()) @map(\"joined_at\")\n\n  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)\n  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@id([projectId, userId])\n  @@map(\"project_members\")\n}\n\nenum TaskStatus {\n  TODO\n  IN_PROGRESS\n  IN_REVIEW\n  DONE\n}\n\nenum Priority {\n  LOW\n  MEDIUM\n  HIGH\n  URGENT\n}\n\nenum ProjectRole {\n  OWNER\n  ADMIN\n  MEMBER\n  VIEWER\n}\n\nenum NotificationType {\n  TASK_ASSIGNED\n  TASK_DUE_SOON\n  TASK_OVERDUE\n  PROJECT_INVITE\n  TASK_COMMENT\n  TASK_STATUS_CHANGED\n  MENTION\n}\n\nenum ActivityAction {\n  CREATED\n  UPDATED\n  DELETED\n  COMMENT_ADDED\n  COMMENT_EDITED\n  COMMENT_DELETED\n  DEPENDENCY_ADDED\n  DEPENDENCY_REMOVED\n}\n\nmodel Notification {\n  id        String           @id @default(uuid())\n  type      NotificationType\n  title     String\n  message   String\n  read      Boolean          @default(false)\n  createdAt DateTime         @default(now()) @map(\"created_at\")\n\n  userId String @map(\"user_id\")\n  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  taskId    String? @map(\"task_id\")\n  projectId String? @map(\"project_id\")\n\n  @@index([userId, read])\n  @@index([createdAt])\n  @@map(\"notifications\")\n}\n\nmodel TimeEntry {\n  id          String    @id @default(uuid())\n  taskId      String    @map(\"task_id\")\n  userId      String    @map(\"user_id\")\n  startTime   DateTime  @map(\"start_time\")\n  endTime     DateTime? @map(\"end_time\")\n  duration    Int?      // Duration in seconds (populated after stop)\n  description String?\n  createdAt   DateTime  @default(now()) @map(\"created_at\")\n\n  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)\n  user User @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@index([taskId])\n  @@index([userId])\n  @@map(\"time_entries\")\n}\n\nmodel RecurringTask {\n  id            String              @id @default(uuid())\n  baseTaskId    String              @map(\"base_task_id\")\n  frequency     RecurrenceFrequency\n  interval      Int                 @default(1)\n  daysOfWeek    String?             @map(\"days_of_week\") // \"0,1,2\" = Sun,Mon,Tue\n  dayOfMonth    Int?                @map(\"day_of_month\")\n  startDate     DateTime            @map(\"start_date\")\n  endDate       DateTime?           @map(\"end_date\")\n  lastGenerated DateTime?           @map(\"last_generated\")\n  createdAt     DateTime            @default(now()) @map(\"created_at\")\n\n  baseTask  Task    @relation(\"BaseTask\", fields: [baseTaskId], references: [id], onDelete: Cascade)\n  projectId String  @map(\"project_id\")\n  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)\n\n  creatorId      String @map(\"creator_id\")\n  creator        User   @relation(fields: [creatorId], references: [id], onDelete: Cascade)\n  generatedTasks Task[] @relation(\"GeneratedTasks\")\n\n  @@index([baseTaskId])\n  @@index([projectId])\n  @@index([creatorId])\n  @@map(\"recurring_tasks\")\n}\n\nenum RecurrenceFrequency {\n  DAILY\n  WEEKLY\n  MONTHLY\n  CUSTOM\n}\n\nmodel Comment {\n  id        String    @id @default(uuid())\n  content   String    @db.Text\n  editedAt  DateTime? @map(\"edited_at\")\n  createdAt DateTime  @default(now()) @map(\"created_at\")\n  updatedAt DateTime  @updatedAt @map(\"updated_at\")\n\n  taskId   String  @map(\"task_id\")\n  task     Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)\n\n  authorId String  @map(\"author_id\")\n  author   User    @relation(fields: [authorId], references: [id], onDelete: Cascade)\n\n  parentId String?   @map(\"parent_id\")\n  parent   Comment?  @relation(\"CommentReplies\", fields: [parentId], references: [id], onDelete: Cascade)\n  replies  Comment[] @relation(\"CommentReplies\")\n\n  @@index([taskId])\n  @@index([authorId])\n  @@index([parentId])\n  @@map(\"comments\")\n}\n\nmodel ActivityLog {\n  id        String         @id @default(uuid())\n  action    ActivityAction\n  field     String?\n  oldValue  String?        @map(\"old_value\")\n  newValue  String?        @map(\"new_value\")\n  createdAt DateTime       @default(now()) @map(\"created_at\")\n\n  taskId String @map(\"task_id\")\n  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)\n\n  userId String @map(\"user_id\")\n  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@index([taskId])\n  @@index([userId])\n  @@index([createdAt])\n  @@map(\"activity_logs\")\n}\n\nmodel Tag {\n  id        String   @id @default(uuid())\n  name      String\n  color     String   @default(\"#6366f1\")\n  projectId String   @map(\"project_id\")\n  createdAt DateTime @default(now()) @map(\"created_at\")\n\n  project Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)\n  tasks   TaskTag[]\n\n  @@unique([projectId, name])\n  @@index([projectId])\n  @@map(\"tags\")\n}\n\nmodel TaskTag {\n  taskId String @map(\"task_id\")\n  tagId  String @map(\"tag_id\")\n\n  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)\n  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)\n\n  @@id([taskId, tagId])\n  @@map(\"task_tags\")\n}\n\nmodel CustomFieldDefinition {\n  id        String   @id @default(uuid())\n  name      String\n  type      CustomFieldType\n  options   String?  // JSON array for dropdown options\n  required  Boolean  @default(false)\n  projectId String   @map(\"project_id\")\n  createdAt DateTime @default(now()) @map(\"created_at\")\n\n  project Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)\n  values  CustomFieldValue[]\n\n  @@unique([projectId, name])\n  @@index([projectId])\n  @@map(\"custom_field_definitions\")\n}\n\nmodel CustomFieldValue {\n  id         String @id @default(uuid())\n  value      String\n  taskId     String @map(\"task_id\")\n  fieldId    String @map(\"field_id\")\n\n  task  Task                  @relation(fields: [taskId], references: [id], onDelete: Cascade)\n  field CustomFieldDefinition @relation(fields: [fieldId], references: [id], onDelete: Cascade)\n\n  @@unique([taskId, fieldId])\n  @@index([taskId])\n  @@index([fieldId])\n  @@map(\"custom_field_values\")\n}\n\nmodel Attachment {\n  id           String   @id @default(uuid())\n  filename     String\n  originalName String   @map(\"original_name\")\n  mimeType     String   @map(\"mime_type\")\n  size         Int      // in bytes\n  path         String   // storage path\n  taskId       String   @map(\"task_id\")\n  uploadedById String   @map(\"uploaded_by_id\")\n  createdAt    DateTime @default(now()) @map(\"created_at\")\n\n  task       Task @relation(fields: [taskId], references: [id], onDelete: Cascade)\n  uploadedBy User @relation(fields: [uploadedById], references: [id], onDelete: Cascade)\n\n  @@index([taskId])\n  @@index([uploadedById])\n  @@map(\"attachments\")\n}\n\nenum CustomFieldType {\n  TEXT\n  NUMBER\n  DATE\n  DROPDOWN\n}\n\nmodel ApiKey {\n  id         String    @id @default(uuid())\n  userId     String    @map(\"user_id\")\n  name       String\n  keyHash    String    @unique @map(\"key_hash\")\n  lastUsedAt DateTime? @map(\"last_used_at\")\n  createdAt  DateTime  @default(now()) @map(\"created_at\")\n\n  user User @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@index([userId])\n  @@map(\"api_keys\")\n}\n\nmodel Webhook {\n  id           String   @id @default(uuid())\n  userId       String   @map(\"user_id\")\n  url          String\n  events       String[]\n  secret       String\n  active       Boolean  @default(true)\n  failureCount Int      @default(0) @map(\"failure_count\")\n  createdAt    DateTime @default(now()) @map(\"created_at\")\n\n  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)\n  logs WebhookLog[]\n\n  @@index([userId])\n  @@map(\"webhooks\")\n}\n\nmodel WebhookLog {\n  id         String   @id @default(uuid())\n  webhookId  String   @map(\"webhook_id\")\n  event      String\n  statusCode Int?     @map(\"status_code\")\n  error      String?\n  createdAt  DateTime @default(now()) @map(\"created_at\")\n\n  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)\n\n  @@index([webhookId])\n  @@index([createdAt])\n  @@map(\"webhook_logs\")\n}\n```",
+    "sortOrder": 193,
+    "description": "### 3.1 Merged Prisma Schema\n\n```prisma\ngenerator client {\n  provider = \"prisma-client-js\"\n}\n\ndataso..."
+  },
+  {
+    "slug": "32-key-schema-decisions",
+    "title": "3.2 Key Schema Decisions",
+    "content": "### 3.2 Key Schema Decisions\n\n| Decision | Rationale |\n|----------|-----------|\n| `creatorId` on Task (from saas-1) | Accountability -- know who created each task |\n| Explicit `@@index` directives (from saas-2) | Query performance on common filter columns |\n| `onDelete: Cascade` on Project->Task | Deleting a project removes all its tasks |\n| `onDelete: SetNull` on Task->assignee | Deleting a user unassigns their tasks rather than deleting them |\n| `onDelete: Cascade` on Task->creator | If a user is deleted, their created tasks are removed |\n| Composite PK on ProjectMember | Enforces one membership record per user-project pair |\n\n---",
+    "sortOrder": 194,
+    "description": "### 3.2 Key Schema Decisions\n\n| Decision | Rationale |\n|----------|-----------|\n| `creatorId` on Tas..."
+  },
+  {
+    "slug": "4-api-summary",
+    "title": "4. API Summary",
+    "content": "## 4. API Summary",
+    "sortOrder": 195,
+    "description": "## 4. API Summary..."
+  },
+  {
+    "slug": "41-core-api-endpoints",
+    "title": "4.1 Core API Endpoints",
+    "content": "### 4.1 Core API Endpoints\n\n| Method | Endpoint | Auth | Status | Sprint |\n|--------|----------|------|--------|--------|\n| **Authentication** |||||\n| POST | /api/auth/register | No | ✅ Live | Phase 1 |\n| POST | /api/auth/login | No | ✅ Live | Phase 1 |\n| POST | /api/auth/logout | No | ✅ Live | Phase 1 |\n| POST | /api/auth/refresh | Yes | ✅ Live | Phase 1 |\n| GET | /api/auth/me | Yes | ✅ Live | Phase 1 |\n| PUT | /api/auth/profile | Yes | ✅ Live | Phase 1 |\n| PUT | /api/auth/password | Yes | ✅ Live | Phase 1 |\n| POST | /api/auth/api-keys | Yes | ✅ Live | Sprint 8 |\n| GET | /api/auth/api-keys | Yes | ✅ Live | Sprint 8 |\n| DELETE | /api/auth/api-keys/:id | Yes | ✅ Live | Sprint 8 |\n| **Projects** |||||\n| GET | /api/projects | Yes | ✅ Live | Phase 2 |\n| GET | /api/projects/:id | Yes | ✅ Live | Phase 2 |\n| POST | /api/projects | Yes | ✅ Live | Phase 2 |\n| PUT | /api/projects/:id | Yes | ✅ Live | Phase 2 |\n| DELETE | /api/projects/:id | Yes | ✅ Live | Phase 2 |\n| POST | /api/projects/:id/members | Yes | ✅ Live | Phase 2 |\n| DELETE | /api/projects/:id/members/:userId | Yes | ✅ Live | Phase 2 |\n| GET | /api/custom-fields | Yes | ✅ Live | Sprint 6 |\n| POST | /api/custom-fields | Yes | ✅ Live | Sprint 6 |\n| DELETE | /api/custom-fields/:id | Yes | ✅ Live | Sprint 6 |\n| PUT | /api/custom-fields/:id | Yes | ✅ Live | Sprint 6 |\n| GET | /api/projects/:id/critical-path | Yes | 🔄 Future | Sprint 10+ |\n| GET | /api/projects/:id/dependencies | Yes | ✅ Live | Sprint 7 |\n| **Tasks** |||||\n| GET | /api/tasks | Yes | ✅ Live | Phase 3 |\n| GET | /api/tasks/:id | Yes | ✅ Live | Phase 3 |\n| POST | /api/tasks | Yes | ✅ Live | Phase 3 |\n| PUT | /api/tasks/:id | Yes | ✅ Live | Phase 3 |\n| DELETE | /api/tasks/:id | Yes | ✅ Live | Phase 3 |\n| PATCH | /api/tasks/bulk-status | Yes | ✅ Live | Phase 3 |\n| POST | /api/recurring-tasks | Yes | ✅ Live | Sprint 3 |\n| GET | /api/recurring-tasks | Yes | ✅ Live | Sprint 3 |\n| DELETE | /api/recurring-tasks/:id | Yes | ✅ Live | Sprint 3 |\n| POST | /api/recurring-tasks/:id/generate | Yes | ✅ Live | Sprint 3 |\n| GET | /api/tasks/:id/dependencies | Yes | ✅ Live | Sprint 7 |\n| POST | /api/tasks/:id/dependencies | Yes | ✅ Live | Sprint 7 |\n| DELETE | /api/tasks/:id/dependencies/:depId | Yes | ✅ Live | Sprint 7 |\n| GET | /api/tasks/:id/activity | Yes | ✅ Live | Sprint 5 |\n| GET | /api/tasks/:id/comments | Yes | ✅ Live | Sprint 5 |\n| POST | /api/tasks/:id/comments | Yes | ✅ Live | Sprint 5 |\n| GET | /api/time-entries | Yes | ✅ Live | Sprint 4 |\n| POST | /api/time-entries | Yes | ✅ Live | Sprint 4 |\n| PUT | /api/time-entries/:id | Yes | ✅ Live | Sprint 4 |\n| GET | /api/time-entries/:id | Yes | ✅ Live | Sprint 4 |\n| POST | /api/time-entries/start | Yes | ✅ Live | Sprint 4 |\n| POST | /api/time-entries/:id/stop | Yes | ✅ Live | Sprint 4 |\n| GET | /api/time-entries/active | Yes | ✅ Live | Sprint 4 |\n| GET | /api/attachments/task/:taskId | Yes | ✅ Live | Sprint 6 |\n| POST | /api/attachments/task/:taskId | Yes | ✅ Live | Sprint 6 |\n| PUT | /api/custom-fields/task/:taskId | Yes | ✅ Live | Sprint 6 |\n| GET | /api/custom-fields/task/:taskId | Yes | ✅ Live | Sprint 6 |\n| POST | /api/tags/task/:taskId | Yes | ✅ Live | Sprint 6 |\n| **Comments** |||||\n| PUT | /api/comments/:id | Yes | ✅ Live | Sprint 5 |\n| DELETE | /api/comments/:id | Yes | ✅ Live | Sprint 5 |\n| **Time Tracking** |||||\n| DELETE | /api/time-entries/:id | Yes | ✅ Live | Sprint 4 |\n| GET | /api/time-entries/stats | Yes | ✅ Live | Sprint 4 |\n| **Attachments** |||||\n| GET | /api/attachments/:id/download | Yes | ✅ Live | Sprint 6 |\n| DELETE | /api/attachments/:id | Yes | ✅ Live | Sprint 6 |\n| **Tags** |||||\n| GET | /api/tags | Yes | ✅ Live | Sprint 6 |\n| POST | /api/tags | Yes | ✅ Live | Sprint 6 |\n| PUT | /api/tags/:id | Yes | ✅ Live | Sprint 6 |\n| DELETE | /api/tags/task/:taskId/:tagId | Yes | ✅ Live | Sprint 6 |\n| **Notifications** |||||\n| GET | /api/notifications | Yes | ✅ Live | Sprint 1 |\n| PATCH | /api/notifications/mark-read | Yes | ✅ Live | Sprint 1 |\n| DELETE | /api/notifications/:id | Yes | ✅ Live | Sprint 1 |\n| GET | /api/notifications/unread-count | Yes | ✅ Live | Sprint 1 |\n| PATCH | /api/notifications/mark-all-read | Yes | ✅ Live | Sprint 1 |\n| **Analytics** |||||\n| GET | /api/analytics/insights | Yes | ✅ Live | Sprint 2 |\n| GET | /api/analytics/creator-metrics | Yes | ✅ Live | Sprint 2 |\n| **Webhooks** |||||\n| GET | /api/webhooks | Yes | ✅ Live | Sprint 8 |\n| POST | /api/webhooks | Yes | ✅ Live | Sprint 8 |\n| PUT | /api/webhooks/:id | Yes | ✅ Live | Sprint 8 |\n| DELETE | /api/webhooks/:id | Yes | ✅ Live | Sprint 8 |\n| GET | /api/webhooks/:id/logs | Yes | ✅ Live | Sprint 8 |\n| **Export** |||||\n| GET | /api/export/tasks | Yes | ✅ Live | Sprint 9 |\n| **Health** |||||\n| GET | /health | No | ✅ Live | Phase 0 |",
+    "sortOrder": 196,
+    "description": "### 4.1 Core API Endpoints\n\n| Method | Endpoint | Auth | Status | Sprint |\n|--------|----------|----..."
+  },
+  {
+    "slug": "42-websocket-events",
+    "title": "4.2 WebSocket Events",
+    "content": "### 4.2 WebSocket Events\n\n| Event | Direction | Status | Sprint |\n|-------|-----------|--------|--------|\n| task_updated | Server → Client | ✅ Live | Sprint 5 |\n| comment_added | Server → Client | ✅ Live | Sprint 5 |\n| presence:update | Bidirectional | ✅ Live | Sprint 5 |\n| task:join | Client → Server | ✅ Live | Sprint 5 |\n| task:leave | Client → Server | ✅ Live | Sprint 5 |\n\n**Implementation:** Socket.IO server in `backend/src/lib/socket.ts`, client hooks in `frontend/src/hooks/useSocket.ts` and `useTaskSocket.ts`, 5 passing tests in `websocket.test.ts`.\n\n---",
+    "sortOrder": 197,
+    "description": "### 4.2 WebSocket Events\n\n| Event | Direction | Status | Sprint |\n|-------|-----------|--------|----..."
+  },
+  {
+    "slug": "5-tech-stack",
+    "title": "5. Tech Stack",
+    "content": "## 5. Tech Stack",
+    "sortOrder": 198,
+    "description": "## 5. Tech Stack..."
+  },
+  {
+    "slug": "51-frontend",
+    "title": "5.1 Frontend",
+    "content": "### 5.1 Frontend\n\n| Technology | Version | Purpose | Rationale |\n|------------|---------|---------|-----------|\n| **React** | 18.x | UI framework | Shared by both upstream systems; mature ecosystem |\n| **TypeScript** | 5.x | Type safety | Shared by both; catches errors at compile time |\n| **Vite** | 5.x | Build tool / dev server | Shared by both; fast HMR, optimized production builds |\n| **React Router DOM** | 6.x | Client-side routing | Shared by both; standard React routing solution |\n| **Zustand** | 4.x | Client state management | From saas-1. Minimal boilerplate, no Context re-render issues, built-in persistence middleware |\n| **TanStack React Query** | 5.x | Server state / data fetching | From saas-1. Automatic caching, background refetching, request deduplication, optimistic updates, built-in loading/error states |\n| **Tailwind CSS** | 3.x | Styling | Shared by both; utility-first, consistent design |\n| **Lucide React** | 0.358+ | Icons | Shared by both; lightweight, tree-shakeable |\n| **clsx** | 2.x | Conditional class names | Shared by both |\n| **date-fns** | 3.x | Date formatting | Shared by both; modular, tree-shakeable |",
+    "sortOrder": 199,
+    "description": "### 5.1 Frontend\n\n| Technology | Version | Purpose | Rationale |\n|------------|---------|---------|-..."
+  },
+  {
+    "slug": "52-backend",
+    "title": "5.2 Backend",
+    "content": "### 5.2 Backend\n\n| Technology | Version | Purpose | Rationale |\n|------------|---------|---------|-----------|\n| **Node.js** | 20 LTS | Runtime | Shared by both; LTS for stability |\n| **Express** | 4.x | HTTP framework | Shared by both; mature, widely supported |\n| **TypeScript** | 5.x | Type safety | Shared by both |\n| **Prisma** | 5.x | ORM / database client | Shared by both; type-safe queries, migrations, schema-as-code |\n| **PostgreSQL** | 16 | Database | saas-2 version; latest stable with performance improvements |\n| **Zod** | 3.x | Request validation | From saas-2. Type-safe schema validation with TypeScript inference; replaces express-validator for request body validation |\n| **bcryptjs** | 2.x | Password hashing | Shared by both; 12 salt rounds |\n| **jsonwebtoken** | 9.x | JWT generation/verification | Shared by both |\n| **cookie-parser** | 1.x | Cookie parsing middleware | From saas-2; needed for HTTP-only cookie auth |\n| **helmet** | 7.x | Security headers | Shared by both |\n| **cors** | 2.x | Cross-origin configuration | Shared by both; configured with credentials support |\n| **morgan** | 1.x | HTTP request logging | Shared by both |\n| **tsx** | 4.x | TypeScript execution (dev) | Shared by both; fast dev server with watch mode |",
+    "sortOrder": 200,
+    "description": "### 5.2 Backend\n\n| Technology | Version | Purpose | Rationale |\n|------------|---------|---------|--..."
+  },
+  {
+    "slug": "53-infrastructure",
+    "title": "5.3 Infrastructure",
+    "content": "### 5.3 Infrastructure\n\n| Technology | Purpose | Rationale |\n|------------|---------|-----------|\n| **Docker** | Containerization | Multi-stage builds for optimized images; consistent dev/prod environments |\n| **Docker Compose** | Local development orchestration | Single command to run full stack locally |\n| **Railway** | Deployment platform | saas-1 is already deployed here successfully. Single platform for frontend, backend, and PostgreSQL. Auto SSL, GitHub integration, environment variable management. |",
+    "sortOrder": 201,
+    "description": "### 5.3 Infrastructure\n\n| Technology | Purpose | Rationale |\n|------------|---------|-----------|\n| ..."
+  },
+  {
+    "slug": "54-stack-decisions-not-carried-forward",
+    "title": "5.4 Stack Decisions Not Carried Forward",
+    "content": "### 5.4 Stack Decisions Not Carried Forward\n\n| Technology | Was In | Why Not |\n|------------|--------|---------|\n| React Context (auth state) | saas-2 | Replaced by Zustand -- avoids subtree re-renders, less boilerplate |\n| Native fetch (API client) | saas-2 | Replaced by React Query + fetch/axios -- adds caching, deduplication, retries |\n| express-validator (body validation) | Both | Replaced by Zod for request bodies -- better TypeScript inference. express-validator retained only for param validation (`:id` UUID checks) |\n| localStorage JWT | saas-1 | Replaced by HTTP-only cookies -- prevents XSS token theft |\n| Axios | saas-1 | Use native **fetch** with `credentials: 'include'` for all API requests. React Query abstracts the HTTP client, and fetch avoids an external dependency. |\n\n---",
+    "sortOrder": 202,
+    "description": "### 5.4 Stack Decisions Not Carried Forward\n\n| Technology | Was In | Why Not |\n|------------|-------..."
+  },
+  {
+    "slug": "6-frontend-routes",
+    "title": "6. Frontend Routes",
+    "content": "## 6. Frontend Routes\n\n| Path | Page | Auth Required |\n|------|------|---------------|\n| `/login` | Login | No (redirects to `/` if authenticated) |\n| `/register` | Register | No (redirects to `/` if authenticated) |\n| `/` | Dashboard | Yes |\n| `/tasks` | Tasks (Table/Kanban toggle) | Yes |\n| `/focus` | Focus Mode | Yes |\n| `/projects` | Projects list | Yes |\n| `/projects/:id` | Project detail (Kanban + members) | Yes |\n| `/calendar` | Calendar View | Yes |\n| `/profile` | User profile settings | Yes |\n| `/creator-dashboard` | Creator Analytics | Yes |\n| `/dependencies` | Dependency Graph | Yes |\n| `/api-keys` | API Key Management | Yes |\n| `/webhooks` | Webhook Configuration | Yes |\n\n---",
+    "sortOrder": 203,
+    "description": "## 6. Frontend Routes\n\n| Path | Page | Auth Required |\n|------|------|---------------|\n| `/login` | ..."
+  },
+  {
+    "slug": "7-non-functional-requirements",
+    "title": "7. Non-Functional Requirements",
+    "content": "## 7. Non-Functional Requirements",
+    "sortOrder": 204,
+    "description": "## 7. Non-Functional Requirements..."
+  },
+  {
+    "slug": "71-security",
+    "title": "7.1 Security",
+    "content": "### 7.1 Security\n- Passwords hashed with bcryptjs (12 rounds)\n- JWT tokens in HTTP-only cookies only -- never exposed to JavaScript\n- CORS configured for specific allowed origin\n- Helmet.js security headers on all responses\n- No user enumeration on login failure\n- Input validation on all endpoints (Zod for bodies, express-validator for URL params)",
+    "sortOrder": 205,
+    "description": "### 7.1 Security\n- Passwords hashed with bcryptjs (12 rounds)\n- JWT tokens in HTTP-only cookies only..."
+  },
+  {
+    "slug": "72-performance",
+    "title": "7.2 Performance",
+    "content": "### 7.2 Performance\n- React Query client-side caching (5-minute stale time)\n- Database indexes on frequently-filtered columns (status, projectId, assigneeId, creatorId)\n- Prisma selective field inclusion (never return passwordHash)",
+    "sortOrder": 206,
+    "description": "### 7.2 Performance\n- React Query client-side caching (5-minute stale time)\n- Database indexes on fr..."
+  },
+  {
+    "slug": "73-developer-experience",
+    "title": "7.3 Developer Experience",
+    "content": "### 7.3 Developer Experience\n- TypeScript end-to-end (frontend + backend)\n- Zustand for minimal-boilerplate state management\n- React Query for declarative server state\n- Prisma for type-safe database access\n- Hot module replacement via Vite in development\n- Docker Compose for one-command local setup\n\n---",
+    "sortOrder": 207,
+    "description": "### 7.3 Developer Experience\n- TypeScript end-to-end (frontend + backend)\n- Zustand for minimal-boil..."
+  },
+  {
+    "slug": "8-seed-data",
+    "title": "8. Seed Data",
+    "content": "## 8. Seed Data\n\nFor development and testing, the system should include a seed script that creates:\n\n- **2 users**: alice@example.com (Password123), bob@example.com (Password123)\n- **3 projects**: with varied ownership and membership between the two users\n- **10 tasks**: distributed across projects with varied statuses, priorities, assignees, and due dates\n\n**Implementation**: Create as `prisma/seed.ts` and execute via `npx prisma db seed` (configured in `package.json` with `\"prisma\": { \"seed\": \"tsx prisma/seed.ts\" }`). The seed script should be idempotent (safe to run multiple times) and clear existing data before seeding.\n\n---",
+    "sortOrder": 208,
+    "description": "## 8. Seed Data\n\nFor development and testing, the system should include a seed script that creates:\n..."
+  },
+  {
+    "slug": "9-open-questions",
+    "title": "9. Open Questions",
+    "content": "## 9. Open Questions\n\nThese items are deferred to the implementation planning phase:\n\n1. **Notification system**: Neither upstream has notifications. Consider whether to add toast notifications for mutation success/error feedback.\n2. **Pagination**: Neither upstream paginates task or project lists. May be needed at scale but is not required for MVP.\n3. **Search**: Neither upstream has full-text search. Deferred.\n4. **Activity log**: With creatorId tracking, an activity/audit log is possible but deferred.\n\n---\n\n*This PRD is the basis for implementation planning. The next phase will produce a detailed implementation plan with file-by-file specifications, build order, and migration strategy.*",
+    "sortOrder": 209,
+    "description": "## 9. Open Questions\n\nThese items are deferred to the implementation planning phase:\n\n1. **Notificat..."
+  },
+  {
+    "slug": "10-implementation-status",
+    "title": "10. Implementation Status",
+    "content": "## 10. Implementation Status\n\n**Version 3.0 (Current)** - 2026-02-07\n- **Completed**: All Sprints 1-9 (100% feature complete)\n- **Test Status**:\n  - Backend: 371/373 tests passing (99.5%)\n  - CLI: 26/26 tests passing (100%)\n  - Total: 397 passing tests across 22 test suites\n- **Architecture**:\n  - 67+ API endpoints across 14 route files\n  - 18 Prisma models with proper relations and indexes\n  - 12 frontend pages with full UI implementation\n  - CLI tool with shell completions\n  - WebSocket real-time updates\n  - Natural language task parsing\n- **Production Ready**: Yes - ready for deployment and user acceptance testing\n- **Remaining**: Sprint 10 features (Habit Tracking, Voice Input, Burnout Prevention, Collaborative Estimation) marked as future enhancements\n- **Validation**: Comprehensive validation report available in `docs/VALIDATION-REPORT.md`",
+    "sortOrder": 210,
+    "description": "## 10. Implementation Status\n\n**Version 3.0 (Current)** - 2026-02-07\n- **Completed**: All Sprints 1-..."
+  }
+]

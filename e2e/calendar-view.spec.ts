@@ -48,7 +48,7 @@ test.describe('Calendar View', () => {
         const initialMonth = await header.textContent();
 
         // Click next month
-        const nextButton = page.getByRole('button', { name: /chevronright|next/i });
+        const nextButton = page.getByRole('button', { name: /next/i });
         await nextButton.click();
         await page.waitForTimeout(300);
 
@@ -56,7 +56,7 @@ test.describe('Calendar View', () => {
         expect(nextMonth).not.toBe(initialMonth);
 
         // Click previous month
-        const prevButton = page.getByRole('button', { name: /chevronleft|previous/i });
+        const prevButton = page.getByRole('button', { name: /previous/i });
         await prevButton.click();
         await page.waitForTimeout(300);
 
@@ -68,7 +68,7 @@ test.describe('Calendar View', () => {
         await page.goto('/calendar');
 
         // Navigate to a different month
-        const nextButton = page.getByRole('button', { name: /chevronright|next/i });
+        const nextButton = page.getByRole('button', { name: /next/i });
         await nextButton.click();
         await nextButton.click();
 

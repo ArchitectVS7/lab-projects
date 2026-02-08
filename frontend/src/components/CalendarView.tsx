@@ -220,6 +220,7 @@ export default function CalendarView({ tasks, onTaskDateChange, onTaskClick }: C
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <button
+            aria-label="Previous"
             onClick={handlePrev}
             className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
           >
@@ -229,6 +230,7 @@ export default function CalendarView({ tasks, onTaskDateChange, onTaskClick }: C
             {headerText}
           </h2>
           <button
+            aria-label="Next"
             onClick={handleNext}
             className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
           >

@@ -1,0 +1,34 @@
+[
+  {
+    "slug": "search-behavior",
+    "title": "Search Behavior",
+    "content": "##### Search Behavior\n- **Fuzzy Matching**: Tolerates typos (e.g., \"tsk\" matches \"task\")\n- **Real-time Filtering**: Updates as user types with 150ms debounce\n- **Auto-focus**: Input field auto-focused on palette open\n- **Empty State**: Shows helpful message when no results found",
+    "summary": "##### Search Behavior\n- **Fuzzy Matching**: Tolerates typos (e.g., \"tsk\" matches \"task\")\n- **Real-ti...",
+    "contextRoute": "/",
+    "priority": 0
+  },
+  {
+    "slug": "2211-overview",
+    "title": "2.21.1 Overview",
+    "content": "#### 2.21.1 Overview\nFull-screen, distraction-free task focus interface that helps users concentrate on high-priority work. Positioned as a \"deep work\" feature for single-task focus sessions.",
+    "summary": "#### 2.21.1 Overview\nFull-screen, distraction-free task focus interface that helps users concentrate...",
+    "contextRoute": "/",
+    "priority": 1
+  },
+  {
+    "slug": "general",
+    "title": "General",
+    "content": "##### General\n- **Help**: `?` - Open shortcuts guide\n- **Close**: `Escape` - Dismiss modal/popover",
+    "summary": "##### General\n- **Help**: `?` - Open shortcuts guide\n- **Close**: `Escape` - Dismiss modal/popover...",
+    "contextRoute": "/",
+    "priority": 2
+  },
+  {
+    "slug": "2246-future-enhancements",
+    "title": "2.24.6 Future Enhancements",
+    "content": "#### 2.24.6 Future Enhancements\n- **Customization**: User-defined shortcuts\n- **Search**: Filter shortcuts in guide modal\n- **Hints**: Tooltip hints on first use\n- **Cheat Sheet**: Printable PDF version\n\n---",
+    "summary": "#### 2.24.6 Future Enhancements\n- **Customization**: User-defined shortcuts\n- **Search**: Filter sho...",
+    "contextRoute": "/",
+    "priority": 3
+  }
+]

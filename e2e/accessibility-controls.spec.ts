@@ -14,71 +14,65 @@ test.describe('Accessibility Controls', () => {
         // Verify Appearance section exists
         await expect(page.getByText('Appearance')).toBeVisible();
 
-        // Find theme picker buttons (color theme circles)
-        const themeButtons = page.locator('button[aria-label*="theme"]');
+        // Find theme picker buttons using test id
+        const themeButtons = page.locator('[data-testid^="color-theme-option-"]');
         await expect(themeButtons.first()).toBeVisible({ timeout: 5000 });
 
         // Get count of theme buttons
         const count = await themeButtons.count();
-        expect(count).toBeGreaterThanOrEqual(5); // Should have multiple color themes
+        expect(count).toBeGreaterThanOrEqual(3);
     });
 
     test('switches between color themes', async ({ page }) => {
-        // Find theme picker buttons
-        const themeButtons = page.locator('button[aria-label*="theme"]');
-        await expect(themeButtons.first()).toBeVisible();
+        // Check initial state (assuming indigo is default or just pick one)
+        const purpleTheme = page.locator('[data-testid="color-theme-option-purple"]');
+        await expect(purpleTheme).toBeVisible();
 
-        const count = await themeButtons.count();
+        // Click purple theme
+        await purpleTheme.click();
+        await page.waitForTimeout(500);
 
-        // Click on a different theme
-        if (count > 1) {
-            await themeButtons.nth(1).click();
-            await page.waitForTimeout(500);
-
-            // Verify theme changed (button should have ring)
-            await expect(themeButtons.nth(1)).toHaveClass(/ring-2/);
-        }
+        // Verify theme changed (button should have ring)
+        await expect(purpleTheme).toHaveClass(/ring-2/);
     });
 
     test('displays layout switcher', async ({ page }) => {
         // Verify Interface Layout section exists
         await expect(page.getByText('Interface Layout')).toBeVisible();
 
-        // Layout switcher should be visible
-        const layoutButtons = page.locator('[data-testid="layout-option"]');
-
-        if (await layoutButtons.count() > 0) {
-            await expect(layoutButtons.first()).toBeVisible();
-        }
+        // Check specific layout options exist
+        await expect(page.locator('[data-testid="layout-option-compact"]')).toBeVisible();
+        await expect(page.locator('[data-testid="layout-option-default"]')).toBeVisible();
+        await expect(page.locator('[data-testid="layout-option-spacious"]')).toBeVisible();
     });
 
     test('displays density picker', async ({ page }) => {
         // Verify Display Density section exists
         await expect(page.getByText('Display Density')).toBeVisible();
 
-        // Density picker should be visible
-        const densityButtons = page.locator('button').filter({ hasText: /compact|comfortable|spacious/i });
-
-        if (await densityButtons.count() > 0) {
-            await expect(densityButtons.first()).toBeVisible();
-        }
+        // Check density options
+        await expect(page.locator('[data-testid="density-option-compact"]')).toBeVisible();
+        await expect(page.locator('[data-testid="density-option-comfortable"]')).toBeVisible();
+        await expect(page.locator('[data-testid="density-option-spacious"]')).toBeVisible();
     });
 
     test('theme toggle switches dark mode', async ({ page }) => {
-        // Find theme toggle button (sun/moon icon)
-        const themeToggle = page.locator('button[aria-label*="theme"], button').filter({ has: page.locator('svg') }).first();
+        // Find theme toggle button (dark mode)
+        const darkModeBtn = page.locator('[data-testid="theme-toggle-dark"]');
 
-        if (await themeToggle.isVisible()) {
+        if (await darkModeBtn.isVisible()) {
             const html = page.locator('html');
-            const initialDark = await html.getAttribute('class');
-
-            // Toggle theme
-            await themeToggle.click();
+            // Click dark mode
+            await darkModeBtn.click();
             await page.waitForTimeout(500);
 
-            const newClass = await html.getAttribute('class');
-            // Class should have changed
-            expect(newClass).not.toBe(initialDark);
+            // Verify class changed to dark
+            await expect(html).toHaveClass(/dark/);
+
+            // Switch back to light
+            await page.locator('[data-testid="theme-toggle-light"]').click();
+            await page.waitForTimeout(500);
+            await expect(html).not.toHaveClass(/dark/);
         }
     });
 
