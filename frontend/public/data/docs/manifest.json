@@ -2,15 +2,15 @@
   "version": "1.0.0",
   "title": "TaskMan Documentation",
   "description": "Automatically generated documentation from PRD",
-  "builtAt": "2026-02-08T17:17:10.282Z",
-  "blockCount": 215,
+  "builtAt": "2026-02-08T19:20:20.900Z",
+  "blockCount": 224,
   "surfaces": [
     "user-manual",
     "in-app-help"
   ],
   "outputPaths": {
-    "manual": "C:\\dev\\Utils\\TaskMan\\frontend\\public\\data\\docs\\manual",
-    "help": "C:\\dev\\Utils\\TaskMan\\frontend\\public\\data\\docs\\help",
-    "database": "C:\\dev\\Utils\\TaskMan\\frontend\\public\\data\\docs\\database"
+    "manual": "/home/user/TaskMan/frontend/public/data/docs/manual",
+    "help": "/home/user/TaskMan/frontend/public/data/docs/help",
+    "database": "/home/user/TaskMan/frontend/public/data/docs/database"
   }
 }

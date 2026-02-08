@@ -1,8 +1,8 @@
 # Product Requirements Document (PRD): Unified Task Management Platform
 
-## Status: Living Document (Updated with Sprint 1-9 Implementation Status)
-## Date: 2026-02-07 (Last Updated)
-## Version: 3.0
+## Status: Living Document (Updated with Sprint 1-9 Implementation Status + Alpha Testing Fixes)
+## Date: 2026-02-08 (Last Updated)
+## Version: 3.1
 ## Upstream Sources: task-management-saas-1 (TaskApp), task-management-saas-2 (TaskFlow)
 
 ---
@@ -205,6 +205,9 @@ TaskMan positions itself as **"The task manager for developers"** with five core
 - Form fields: name, avatar URL
 - Separate form/section for password change (current password + new password + confirm)
 - Validation feedback inline
+- **Sample Data Import**: Button to seed account with example project and tasks (idempotent - safe to click multiple times)
+- **Achievements Display**: Shows earned achievement badges (First Steps, Project Manager, Task Master, Team Player)
+- **Appearance Settings**: Theme picker, layout switcher, density picker
 
 ---
 
@@ -273,6 +276,7 @@ TaskMan positions itself as **"The task manager for developers"** with five core
 - **Validation**:
   - Target user must exist (404 if not found)
   - Target user must not already be a member (409 if duplicate)
+- **Notification**: Sends PROJECT_INVITE in-app notification to the added user via WebSocket (real-time)
 - **Returns**: Created membership with user info (201)
 
 #### 2.4.2 Remove Member
@@ -611,10 +615,14 @@ model Task {
 **Source: saas-1 (sidebar layout), saas-2 (navbar with user menu)**
 
 #### 2.7.1 Layout Structure
-- Sidebar navigation with links: Dashboard, Tasks, Projects
+- Sidebar navigation with links: Dashboard, Tasks, Projects, Calendar, Focus Mode, Creator Dashboard, Dependencies, API Keys, Webhooks
 - Active route highlighting
 - User section showing avatar initial and name
 - User menu: Profile settings, Logout
+- Help button for contextual documentation sidebar
+- Notification center with unread count badge
+- Connection status indicator (WebSocket online/offline)
+- Onboarding modal on first login for new users
 
 #### 2.7.2 Protected Routes
 - All routes except `/login` and `/register` require authentication
@@ -1510,7 +1518,62 @@ Full-screen, distraction-free task focus interface that helps users concentrate 
 
 ---
 
-### 2.23 Data Export
+### 2.23 Onboarding Flow
+
+**Status**: ✅ Implemented
+
+#### 2.23.1 Overview
+New user onboarding modal that introduces key features on first login. Guides users through the application's core capabilities.
+
+#### 2.23.2 Onboarding Steps
+1. **Welcome to TaskMan** - Introduction and overview
+2. **Collaborate** - Create projects, invite team members, work together in real-time
+3. **Manage Tasks** - Track progress with Kanban boards, lists, and calendar views
+4. **Gamify Your Work** - Earn achievements and track productivity stats
+5. **Get Started** - Call-to-action to begin using the app
+
+#### 2.23.3 Behavior
+- **Trigger**: Automatically shows on first login when user is authenticated
+- **Persistence**: `localStorage` key `hasSeenOnboarding` prevents repeat display
+- **Navigation**: Next/Previous buttons, Skip button, progress dots
+- **Animations**: Smooth step transitions via Framer Motion
+- **Component**: `OnboardingModal.tsx` rendered in `Layout.tsx`
+
+#### 2.23.4 Seed Data for New Users
+- **Endpoint**: `POST /api/seed` (authenticated)
+- **Purpose**: Pre-populate account with example project and tasks so new users can explore features
+- **Creates**: 1 "Welcome Project", 3 sample tasks (varied status/priority), 4 achievement definitions
+- **Idempotent**: Safe to call multiple times - checks for existing "Welcome Project" before creating
+- **Frontend**: "Import Sample Data" button on Profile page
+- **Response**: Returns `{ alreadySeeded: true }` if data was already imported
+
+---
+
+### 2.24 In-App Help System
+
+**Status**: ✅ Implemented
+
+#### 2.24.1 Help Page
+- **Route**: `/help`
+- **Features**: Full searchable documentation generated from PRD
+- **Content**: Grouped by section, renders markdown with proper hierarchy
+- **Search**: Full-text search across all documentation blocks
+
+#### 2.24.2 Contextual Help Sidebar
+- **Trigger**: Help button in navigation bar
+- **Behavior**: Shows context-aware suggestions based on current route
+- **Search**: Inline search within sidebar
+- **Link**: Links to full `/help` page for comprehensive documentation
+
+#### 2.24.3 Documentation Pipeline
+- **Source**: `docs/PRD.md` parsed by `.docs-automation/parser.ts`
+- **Build**: `npm run docs:build` in `.docs-automation/` directory
+- **Output**: JSON content blocks in `frontend/public/data/docs/`
+- **Consumption**: `HelpContext.tsx` loads blocks and provides route-based suggestions
+
+---
+
+### 2.25 Data Export
 
 **Status**: ✅ Implemented (Sprint 9)
 
@@ -1574,7 +1637,7 @@ Full-screen, distraction-free task focus interface that helps users concentrate 
 
 ---
 
-### 2.24 Keyboard Shortcuts System
+### 2.26 Keyboard Shortcuts System
 
 **Status**: ✅ Implemented (Sprint 9)
 
@@ -1633,7 +1696,7 @@ Full-screen, distraction-free task focus interface that helps users concentrate 
 
 ---
 
-### 2.25 Pagination System
+### 2.27 Pagination System
 
 **Status**: ✅ Implemented (Sprint 8)
 
@@ -2149,7 +2212,7 @@ model WebhookLog {
 | POST | /api/custom-fields | Yes | ✅ Live | Sprint 6 |
 | DELETE | /api/custom-fields/:id | Yes | ✅ Live | Sprint 6 |
 | PUT | /api/custom-fields/:id | Yes | ✅ Live | Sprint 6 |
-| GET | /api/projects/:id/critical-path | Yes | 🔄 Future | Sprint 10+ |
+| GET | /api/projects/:id/critical-path | Yes | ✅ Live | Sprint 7 |
 | GET | /api/projects/:id/dependencies | Yes | ✅ Live | Sprint 7 |
 | **Tasks** |||||
 | GET | /api/tasks | Yes | ✅ Live | Phase 3 |
@@ -2211,6 +2274,8 @@ model WebhookLog {
 | GET | /api/webhooks/:id/logs | Yes | ✅ Live | Sprint 8 |
 | **Export** |||||
 | GET | /api/export/tasks | Yes | ✅ Live | Sprint 9 |
+| **Seed Data** |||||
+| POST | /api/seed | Yes | ✅ Live | Alpha |
 | **Health** |||||
 | GET | /health | No | ✅ Live | Phase 0 |
 
@@ -2300,6 +2365,7 @@ model WebhookLog {
 | `/dependencies` | Dependency Graph | Yes |
 | `/api-keys` | API Key Management | Yes |
 | `/webhooks` | Webhook Configuration | Yes |
+| `/help` | Documentation / Help | Yes |
 
 ---
 
@@ -2340,14 +2406,14 @@ For development and testing, the system should include a seed script that create
 
 ---
 
-## 9. Open Questions
+## 9. Resolved Questions
 
-These items are deferred to the implementation planning phase:
+These items were originally open questions and have all been resolved:
 
-1. **Notification system**: Neither upstream has notifications. Consider whether to add toast notifications for mutation success/error feedback.
-2. **Pagination**: Neither upstream paginates task or project lists. May be needed at scale but is not required for MVP.
-3. **Search**: Neither upstream has full-text search. Deferred.
-4. **Activity log**: With creatorId tracking, an activity/audit log is possible but deferred.
+1. **Notification system**: ✅ Implemented (Sprint 1) - In-app notifications with WebSocket real-time delivery, notification center UI, PROJECT_INVITE / TASK_ASSIGNED / TASK_STATUS_CHANGED types
+2. **Pagination**: ✅ Implemented (Sprint 8) - Offset-based pagination with backward-compatible envelope format
+3. **Search**: ✅ Implemented - Command Palette (Cmd+K) with fuzzy search across tasks, NLP smart task input with natural language parsing
+4. **Activity log**: ✅ Implemented (Sprint 5) - Full activity timeline with change tracking, middleware-based automatic logging
 
 ---
 
@@ -2355,19 +2421,28 @@ These items are deferred to the implementation planning phase:
 
 ## 10. Implementation Status
 
-**Version 3.0 (Current)** - 2026-02-07
-- **Completed**: All Sprints 1-9 (100% feature complete)
+**Version 3.1 (Current)** - 2026-02-08
+- **Completed**: All Sprints 1-9 (100% feature complete) + Alpha Testing Fixes
 - **Test Status**:
   - Backend: 371/373 tests passing (99.5%)
+  - Frontend: 106/106 tests passing (100%)
   - CLI: 26/26 tests passing (100%)
-  - Total: 397 passing tests across 22 test suites
+  - Total: 503 passing tests across 36 test suites
 - **Architecture**:
   - 67+ API endpoints across 14 route files
   - 18 Prisma models with proper relations and indexes
-  - 12 frontend pages with full UI implementation
+  - 13 frontend pages with full UI implementation
   - CLI tool with shell completions
-  - WebSocket real-time updates
+  - WebSocket real-time updates with presence indicators
   - Natural language task parsing
-- **Production Ready**: Yes - ready for deployment and user acceptance testing
+  - Documentation automation pipeline (PRD → Help system)
+- **Alpha Testing Ready**: Yes - multi-user collaboration tested and verified
+- **Recent Fixes (v3.1)**:
+  - Onboarding modal wired into Layout for new user guidance
+  - Seed data endpoint made idempotent (no duplicates on repeat use)
+  - Project invite notifications now sent via WebSocket when adding members
+  - Projects list auto-refreshes when user is added to a project
+  - Broken CMS admin route removed (help system is the working docs surface)
+  - Backend CI pipeline now includes TypeScript compilation check
 - **Remaining**: Sprint 10 features (Habit Tracking, Voice Input, Burnout Prevention, Collaborative Estimation) marked as future enhancements
 - **Validation**: Comprehensive validation report available in `docs/VALIDATION-REPORT.md`

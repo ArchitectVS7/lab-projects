@@ -30,6 +30,14 @@ export class SeedService {
         const user = await prisma.user.findUnique({ where: { id: userId } });
         if (!user) throw new Error('User not found');
 
+        // Check if seed data already exists for this user
+        const existingProject = await prisma.project.findFirst({
+            where: { ownerId: userId, name: 'Welcome Project' },
+        });
+        if (existingProject) {
+            return { message: 'Seed data already exists', alreadySeeded: true };
+        }
+
         // 1. Create Achievements
         const achievements = [
             { code: 'FIRST_TASK', name: 'First Steps', description: 'Create your first task', icon: 'check-circle' },

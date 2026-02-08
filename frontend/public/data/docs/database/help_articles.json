@@ -1,11 +1,27 @@
 [
   {
+    "slug": "241-add-member",
+    "title": "2.4.1 Add Member",
+    "content": "#### 2.4.1 Add Member\n- **Endpoint**: `POST /api/projects/:id/members`\n- **Requires**: OWNER or ADMIN role on the project\n- **Input**:\n  - `email`: valid email of an existing user\n  - `role`: optional, one of `ADMIN`, `MEMBER`, `VIEWER` (default: `MEMBER`)\n- **Validation**:\n  - Target user must exist (404 if not found)\n  - Target user must not already be a member (409 if duplicate)\n- **Notification**: Sends PROJECT_INVITE in-app notification to the added user via WebSocket (real-time)\n- **Returns**: Created membership with user info (201)",
+    "summary": "#### 2.4.1 Add Member\n- **Endpoint**: `POST /api/projects/:id/members`\n- **Requires**: OWNER or ADMI...",
+    "contextRoute": "/",
+    "priority": 0
+  },
+  {
+    "slug": "271-layout-structure",
+    "title": "2.7.1 Layout Structure",
+    "content": "#### 2.7.1 Layout Structure\n- Sidebar navigation with links: Dashboard, Tasks, Projects, Calendar, Focus Mode, Creator Dashboard, Dependencies, API Keys, Webhooks\n- Active route highlighting\n- User section showing avatar initial and name\n- User menu: Profile settings, Logout\n- Help button for contextual documentation sidebar\n- Notification center with unread count badge\n- Connection status indicator (WebSocket online/offline)\n- Onboarding modal on first login for new users",
+    "summary": "#### 2.7.1 Layout Structure\n- Sidebar navigation with links: Dashboard, Tasks, Projects, Calendar, F...",
+    "contextRoute": "/",
+    "priority": 1
+  },
+  {
     "slug": "search-behavior",
     "title": "Search Behavior",
     "content": "##### Search Behavior\n- **Fuzzy Matching**: Tolerates typos (e.g., \"tsk\" matches \"task\")\n- **Real-time Filtering**: Updates as user types with 150ms debounce\n- **Auto-focus**: Input field auto-focused on palette open\n- **Empty State**: Shows helpful message when no results found",
     "summary": "##### Search Behavior\n- **Fuzzy Matching**: Tolerates typos (e.g., \"tsk\" matches \"task\")\n- **Real-ti...",
     "contextRoute": "/",
-    "priority": 0
+    "priority": 2
   },
   {
     "slug": "2211-overview",
@@ -13,7 +29,39 @@
     "content": "#### 2.21.1 Overview\nFull-screen, distraction-free task focus interface that helps users concentrate on high-priority work. Positioned as a \"deep work\" feature for single-task focus sessions.",
     "summary": "#### 2.21.1 Overview\nFull-screen, distraction-free task focus interface that helps users concentrate...",
     "contextRoute": "/",
-    "priority": 1
+    "priority": 3
+  },
+  {
+    "slug": "224-in-app-help-system",
+    "title": "2.24 In-App Help System",
+    "content": "### 2.24 In-App Help System\n\n**Status**: ✅ Implemented",
+    "summary": "### 2.24 In-App Help System\n\n**Status**: ✅ Implemented...",
+    "contextRoute": "/",
+    "priority": 4
+  },
+  {
+    "slug": "2241-help-page",
+    "title": "2.24.1 Help Page",
+    "content": "#### 2.24.1 Help Page\n- **Route**: `/help`\n- **Features**: Full searchable documentation generated from PRD\n- **Content**: Grouped by section, renders markdown with proper hierarchy\n- **Search**: Full-text search across all documentation blocks",
+    "summary": "#### 2.24.1 Help Page\n- **Route**: `/help`\n- **Features**: Full searchable documentation generated f...",
+    "contextRoute": "/",
+    "priority": 5
+  },
+  {
+    "slug": "2242-contextual-help-sidebar",
+    "title": "2.24.2 Contextual Help Sidebar",
+    "content": "#### 2.24.2 Contextual Help Sidebar\n- **Trigger**: Help button in navigation bar\n- **Behavior**: Shows context-aware suggestions based on current route\n- **Search**: Inline search within sidebar\n- **Link**: Links to full `/help` page for comprehensive documentation",
+    "summary": "#### 2.24.2 Contextual Help Sidebar\n- **Trigger**: Help button in navigation bar\n- **Behavior**: Sho...",
+    "contextRoute": "/",
+    "priority": 6
+  },
+  {
+    "slug": "2243-documentation-pipeline",
+    "title": "2.24.3 Documentation Pipeline",
+    "content": "#### 2.24.3 Documentation Pipeline\n- **Source**: `docs/PRD.md` parsed by `.docs-automation/parser.ts`\n- **Build**: `npm run docs:build` in `.docs-automation/` directory\n- **Output**: JSON content blocks in `frontend/public/data/docs/`\n- **Consumption**: `HelpContext.tsx` loads blocks and provides route-based suggestions\n\n---",
+    "summary": "#### 2.24.3 Documentation Pipeline\n- **Source**: `docs/PRD.md` parsed by `.docs-automation/parser.ts...",
+    "contextRoute": "/",
+    "priority": 7
   },
   {
     "slug": "general",
@@ -21,7 +69,7 @@
     "content": "##### General\n- **Help**: `?` - Open shortcuts guide\n- **Close**: `Escape` - Dismiss modal/popover",
     "summary": "##### General\n- **Help**: `?` - Open shortcuts guide\n- **Close**: `Escape` - Dismiss modal/popover...",
     "contextRoute": "/",
-    "priority": 2
+    "priority": 8
   },
   {
     "slug": "2246-future-enhancements",
@@ -29,6 +77,30 @@
     "content": "#### 2.24.6 Future Enhancements\n- **Customization**: User-defined shortcuts\n- **Search**: Filter shortcuts in guide modal\n- **Hints**: Tooltip hints on first use\n- **Cheat Sheet**: Printable PDF version\n\n---",
     "summary": "#### 2.24.6 Future Enhancements\n- **Customization**: User-defined shortcuts\n- **Search**: Filter sho...",
     "contextRoute": "/",
-    "priority": 3
+    "priority": 9
+  },
+  {
+    "slug": "6-frontend-routes",
+    "title": "6. Frontend Routes",
+    "content": "## 6. Frontend Routes\n\n| Path | Page | Auth Required |\n|------|------|---------------|\n| `/login` | Login | No (redirects to `/` if authenticated) |\n| `/register` | Register | No (redirects to `/` if authenticated) |\n| `/` | Dashboard | Yes |\n| `/tasks` | Tasks (Table/Kanban toggle) | Yes |\n| `/focus` | Focus Mode | Yes |\n| `/projects` | Projects list | Yes |\n| `/projects/:id` | Project detail (Kanban + members) | Yes |\n| `/calendar` | Calendar View | Yes |\n| `/profile` | User profile settings | Yes |\n| `/creator-dashboard` | Creator Analytics | Yes |\n| `/dependencies` | Dependency Graph | Yes |\n| `/api-keys` | API Key Management | Yes |\n| `/webhooks` | Webhook Configuration | Yes |\n| `/help` | Documentation / Help | Yes |\n\n---",
+    "summary": "## 6. Frontend Routes\n\n| Path | Page | Auth Required |\n|------|------|---------------|\n| `/login` | ...",
+    "contextRoute": "/",
+    "priority": 10
+  },
+  {
+    "slug": "9-resolved-questions",
+    "title": "9. Resolved Questions",
+    "content": "## 9. Resolved Questions\n\nThese items were originally open questions and have all been resolved:\n\n1. **Notification system**: ✅ Implemented (Sprint 1) - In-app notifications with WebSocket real-time delivery, notification center UI, PROJECT_INVITE / TASK_ASSIGNED / TASK_STATUS_CHANGED types\n2. **Pagination**: ✅ Implemented (Sprint 8) - Offset-based pagination with backward-compatible envelope format\n3. **Search**: ✅ Implemented - Command Palette (Cmd+K) with fuzzy search across tasks, NLP smart task input with natural language parsing\n4. **Activity log**: ✅ Implemented (Sprint 5) - Full activity timeline with change tracking, middleware-based automatic logging\n\n---\n\n*This PRD is the basis for implementation planning. The next phase will produce a detailed implementation plan with file-by-file specifications, build order, and migration strategy.*",
+    "summary": "## 9. Resolved Questions\n\nThese items were originally open questions and have all been resolved:\n\n1....",
+    "contextRoute": "/",
+    "priority": 11
+  },
+  {
+    "slug": "10-implementation-status",
+    "title": "10. Implementation Status",
+    "content": "## 10. Implementation Status\n\n**Version 3.1 (Current)** - 2026-02-08\n- **Completed**: All Sprints 1-9 (100% feature complete) + Alpha Testing Fixes\n- **Test Status**:\n  - Backend: 371/373 tests passing (99.5%)\n  - Frontend: 106/106 tests passing (100%)\n  - CLI: 26/26 tests passing (100%)\n  - Total: 503 passing tests across 36 test suites\n- **Architecture**:\n  - 67+ API endpoints across 14 route files\n  - 18 Prisma models with proper relations and indexes\n  - 13 frontend pages with full UI implementation\n  - CLI tool with shell completions\n  - WebSocket real-time updates with presence indicators\n  - Natural language task parsing\n  - Documentation automation pipeline (PRD → Help system)\n- **Alpha Testing Ready**: Yes - multi-user collaboration tested and verified\n- **Recent Fixes (v3.1)**:\n  - Onboarding modal wired into Layout for new user guidance\n  - Seed data endpoint made idempotent (no duplicates on repeat use)\n  - Project invite notifications now sent via WebSocket when adding members\n  - Projects list auto-refreshes when user is added to a project\n  - Broken CMS admin route removed (help system is the working docs surface)\n  - Backend CI pipeline now includes TypeScript compilation check\n- **Remaining**: Sprint 10 features (Habit Tracking, Voice Input, Burnout Prevention, Collaborative Estimation) marked as future enhancements\n- **Validation**: Comprehensive validation report available in `docs/VALIDATION-REPORT.md`",
+    "summary": "## 10. Implementation Status\n\n**Version 3.1 (Current)** - 2026-02-08\n- **Completed**: All Sprints 1-...",
+    "contextRoute": "/",
+    "priority": 12
   }
 ]

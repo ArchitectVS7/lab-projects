@@ -20,6 +20,7 @@ import KeyboardShortcutsModal from './KeyboardShortcutsModal';
 import { useCommandPalette } from '../hooks/useCommandPalette';
 import { HelpButton } from './Help/HelpButton';
 import { HelpSidebar } from './Help/HelpSidebar';
+import OnboardingModal from './OnboardingModal';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -163,6 +164,7 @@ export default function Layout() {
       <CommandPalette />
       <KeyboardShortcutsModal />
       <HelpSidebar />
+      <OnboardingModal />
     </div>
   );
 }

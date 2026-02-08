@@ -4,6 +4,7 @@ import prisma from '../lib/prisma.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
 import { dispatchWebhooks } from '../lib/webhookDispatcher.js';
+import { notifyProjectInvite } from '../lib/notifications.js';
 
 const router = Router();
 router.use(authenticate);
@@ -262,6 +263,12 @@ router.post('/:id/members', async (req: AuthRequest, res: Response, next: NextFu
       throw new AppError('User is already a member of this project', 409);
     }
 
+    // Fetch project name and inviter name for the notification
+    const [project, inviter] = await Promise.all([
+      prisma.project.findUnique({ where: { id: req.params.id }, select: { name: true } }),
+      prisma.user.findUnique({ where: { id: req.userId! }, select: { name: true } }),
+    ]);
+
     const newMember = await prisma.projectMember.create({
       data: {
         projectId: req.params.id,
@@ -272,6 +279,14 @@ router.post('/:id/members', async (req: AuthRequest, res: Response, next: NextFu
         user: { select: userSelect },
       },
     });
+
+    // Notify the added user (non-blocking)
+    notifyProjectInvite(
+      req.params.id,
+      targetUser.id,
+      inviter?.name || 'A team member',
+      project?.name || 'a project',
+    ).catch(() => {});
 
     res.status(201).json(newMember);
   } catch (error) {

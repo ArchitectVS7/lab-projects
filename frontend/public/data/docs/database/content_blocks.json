@@ -10,23 +10,23 @@
   {
     "blockId": "status-living-document",
     "title": "Status: Living Document",
-    "content": "## Status: Living Document (Updated with Sprint 1-9 Implementation Status)",
+    "content": "## Status: Living Document (Updated with Sprint 1-9 Implementation Status + Alpha Testing Fixes)",
     "level": 2,
     "sortOrder": 0,
     "metadata": {}
   },
   {
-    "blockId": "date-2026-02-07",
-    "title": "Date: 2026-02-07",
-    "content": "## Date: 2026-02-07 (Last Updated)",
+    "blockId": "date-2026-02-08",
+    "title": "Date: 2026-02-08",
+    "content": "## Date: 2026-02-08 (Last Updated)",
     "level": 2,
     "sortOrder": 0,
     "metadata": {}
   },
   {
-    "blockId": "version-30",
-    "title": "Version: 3.0",
-    "content": "## Version: 3.0",
+    "blockId": "version-31",
+    "title": "Version: 3.1",
+    "content": "## Version: 3.1",
     "level": 2,
     "sortOrder": 0,
     "metadata": {}
@@ -278,7 +278,7 @@
   {
     "blockId": "223-frontend-profile-page",
     "title": "2.2.3 Frontend Profile Page",
-    "content": "#### 2.2.3 Frontend Profile Page\n- Accessible from user menu in the navigation bar\n- Form fields: name, avatar URL\n- Separate form/section for password change (current password + new password + confirm)\n- Validation feedback inline\n\n---",
+    "content": "#### 2.2.3 Frontend Profile Page\n- Accessible from user menu in the navigation bar\n- Form fields: name, avatar URL\n- Separate form/section for password change (current password + new password + confirm)\n- Validation feedback inline\n- **Sample Data Import**: Button to seed account with example project and tasks (idempotent - safe to click multiple times)\n- **Achievements Display**: Shows earned achievement badges (First Steps, Project Manager, Task Master, Team Player)\n- **Appearance Settings**: Theme picker, layout switcher, density picker\n\n---",
     "level": 4,
     "sortOrder": 0,
     "metadata": {
@@ -381,7 +381,7 @@
   {
     "blockId": "241-add-member",
     "title": "2.4.1 Add Member",
-    "content": "#### 2.4.1 Add Member\n- **Endpoint**: `POST /api/projects/:id/members`\n- **Requires**: OWNER or ADMIN role on the project\n- **Input**:\n  - `email`: valid email of an existing user\n  - `role`: optional, one of `ADMIN`, `MEMBER`, `VIEWER` (default: `MEMBER`)\n- **Validation**:\n  - Target user must exist (404 if not found)\n  - Target user must not already be a member (409 if duplicate)\n- **Returns**: Created membership with user info (201)",
+    "content": "#### 2.4.1 Add Member\n- **Endpoint**: `POST /api/projects/:id/members`\n- **Requires**: OWNER or ADMIN role on the project\n- **Input**:\n  - `email`: valid email of an existing user\n  - `role`: optional, one of `ADMIN`, `MEMBER`, `VIEWER` (default: `MEMBER`)\n- **Validation**:\n  - Target user must exist (404 if not found)\n  - Target user must not already be a member (409 if duplicate)\n- **Notification**: Sends PROJECT_INVITE in-app notification to the added user via WebSocket (real-time)\n- **Returns**: Created membership with user info (201)",
     "level": 4,
     "sortOrder": 0,
     "metadata": {
@@ -389,6 +389,9 @@
         "user",
         "admin",
         "developer"
+      ],
+      "surface": [
+        "help"
       ]
     }
   },
@@ -781,12 +784,17 @@
   {
     "blockId": "271-layout-structure",
     "title": "2.7.1 Layout Structure",
-    "content": "#### 2.7.1 Layout Structure\n- Sidebar navigation with links: Dashboard, Tasks, Projects\n- Active route highlighting\n- User section showing avatar initial and name\n- User menu: Profile settings, Logout",
+    "content": "#### 2.7.1 Layout Structure\n- Sidebar navigation with links: Dashboard, Tasks, Projects, Calendar, Focus Mode, Creator Dashboard, Dependencies, API Keys, Webhooks\n- Active route highlighting\n- User section showing avatar initial and name\n- User menu: Profile settings, Logout\n- Help button for contextual documentation sidebar\n- Notification center with unread count badge\n- Connection status indicator (WebSocket online/offline)\n- Onboarding modal on first login for new users",
     "level": 4,
     "sortOrder": 0,
     "metadata": {
       "audience": [
-        "user"
+        "user",
+        "developer"
+      ],
+      "surface": [
+        "docs",
+        "help"
       ]
     }
   },
@@ -1799,9 +1807,113 @@
     "metadata": {}
   },
   {
-    "blockId": "223-data-export",
-    "title": "2.23 Data Export",
-    "content": "### 2.23 Data Export\n\n**Status**: ✅ Implemented (Sprint 9)",
+    "blockId": "223-onboarding-flow",
+    "title": "2.23 Onboarding Flow",
+    "content": "### 2.23 Onboarding Flow\n\n**Status**: ✅ Implemented",
+    "level": 3,
+    "sortOrder": 0,
+    "metadata": {}
+  },
+  {
+    "blockId": "2231-overview",
+    "title": "2.23.1 Overview",
+    "content": "#### 2.23.1 Overview\nNew user onboarding modal that introduces key features on first login. Guides users through the application's core capabilities.",
+    "level": 4,
+    "sortOrder": 0,
+    "metadata": {
+      "audience": [
+        "user"
+      ]
+    }
+  },
+  {
+    "blockId": "2232-onboarding-steps",
+    "title": "2.23.2 Onboarding Steps",
+    "content": "#### 2.23.2 Onboarding Steps\n1. **Welcome to TaskMan** - Introduction and overview\n2. **Collaborate** - Create projects, invite team members, work together in real-time\n3. **Manage Tasks** - Track progress with Kanban boards, lists, and calendar views\n4. **Gamify Your Work** - Earn achievements and track productivity stats\n5. **Get Started** - Call-to-action to begin using the app",
+    "level": 4,
+    "sortOrder": 0,
+    "metadata": {}
+  },
+  {
+    "blockId": "2233-behavior",
+    "title": "2.23.3 Behavior",
+    "content": "#### 2.23.3 Behavior\n- **Trigger**: Automatically shows on first login when user is authenticated\n- **Persistence**: `localStorage` key `hasSeenOnboarding` prevents repeat display\n- **Navigation**: Next/Previous buttons, Skip button, progress dots\n- **Animations**: Smooth step transitions via Framer Motion\n- **Component**: `OnboardingModal.tsx` rendered in `Layout.tsx`",
+    "level": 4,
+    "sortOrder": 0,
+    "metadata": {
+      "audience": [
+        "user"
+      ]
+    }
+  },
+  {
+    "blockId": "2234-seed-data-for-new-users",
+    "title": "2.23.4 Seed Data for New Users",
+    "content": "#### 2.23.4 Seed Data for New Users\n- **Endpoint**: `POST /api/seed` (authenticated)\n- **Purpose**: Pre-populate account with example project and tasks so new users can explore features\n- **Creates**: 1 \"Welcome Project\", 3 sample tasks (varied status/priority), 4 achievement definitions\n- **Idempotent**: Safe to call multiple times - checks for existing \"Welcome Project\" before creating\n- **Frontend**: \"Import Sample Data\" button on Profile page\n- **Response**: Returns `{ alreadySeeded: true }` if data was already imported\n\n---",
+    "level": 4,
+    "sortOrder": 0,
+    "metadata": {
+      "audience": [
+        "user",
+        "developer"
+      ]
+    }
+  },
+  {
+    "blockId": "224-in-app-help-system",
+    "title": "2.24 In-App Help System",
+    "content": "### 2.24 In-App Help System\n\n**Status**: ✅ Implemented",
+    "level": 3,
+    "sortOrder": 0,
+    "metadata": {
+      "surface": [
+        "help"
+      ]
+    }
+  },
+  {
+    "blockId": "2241-help-page",
+    "title": "2.24.1 Help Page",
+    "content": "#### 2.24.1 Help Page\n- **Route**: `/help`\n- **Features**: Full searchable documentation generated from PRD\n- **Content**: Grouped by section, renders markdown with proper hierarchy\n- **Search**: Full-text search across all documentation blocks",
+    "level": 4,
+    "sortOrder": 0,
+    "metadata": {
+      "surface": [
+        "docs",
+        "help"
+      ]
+    }
+  },
+  {
+    "blockId": "2242-contextual-help-sidebar",
+    "title": "2.24.2 Contextual Help Sidebar",
+    "content": "#### 2.24.2 Contextual Help Sidebar\n- **Trigger**: Help button in navigation bar\n- **Behavior**: Shows context-aware suggestions based on current route\n- **Search**: Inline search within sidebar\n- **Link**: Links to full `/help` page for comprehensive documentation",
+    "level": 4,
+    "sortOrder": 0,
+    "metadata": {
+      "surface": [
+        "docs",
+        "help"
+      ]
+    }
+  },
+  {
+    "blockId": "2243-documentation-pipeline",
+    "title": "2.24.3 Documentation Pipeline",
+    "content": "#### 2.24.3 Documentation Pipeline\n- **Source**: `docs/PRD.md` parsed by `.docs-automation/parser.ts`\n- **Build**: `npm run docs:build` in `.docs-automation/` directory\n- **Output**: JSON content blocks in `frontend/public/data/docs/`\n- **Consumption**: `HelpContext.tsx` loads blocks and provides route-based suggestions\n\n---",
+    "level": 4,
+    "sortOrder": 0,
+    "metadata": {
+      "surface": [
+        "docs",
+        "help"
+      ]
+    }
+  },
+  {
+    "blockId": "225-data-export",
+    "title": "2.25 Data Export",
+    "content": "### 2.25 Data Export\n\n**Status**: ✅ Implemented (Sprint 9)",
     "level": 3,
     "sortOrder": 0,
     "metadata": {}
@@ -1856,9 +1968,9 @@
     "metadata": {}
   },
   {
-    "blockId": "224-keyboard-shortcuts-system",
-    "title": "2.24 Keyboard Shortcuts System",
-    "content": "### 2.24 Keyboard Shortcuts System\n\n**Status**: ✅ Implemented (Sprint 9)",
+    "blockId": "226-keyboard-shortcuts-system",
+    "title": "2.26 Keyboard Shortcuts System",
+    "content": "### 2.26 Keyboard Shortcuts System\n\n**Status**: ✅ Implemented (Sprint 9)",
     "level": 3,
     "sortOrder": 0,
     "metadata": {}
@@ -1959,9 +2071,9 @@
     }
   },
   {
-    "blockId": "225-pagination-system",
-    "title": "2.25 Pagination System",
-    "content": "### 2.25 Pagination System\n\n**Status**: ✅ Implemented (Sprint 8)",
+    "blockId": "227-pagination-system",
+    "title": "2.27 Pagination System",
+    "content": "### 2.27 Pagination System\n\n**Status**: ✅ Implemented (Sprint 8)",
     "level": 3,
     "sortOrder": 0,
     "metadata": {}
@@ -2079,7 +2191,7 @@
   {
     "blockId": "41-core-api-endpoints",
     "title": "4.1 Core API Endpoints",
-    "content": "### 4.1 Core API Endpoints\n\n| Method | Endpoint | Auth | Status | Sprint |\n|--------|----------|------|--------|--------|\n| **Authentication** |||||\n| POST | /api/auth/register | No | ✅ Live | Phase 1 |\n| POST | /api/auth/login | No | ✅ Live | Phase 1 |\n| POST | /api/auth/logout | No | ✅ Live | Phase 1 |\n| POST | /api/auth/refresh | Yes | ✅ Live | Phase 1 |\n| GET | /api/auth/me | Yes | ✅ Live | Phase 1 |\n| PUT | /api/auth/profile | Yes | ✅ Live | Phase 1 |\n| PUT | /api/auth/password | Yes | ✅ Live | Phase 1 |\n| POST | /api/auth/api-keys | Yes | ✅ Live | Sprint 8 |\n| GET | /api/auth/api-keys | Yes | ✅ Live | Sprint 8 |\n| DELETE | /api/auth/api-keys/:id | Yes | ✅ Live | Sprint 8 |\n| **Projects** |||||\n| GET | /api/projects | Yes | ✅ Live | Phase 2 |\n| GET | /api/projects/:id | Yes | ✅ Live | Phase 2 |\n| POST | /api/projects | Yes | ✅ Live | Phase 2 |\n| PUT | /api/projects/:id | Yes | ✅ Live | Phase 2 |\n| DELETE | /api/projects/:id | Yes | ✅ Live | Phase 2 |\n| POST | /api/projects/:id/members | Yes | ✅ Live | Phase 2 |\n| DELETE | /api/projects/:id/members/:userId | Yes | ✅ Live | Phase 2 |\n| GET | /api/custom-fields | Yes | ✅ Live | Sprint 6 |\n| POST | /api/custom-fields | Yes | ✅ Live | Sprint 6 |\n| DELETE | /api/custom-fields/:id | Yes | ✅ Live | Sprint 6 |\n| PUT | /api/custom-fields/:id | Yes | ✅ Live | Sprint 6 |\n| GET | /api/projects/:id/critical-path | Yes | 🔄 Future | Sprint 10+ |\n| GET | /api/projects/:id/dependencies | Yes | ✅ Live | Sprint 7 |\n| **Tasks** |||||\n| GET | /api/tasks | Yes | ✅ Live | Phase 3 |\n| GET | /api/tasks/:id | Yes | ✅ Live | Phase 3 |\n| POST | /api/tasks | Yes | ✅ Live | Phase 3 |\n| PUT | /api/tasks/:id | Yes | ✅ Live | Phase 3 |\n| DELETE | /api/tasks/:id | Yes | ✅ Live | Phase 3 |\n| PATCH | /api/tasks/bulk-status | Yes | ✅ Live | Phase 3 |\n| POST | /api/recurring-tasks | Yes | ✅ Live | Sprint 3 |\n| GET | /api/recurring-tasks | Yes | ✅ Live | Sprint 3 |\n| DELETE | /api/recurring-tasks/:id | Yes | ✅ Live | Sprint 3 |\n| POST | /api/recurring-tasks/:id/generate | Yes | ✅ Live | Sprint 3 |\n| GET | /api/tasks/:id/dependencies | Yes | ✅ Live | Sprint 7 |\n| POST | /api/tasks/:id/dependencies | Yes | ✅ Live | Sprint 7 |\n| DELETE | /api/tasks/:id/dependencies/:depId | Yes | ✅ Live | Sprint 7 |\n| GET | /api/tasks/:id/activity | Yes | ✅ Live | Sprint 5 |\n| GET | /api/tasks/:id/comments | Yes | ✅ Live | Sprint 5 |\n| POST | /api/tasks/:id/comments | Yes | ✅ Live | Sprint 5 |\n| GET | /api/time-entries | Yes | ✅ Live | Sprint 4 |\n| POST | /api/time-entries | Yes | ✅ Live | Sprint 4 |\n| PUT | /api/time-entries/:id | Yes | ✅ Live | Sprint 4 |\n| GET | /api/time-entries/:id | Yes | ✅ Live | Sprint 4 |\n| POST | /api/time-entries/start | Yes | ✅ Live | Sprint 4 |\n| POST | /api/time-entries/:id/stop | Yes | ✅ Live | Sprint 4 |\n| GET | /api/time-entries/active | Yes | ✅ Live | Sprint 4 |\n| GET | /api/attachments/task/:taskId | Yes | ✅ Live | Sprint 6 |\n| POST | /api/attachments/task/:taskId | Yes | ✅ Live | Sprint 6 |\n| PUT | /api/custom-fields/task/:taskId | Yes | ✅ Live | Sprint 6 |\n| GET | /api/custom-fields/task/:taskId | Yes | ✅ Live | Sprint 6 |\n| POST | /api/tags/task/:taskId | Yes | ✅ Live | Sprint 6 |\n| **Comments** |||||\n| PUT | /api/comments/:id | Yes | ✅ Live | Sprint 5 |\n| DELETE | /api/comments/:id | Yes | ✅ Live | Sprint 5 |\n| **Time Tracking** |||||\n| DELETE | /api/time-entries/:id | Yes | ✅ Live | Sprint 4 |\n| GET | /api/time-entries/stats | Yes | ✅ Live | Sprint 4 |\n| **Attachments** |||||\n| GET | /api/attachments/:id/download | Yes | ✅ Live | Sprint 6 |\n| DELETE | /api/attachments/:id | Yes | ✅ Live | Sprint 6 |\n| **Tags** |||||\n| GET | /api/tags | Yes | ✅ Live | Sprint 6 |\n| POST | /api/tags | Yes | ✅ Live | Sprint 6 |\n| PUT | /api/tags/:id | Yes | ✅ Live | Sprint 6 |\n| DELETE | /api/tags/task/:taskId/:tagId | Yes | ✅ Live | Sprint 6 |\n| **Notifications** |||||\n| GET | /api/notifications | Yes | ✅ Live | Sprint 1 |\n| PATCH | /api/notifications/mark-read | Yes | ✅ Live | Sprint 1 |\n| DELETE | /api/notifications/:id | Yes | ✅ Live | Sprint 1 |\n| GET | /api/notifications/unread-count | Yes | ✅ Live | Sprint 1 |\n| PATCH | /api/notifications/mark-all-read | Yes | ✅ Live | Sprint 1 |\n| **Analytics** |||||\n| GET | /api/analytics/insights | Yes | ✅ Live | Sprint 2 |\n| GET | /api/analytics/creator-metrics | Yes | ✅ Live | Sprint 2 |\n| **Webhooks** |||||\n| GET | /api/webhooks | Yes | ✅ Live | Sprint 8 |\n| POST | /api/webhooks | Yes | ✅ Live | Sprint 8 |\n| PUT | /api/webhooks/:id | Yes | ✅ Live | Sprint 8 |\n| DELETE | /api/webhooks/:id | Yes | ✅ Live | Sprint 8 |\n| GET | /api/webhooks/:id/logs | Yes | ✅ Live | Sprint 8 |\n| **Export** |||||\n| GET | /api/export/tasks | Yes | ✅ Live | Sprint 9 |\n| **Health** |||||\n| GET | /health | No | ✅ Live | Phase 0 |",
+    "content": "### 4.1 Core API Endpoints\n\n| Method | Endpoint | Auth | Status | Sprint |\n|--------|----------|------|--------|--------|\n| **Authentication** |||||\n| POST | /api/auth/register | No | ✅ Live | Phase 1 |\n| POST | /api/auth/login | No | ✅ Live | Phase 1 |\n| POST | /api/auth/logout | No | ✅ Live | Phase 1 |\n| POST | /api/auth/refresh | Yes | ✅ Live | Phase 1 |\n| GET | /api/auth/me | Yes | ✅ Live | Phase 1 |\n| PUT | /api/auth/profile | Yes | ✅ Live | Phase 1 |\n| PUT | /api/auth/password | Yes | ✅ Live | Phase 1 |\n| POST | /api/auth/api-keys | Yes | ✅ Live | Sprint 8 |\n| GET | /api/auth/api-keys | Yes | ✅ Live | Sprint 8 |\n| DELETE | /api/auth/api-keys/:id | Yes | ✅ Live | Sprint 8 |\n| **Projects** |||||\n| GET | /api/projects | Yes | ✅ Live | Phase 2 |\n| GET | /api/projects/:id | Yes | ✅ Live | Phase 2 |\n| POST | /api/projects | Yes | ✅ Live | Phase 2 |\n| PUT | /api/projects/:id | Yes | ✅ Live | Phase 2 |\n| DELETE | /api/projects/:id | Yes | ✅ Live | Phase 2 |\n| POST | /api/projects/:id/members | Yes | ✅ Live | Phase 2 |\n| DELETE | /api/projects/:id/members/:userId | Yes | ✅ Live | Phase 2 |\n| GET | /api/custom-fields | Yes | ✅ Live | Sprint 6 |\n| POST | /api/custom-fields | Yes | ✅ Live | Sprint 6 |\n| DELETE | /api/custom-fields/:id | Yes | ✅ Live | Sprint 6 |\n| PUT | /api/custom-fields/:id | Yes | ✅ Live | Sprint 6 |\n| GET | /api/projects/:id/critical-path | Yes | ✅ Live | Sprint 7 |\n| GET | /api/projects/:id/dependencies | Yes | ✅ Live | Sprint 7 |\n| **Tasks** |||||\n| GET | /api/tasks | Yes | ✅ Live | Phase 3 |\n| GET | /api/tasks/:id | Yes | ✅ Live | Phase 3 |\n| POST | /api/tasks | Yes | ✅ Live | Phase 3 |\n| PUT | /api/tasks/:id | Yes | ✅ Live | Phase 3 |\n| DELETE | /api/tasks/:id | Yes | ✅ Live | Phase 3 |\n| PATCH | /api/tasks/bulk-status | Yes | ✅ Live | Phase 3 |\n| POST | /api/recurring-tasks | Yes | ✅ Live | Sprint 3 |\n| GET | /api/recurring-tasks | Yes | ✅ Live | Sprint 3 |\n| DELETE | /api/recurring-tasks/:id | Yes | ✅ Live | Sprint 3 |\n| POST | /api/recurring-tasks/:id/generate | Yes | ✅ Live | Sprint 3 |\n| GET | /api/tasks/:id/dependencies | Yes | ✅ Live | Sprint 7 |\n| POST | /api/tasks/:id/dependencies | Yes | ✅ Live | Sprint 7 |\n| DELETE | /api/tasks/:id/dependencies/:depId | Yes | ✅ Live | Sprint 7 |\n| GET | /api/tasks/:id/activity | Yes | ✅ Live | Sprint 5 |\n| GET | /api/tasks/:id/comments | Yes | ✅ Live | Sprint 5 |\n| POST | /api/tasks/:id/comments | Yes | ✅ Live | Sprint 5 |\n| GET | /api/time-entries | Yes | ✅ Live | Sprint 4 |\n| POST | /api/time-entries | Yes | ✅ Live | Sprint 4 |\n| PUT | /api/time-entries/:id | Yes | ✅ Live | Sprint 4 |\n| GET | /api/time-entries/:id | Yes | ✅ Live | Sprint 4 |\n| POST | /api/time-entries/start | Yes | ✅ Live | Sprint 4 |\n| POST | /api/time-entries/:id/stop | Yes | ✅ Live | Sprint 4 |\n| GET | /api/time-entries/active | Yes | ✅ Live | Sprint 4 |\n| GET | /api/attachments/task/:taskId | Yes | ✅ Live | Sprint 6 |\n| POST | /api/attachments/task/:taskId | Yes | ✅ Live | Sprint 6 |\n| PUT | /api/custom-fields/task/:taskId | Yes | ✅ Live | Sprint 6 |\n| GET | /api/custom-fields/task/:taskId | Yes | ✅ Live | Sprint 6 |\n| POST | /api/tags/task/:taskId | Yes | ✅ Live | Sprint 6 |\n| **Comments** |||||\n| PUT | /api/comments/:id | Yes | ✅ Live | Sprint 5 |\n| DELETE | /api/comments/:id | Yes | ✅ Live | Sprint 5 |\n| **Time Tracking** |||||\n| DELETE | /api/time-entries/:id | Yes | ✅ Live | Sprint 4 |\n| GET | /api/time-entries/stats | Yes | ✅ Live | Sprint 4 |\n| **Attachments** |||||\n| GET | /api/attachments/:id/download | Yes | ✅ Live | Sprint 6 |\n| DELETE | /api/attachments/:id | Yes | ✅ Live | Sprint 6 |\n| **Tags** |||||\n| GET | /api/tags | Yes | ✅ Live | Sprint 6 |\n| POST | /api/tags | Yes | ✅ Live | Sprint 6 |\n| PUT | /api/tags/:id | Yes | ✅ Live | Sprint 6 |\n| DELETE | /api/tags/task/:taskId/:tagId | Yes | ✅ Live | Sprint 6 |\n| **Notifications** |||||\n| GET | /api/notifications | Yes | ✅ Live | Sprint 1 |\n| PATCH | /api/notifications/mark-read | Yes | ✅ Live | Sprint 1 |\n| DELETE | /api/notifications/:id | Yes | ✅ Live | Sprint 1 |\n| GET | /api/notifications/unread-count | Yes | ✅ Live | Sprint 1 |\n| PATCH | /api/notifications/mark-all-read | Yes | ✅ Live | Sprint 1 |\n| **Analytics** |||||\n| GET | /api/analytics/insights | Yes | ✅ Live | Sprint 2 |\n| GET | /api/analytics/creator-metrics | Yes | ✅ Live | Sprint 2 |\n| **Webhooks** |||||\n| GET | /api/webhooks | Yes | ✅ Live | Sprint 8 |\n| POST | /api/webhooks | Yes | ✅ Live | Sprint 8 |\n| PUT | /api/webhooks/:id | Yes | ✅ Live | Sprint 8 |\n| DELETE | /api/webhooks/:id | Yes | ✅ Live | Sprint 8 |\n| GET | /api/webhooks/:id/logs | Yes | ✅ Live | Sprint 8 |\n| **Export** |||||\n| GET | /api/export/tasks | Yes | ✅ Live | Sprint 9 |\n| **Seed Data** |||||\n| POST | /api/seed | Yes | ✅ Live | Alpha |\n| **Health** |||||\n| GET | /health | No | ✅ Live | Phase 0 |",
     "level": 3,
     "sortOrder": 0,
     "metadata": {
@@ -2144,13 +2256,17 @@
   {
     "blockId": "6-frontend-routes",
     "title": "6. Frontend Routes",
-    "content": "## 6. Frontend Routes\n\n| Path | Page | Auth Required |\n|------|------|---------------|\n| `/login` | Login | No (redirects to `/` if authenticated) |\n| `/register` | Register | No (redirects to `/` if authenticated) |\n| `/` | Dashboard | Yes |\n| `/tasks` | Tasks (Table/Kanban toggle) | Yes |\n| `/focus` | Focus Mode | Yes |\n| `/projects` | Projects list | Yes |\n| `/projects/:id` | Project detail (Kanban + members) | Yes |\n| `/calendar` | Calendar View | Yes |\n| `/profile` | User profile settings | Yes |\n| `/creator-dashboard` | Creator Analytics | Yes |\n| `/dependencies` | Dependency Graph | Yes |\n| `/api-keys` | API Key Management | Yes |\n| `/webhooks` | Webhook Configuration | Yes |\n\n---",
+    "content": "## 6. Frontend Routes\n\n| Path | Page | Auth Required |\n|------|------|---------------|\n| `/login` | Login | No (redirects to `/` if authenticated) |\n| `/register` | Register | No (redirects to `/` if authenticated) |\n| `/` | Dashboard | Yes |\n| `/tasks` | Tasks (Table/Kanban toggle) | Yes |\n| `/focus` | Focus Mode | Yes |\n| `/projects` | Projects list | Yes |\n| `/projects/:id` | Project detail (Kanban + members) | Yes |\n| `/calendar` | Calendar View | Yes |\n| `/profile` | User profile settings | Yes |\n| `/creator-dashboard` | Creator Analytics | Yes |\n| `/dependencies` | Dependency Graph | Yes |\n| `/api-keys` | API Key Management | Yes |\n| `/webhooks` | Webhook Configuration | Yes |\n| `/help` | Documentation / Help | Yes |\n\n---",
     "level": 2,
     "sortOrder": 0,
     "metadata": {
       "audience": [
         "user",
         "developer"
+      ],
+      "surface": [
+        "docs",
+        "help"
       ]
     }
   },
@@ -2207,26 +2323,32 @@
     }
   },
   {
-    "blockId": "9-open-questions",
-    "title": "9. Open Questions",
-    "content": "## 9. Open Questions\n\nThese items are deferred to the implementation planning phase:\n\n1. **Notification system**: Neither upstream has notifications. Consider whether to add toast notifications for mutation success/error feedback.\n2. **Pagination**: Neither upstream paginates task or project lists. May be needed at scale but is not required for MVP.\n3. **Search**: Neither upstream has full-text search. Deferred.\n4. **Activity log**: With creatorId tracking, an activity/audit log is possible but deferred.\n\n---\n\n*This PRD is the basis for implementation planning. The next phase will produce a detailed implementation plan with file-by-file specifications, build order, and migration strategy.*",
+    "blockId": "9-resolved-questions",
+    "title": "9. Resolved Questions",
+    "content": "## 9. Resolved Questions\n\nThese items were originally open questions and have all been resolved:\n\n1. **Notification system**: ✅ Implemented (Sprint 1) - In-app notifications with WebSocket real-time delivery, notification center UI, PROJECT_INVITE / TASK_ASSIGNED / TASK_STATUS_CHANGED types\n2. **Pagination**: ✅ Implemented (Sprint 8) - Offset-based pagination with backward-compatible envelope format\n3. **Search**: ✅ Implemented - Command Palette (Cmd+K) with fuzzy search across tasks, NLP smart task input with natural language parsing\n4. **Activity log**: ✅ Implemented (Sprint 5) - Full activity timeline with change tracking, middleware-based automatic logging\n\n---\n\n*This PRD is the basis for implementation planning. The next phase will produce a detailed implementation plan with file-by-file specifications, build order, and migration strategy.*",
     "level": 2,
     "sortOrder": 0,
-    "metadata": {}
+    "metadata": {
+      "surface": [
+        "help"
+      ]
+    }
   },
   {
     "blockId": "10-implementation-status",
     "title": "10. Implementation Status",
-    "content": "## 10. Implementation Status\n\n**Version 3.0 (Current)** - 2026-02-07\n- **Completed**: All Sprints 1-9 (100% feature complete)\n- **Test Status**:\n  - Backend: 371/373 tests passing (99.5%)\n  - CLI: 26/26 tests passing (100%)\n  - Total: 397 passing tests across 22 test suites\n- **Architecture**:\n  - 67+ API endpoints across 14 route files\n  - 18 Prisma models with proper relations and indexes\n  - 12 frontend pages with full UI implementation\n  - CLI tool with shell completions\n  - WebSocket real-time updates\n  - Natural language task parsing\n- **Production Ready**: Yes - ready for deployment and user acceptance testing\n- **Remaining**: Sprint 10 features (Habit Tracking, Voice Input, Burnout Prevention, Collaborative Estimation) marked as future enhancements\n- **Validation**: Comprehensive validation report available in `docs/VALIDATION-REPORT.md`",
+    "content": "## 10. Implementation Status\n\n**Version 3.1 (Current)** - 2026-02-08\n- **Completed**: All Sprints 1-9 (100% feature complete) + Alpha Testing Fixes\n- **Test Status**:\n  - Backend: 371/373 tests passing (99.5%)\n  - Frontend: 106/106 tests passing (100%)\n  - CLI: 26/26 tests passing (100%)\n  - Total: 503 passing tests across 36 test suites\n- **Architecture**:\n  - 67+ API endpoints across 14 route files\n  - 18 Prisma models with proper relations and indexes\n  - 13 frontend pages with full UI implementation\n  - CLI tool with shell completions\n  - WebSocket real-time updates with presence indicators\n  - Natural language task parsing\n  - Documentation automation pipeline (PRD → Help system)\n- **Alpha Testing Ready**: Yes - multi-user collaboration tested and verified\n- **Recent Fixes (v3.1)**:\n  - Onboarding modal wired into Layout for new user guidance\n  - Seed data endpoint made idempotent (no duplicates on repeat use)\n  - Project invite notifications now sent via WebSocket when adding members\n  - Projects list auto-refreshes when user is added to a project\n  - Broken CMS admin route removed (help system is the working docs surface)\n  - Backend CI pipeline now includes TypeScript compilation check\n- **Remaining**: Sprint 10 features (Habit Tracking, Voice Input, Burnout Prevention, Collaborative Estimation) marked as future enhancements\n- **Validation**: Comprehensive validation report available in `docs/VALIDATION-REPORT.md`",
     "level": 2,
     "sortOrder": 0,
     "metadata": {
       "audience": [
         "user",
+        "admin",
         "developer"
       ],
       "surface": [
-        "docs"
+        "docs",
+        "help"
       ]
     }
   }

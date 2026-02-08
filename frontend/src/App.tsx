@@ -20,7 +20,6 @@ import DependenciesDashboardPage from './pages/DependenciesDashboardPage';
 import ApiKeysPage from './pages/ApiKeysPage';
 import WebhooksPage from './pages/WebhooksPage';
 import HelpPage from './pages/HelpPage';
-import DocumentationCMSPage from './pages/DocumentationCMSPage';
 import { HelpProvider } from './context/HelpContext';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -83,7 +82,6 @@ export default function App() {
               <Route path="webhooks" element={<WebhooksPage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="help" element={<HelpPage />} />
-              <Route path="admin/docs" element={<DocumentationCMSPage />} />
             </Route>
           </Routes>
         </HelpProvider>
