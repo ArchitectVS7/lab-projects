@@ -69,6 +69,7 @@ export default function ProjectDetailPage() {
     mutationFn: (data: { email: string; role?: string }) => projectsApi.addMember(id!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects', id] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       setAddMemberOpen(false);
       setMemberEmail('');
       setMemberRole('MEMBER');

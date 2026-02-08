@@ -28,6 +28,8 @@ export function useSocket() {
 
     socket.on('notification:new', () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      // Also refetch projects in case a PROJECT_INVITE was received
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
     });
 
     socket.on('presence:update', (data: { onlineUsers: string[] }) => {
