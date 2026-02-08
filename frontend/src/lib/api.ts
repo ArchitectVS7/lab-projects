@@ -9,18 +9,23 @@ const AUTH_PATHS = ['/api/auth/login', '/api/auth/register', '/api/auth/me'];
 // --- Core fetch wrapper ---
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  // Include Authorization header as fallback for mobile browsers that may not
+  // send cross-origin cookies reliably (iOS Safari ITP, SameSite issues)
+  const token = useAuthStore.getState().token;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers as Record<string, string>),
+  };
+
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    headers,
   });
 
   if (res.status === 401 && !AUTH_PATHS.includes(path)) {
     useAuthStore.getState().clearUser();
-    window.location.href = '/login';
     throw new Error('Unauthorized');
   }
 
@@ -41,13 +46,13 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export const authApi = {
   register: (data: { email: string; password: string; name: string }) =>
-    request<{ message: string; user: User }>('/api/auth/register', {
+    request<{ message: string; user: User; token: string }>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
   login: (data: { email: string; password: string }) =>
-    request<{ message: string; user: User }>('/api/auth/login', {
+    request<{ message: string; user: User; token: string }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
@@ -59,7 +64,7 @@ export const authApi = {
     request<{ user: User }>('/api/auth/me'),
 
   refresh: () =>
-    request<{ message: string }>('/api/auth/refresh', { method: 'POST' }),
+    request<{ message: string; token: string }>('/api/auth/refresh', { method: 'POST' }),
 
   updateProfile: (data: { name?: string; avatarUrl?: string | null }) =>
     request<{ user: User }>('/api/auth/profile', {
@@ -499,16 +504,17 @@ export const attachmentsApi = {
     const formData = new FormData();
     formData.append('file', file);
 
+    const token = useAuthStore.getState().token;
     const res = await fetch(`${API_BASE}/api/attachments/task/${taskId}`, {
       method: 'POST',
       credentials: 'include',
       body: formData,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
       // Note: do NOT set Content-Type header - browser sets it with boundary for multipart
     });
 
     if (res.status === 401) {
       useAuthStore.getState().clearUser();
-      window.location.href = '/login';
       throw new Error('Unauthorized');
     }
 

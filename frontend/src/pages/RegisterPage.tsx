@@ -5,7 +5,7 @@ import { authApi } from '../lib/api';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const setUser = useAuthStore((s) => s.setUser);
+  const { setUser, setToken } = useAuthStore();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,6 +25,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       const res = await authApi.register({ email, password, name });
+      setToken(res.token);
       setUser(res.user);
       navigate('/');
     } catch (err) {

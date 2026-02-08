@@ -75,12 +75,11 @@ const extractToken = (req: Request): string | null => {
   if (req.cookies?.[COOKIE_NAME]) {
     return req.cookies[COOKIE_NAME];
   }
-  // 2. Fallback to Authorization header in dev only
-  if (process.env.NODE_ENV !== 'production') {
-    const authHeader = req.headers.authorization;
-    if (authHeader?.startsWith('Bearer ')) {
-      return authHeader.split(' ')[1];
-    }
+  // 2. Fallback to Authorization header (needed for mobile browsers that
+  //    may not send cross-origin cookies reliably due to ITP / SameSite issues)
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.split(' ')[1];
   }
   return null;
 };

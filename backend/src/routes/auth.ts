@@ -123,7 +123,7 @@ router.post('/register', authLimiter, async (req: Request, res: Response, next: 
     const token = generateToken(user.id);
     setAuthCookie(res, token);
 
-    res.status(201).json({ message: 'Registration successful', user });
+    res.status(201).json({ message: 'Registration successful', user, token });
   } catch (error) {
     next(error);
   }
@@ -183,7 +183,7 @@ router.post('/login', authLimiter, async (req: Request, res: Response, next: Nex
       select: userSelect,
     });
 
-    res.json({ message: 'Login successful', user });
+    res.json({ message: 'Login successful', user, token });
   } catch (error) {
     next(error);
   }
@@ -278,7 +278,7 @@ router.get('/me', authenticate, async (req: AuthRequest, res: Response, next: Ne
 router.post('/refresh', authenticate, (req: AuthRequest, res: Response) => {
   const token = generateToken(req.userId!);
   setAuthCookie(res, token);
-  res.json({ message: 'Token refreshed' });
+  res.json({ message: 'Token refreshed', token });
 });
 
 /**
