@@ -41,12 +41,7 @@ const STATUS_BG: Record<TaskStatus, string> = {
   DONE: 'bg-green-500',
 };
 
-const STATUS_BG: Record<TaskStatus, string> = {
-  TODO: 'bg-gray-400',
-  IN_PROGRESS: 'bg-blue-500',
-  IN_REVIEW: 'bg-yellow-500',
-  DONE: 'bg-green-500',
-};
+
 
 const PRIORITY_COLORS: Record<TaskPriority, string> = {
   LOW: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300',

@@ -180,14 +180,12 @@ export default function FocusPage() {
                         canEdit={false}
                       />
                       <div className="flex justify-end mt-2">
-                        {!task.completedAt && (
-                          <button
-                            onClick={() => completeMutation.mutate(task.id)}
-                            className="text-sm font-medium text-[var(--primary-base)] hover:opacity-80"
-                          >
-                            Complete
-                          </button>
-                        )}
+                        <button
+                          onClick={() => completeMutation.mutate(task.id)}
+                          className="text-sm font-medium text-[var(--primary-base)] hover:opacity-80"
+                        >
+                          Complete
+                        </button>
                       </div>
                     </div>
                   ))}
