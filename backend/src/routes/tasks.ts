@@ -6,6 +6,7 @@ import { authenticate, AuthRequest } from '../middleware/auth.js';
 import { logTaskCreated, logTaskChanges, logTaskDeleted } from '../lib/activityLog.js';
 import { getIO } from '../lib/socket.js';
 import { dispatchWebhooks } from '../lib/webhookDispatcher.js';
+import { calculateTaskXP, awardXP } from '../services/xpService.js';
 
 const router = Router();
 router.use(authenticate);
@@ -728,6 +729,38 @@ router.put('/:id', async (req: AuthRequest, res: Response, next: NextFunction) =
     await dispatchWebhooks('task.updated', updatedTask, req.userId!);
     if (updatedTask.status === 'DONE' && oldTask.status !== 'DONE') {
       await dispatchWebhooks('task.completed', updatedTask, req.userId!);
+
+      // Award XP for task completion
+      try {
+        // Get time tracking data
+        const timeEntries = await prisma.timeEntry.findMany({
+          where: { taskId: updatedTask.id, userId: req.userId! },
+          select: { duration: true },
+        });
+        const totalTimeTracked = timeEntries.reduce((sum, entry) => sum + (entry.duration || 0), 0);
+
+        // Get attachment count
+        const attachmentCount = await prisma.attachment.count({
+          where: { taskId: updatedTask.id },
+        });
+
+        // Calculate XP
+        const xpCalc = await calculateTaskXP({
+          priority: updatedTask.priority,
+          description: updatedTask.description,
+          timeTracked: totalTimeTracked || undefined,
+          dueDate: updatedTask.dueDate,
+          completedAt: new Date(),
+          attachmentCount,
+        });
+
+        // Award XP (user who completed the task gets the XP)
+        const userId = updatedTask.assigneeId || req.userId!;
+        await awardXP(userId, xpCalc.totalXP, `Task: ${updatedTask.title}`);
+      } catch (xpError) {
+        // Log error but don't fail the request
+        console.error('Error awarding XP:', xpError);
+      }
     }
 
     res.json(updatedTask);

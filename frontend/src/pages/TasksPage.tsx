@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { tasksApi, projectsApi, recurringTasksApi, exportApi } from '../lib/api';
 import { useAuthStore } from '../store/auth';
+import { useCelebrationStore } from '../store/celebration';
 import { Plus, Table, Columns3, Calendar as CalendarIcon, Pencil, Trash2, Repeat, Download, Zap, Loader2, Shield, ShieldAlert, X } from 'lucide-react';
 import { format } from 'date-fns';
 import clsx from 'clsx';
@@ -389,6 +390,7 @@ function KanbanView({
 export default function TasksPage() {
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((s) => s.user);
+  const { addCelebration } = useCelebrationStore();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [viewMode, setViewMode] = useState<'table' | 'kanban' | 'calendar'>(
@@ -515,6 +517,13 @@ export default function TasksPage() {
     if (status === 'DONE') {
       setCelebrateCompletion(true);
       setTimeout(() => setCelebrateCompletion(false), 100);
+
+      // Trigger task completion celebration
+      // Find the task name from the current tasks list
+      const task = (tasksData?.pages?.flatMap(p => p.tasks) || []).find(t => t.id === id);
+      if (task) {
+        addCelebration('TASK', { taskName: task.title });
+      }
     }
     // For single status changes, we can use the optimistic bulk update or standard update
     // Using bulk mutation for consistency with Kanban drop

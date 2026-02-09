@@ -3,11 +3,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import { connectSocket, disconnectSocket } from '../lib/socket';
 import { useSocketStore } from '../store/socket';
 import { useAuthStore } from '../store/auth';
+import { useCelebrationStore } from '../store/celebration';
 
 export function useSocket() {
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const { setConnected, setOnlineUsers } = useSocketStore();
+  const { addCelebration } = useCelebrationStore();
 
   useEffect(() => {
     if (!user) {
@@ -36,13 +38,28 @@ export function useSocket() {
       setOnlineUsers(data.onlineUsers);
     });
 
+    // Gamification events
+    socket.on('xpGained', (data: { xp: number; source: string; newTotal: number }) => {
+      addCelebration('XP', { xp: data.xp, source: data.source });
+      // Invalidate XP progress query to refresh the UI
+      queryClient.invalidateQueries({ queryKey: ['xp-progress'] });
+    });
+
+    socket.on('levelUp', (data: { newLevel: number; rewards: any }) => {
+      addCelebration('LEVEL_UP', { newLevel: data.newLevel, rewards: data.rewards });
+      // Invalidate XP progress query to refresh the UI
+      queryClient.invalidateQueries({ queryKey: ['xp-progress'] });
+    });
+
     return () => {
       socket.off('connect');
       socket.off('disconnect');
       socket.off('notification:new');
       socket.off('presence:update');
+      socket.off('xpGained');
+      socket.off('levelUp');
       disconnectSocket();
       setConnected(false);
     };
-  }, [user, queryClient, setConnected, setOnlineUsers]);
+  }, [user, queryClient, setConnected, setOnlineUsers, addCelebration]);
 }

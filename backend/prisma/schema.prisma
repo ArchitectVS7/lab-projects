@@ -15,6 +15,13 @@ model User {
   avatarUrl    String?  @map("avatar_url")
   createdAt    DateTime @default(now()) @map("created_at")
 
+  // Gamification fields
+  xp            Int      @default(0)
+  level         Int      @default(1)
+  currentStreak Int      @default(0) @map("current_streak")
+  longestStreak Int      @default(0) @map("longest_streak")
+  lastLoginAt   DateTime? @map("last_login_at")
+
   ownedProjects  Project[]       @relation("ProjectOwner")
   projectMembers ProjectMember[]
   assignedTasks  Task[]          @relation("TaskAssignee")
@@ -28,6 +35,10 @@ model User {
   apiKeys        ApiKey[]
   webhooks       Webhook[]
   achievements   UserAchievement[]
+  quests         UserQuest[]
+  skills         UserSkill[]
+  xpLogs         XPLog[]
+  streakProtections StreakProtectionLog[]
 
   @@map("users")
 }
@@ -424,4 +435,64 @@ model UserAchievement {
 
   @@id([userId, achievementId])
   @@map("user_achievements")
+}
+
+model UserQuest {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  questType   QuestType @map("quest_type")
+  questData   Json      @map("quest_data")
+  completed   Boolean   @default(false)
+  completedAt DateTime? @map("completed_at")
+  expiresAt   DateTime  @map("expires_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, completed, expiresAt])
+  @@map("user_quests")
+}
+
+model UserSkill {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  skillId    String   @map("skill_id")
+  unlockedAt DateTime @default(now()) @map("unlocked_at")
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, skillId])
+  @@index([userId])
+  @@map("user_skills")
+}
+
+model XPLog {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  xpGained  Int      @map("xp_gained")
+  source    String
+  timestamp DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, timestamp])
+  @@map("xp_logs")
+}
+
+model StreakProtectionLog {
+  id     String   @id @default(uuid())
+  userId String   @map("user_id")
+  usedAt DateTime @default(now()) @map("used_at")
+
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, usedAt])
+  @@map("streak_protection_logs")
+}
+
+enum QuestType {
+  DAILY
+  WEEKLY
+  CHALLENGE
+  PERSONAL
 }

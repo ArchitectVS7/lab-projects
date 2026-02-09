@@ -21,6 +21,9 @@ import { useCommandPalette } from '../hooks/useCommandPalette';
 import { HelpButton } from './Help/HelpButton';
 import { HelpSidebar } from './Help/HelpSidebar';
 import OnboardingModal from './OnboardingModal';
+import { CelebrationManager } from './Celebrations';
+import { XPBar, LevelBadge } from './Gamification';
+import { useQuery } from '@tanstack/react-query';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -41,6 +44,19 @@ export default function Layout() {
   const { density } = useDensityStore();
   useCommandPalette();
   useSocket();
+
+  // Fetch XP progress
+  const { data: xpProgress } = useQuery({
+    queryKey: ['xp-progress'],
+    queryFn: async () => {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/xp/progress`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch XP progress');
+      return res.json();
+    },
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
 
   const handleLogout = async () => {
     try { await authApi.logout(); } catch { /* server unreachable is fine */ }
@@ -98,6 +114,17 @@ export default function Layout() {
             <ThemeToggle />
             <NotificationCenter />
           </div>
+
+          {layout !== 'minimal' && xpProgress && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <LevelBadge level={xpProgress.currentLevel} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <XPBar {...xpProgress} />
+                </div>
+              </div>
+            </div>
+          )}
 
           {layout !== 'minimal' && (
             <div className="flex items-center gap-3">
@@ -165,6 +192,7 @@ export default function Layout() {
       <KeyboardShortcutsModal />
       <HelpSidebar />
       <OnboardingModal />
+      <CelebrationManager />
     </div>
   );
 }

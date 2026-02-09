@@ -21,6 +21,7 @@ import attachmentRoutes from './routes/attachments.js';
 import dependencyRoutes from './routes/dependencies.js';
 import webhookRoutes from './routes/webhooks.js';
 import seedRoutes from './routes/seed.js';
+import xpRoutes from './routes/xp.js';
 import { apiKeyRateLimiter } from './middleware/apiKeyRateLimiter.js';
 import specs from './lib/swagger.js';
 import swaggerUi from 'swagger-ui-express';
@@ -79,6 +80,7 @@ app.use('/api/attachments', attachmentRoutes);
 app.use('/api', dependencyRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/seed', seedRoutes);
+app.use('/api/xp', xpRoutes);
 
 // Health check -- verifies database connectivity
 app.get('/health', async (_req, res) => {
