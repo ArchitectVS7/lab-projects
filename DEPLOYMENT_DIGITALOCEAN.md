@@ -64,6 +64,8 @@ echo \
 sudo apt update
 sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 sudo usermod -aG docker $USER
+# The following command applies the new group membership to the current shell session.
+# For the change to be permanent across all sessions, you need to log out and log back in.
 newgrp docker
 ```
 
