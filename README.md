@@ -1,6 +1,21 @@
+```markdown
 # TaskMan - Unified Task Management Application
 
-A modern, full-stack task management application for organizing projects, tasks, and team collaboration.
+A modern, full-stack task management application for organizing projects, tasks, and team collaboration. Built with Node.js and React, TaskMan provides real-time task synchronization, drag-and-drop interfaces, team collaboration features, and a gamification system to boost productivity. The application is designed for scalability with Docker support and comprehensive CI/CD integration.
+
+## ⚠️ Project Status
+
+**Note**: This project is currently in active development with high commit frequency (109 commits/30 days). Recent development cycles have focused on stabilizing CI/CD pipelines, fixing authentication flows, and implementing gamification features. The codebase is functional but may experience breaking changes. Refer to recent commits and issues for the latest status.
+
+## Features
+
+- **Task Management**: Create, organize, and track projects and tasks with real-time updates
+- **Team Collaboration**: Add team members to projects, assign tasks, and track progress
+- **Drag & Drop Interface**: Intuitive Kanban-style board for visual task organization
+- **Gamification System**: Earn XP, unlock levels, and celebrate milestones (Phase 1 implemented)
+- **Authentication**: Secure JWT-based authentication with password hashing
+- **Responsive Design**: Mobile-friendly interface with cross-platform support
+- **Notifications**: Real-time updates when users are added to projects or assigned tasks
 
 ## Tech Stack
 
@@ -10,6 +25,7 @@ A modern, full-stack task management application for organizing projects, tasks,
 - **Database**: PostgreSQL with Prisma ORM
 - **Authentication**: JWT (JSON Web Tokens)
 - **Security**: Helmet, CORS, Rate Limiting, bcrypt for password hashing
+- **Testing**: Playwright for end-to-end testing
 
 ### Frontend
 - **Framework**: React 18 with Vite
@@ -19,223 +35,191 @@ A modern, full-stack task management application for organizing projects, tasks,
 - **Styling**: Tailwind CSS
 - **Drag & Drop**: dnd-kit
 - **Routing**: React Router v6
+- **Testing**: Playwright for end-to-end testing
+
+## Installation
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL 14+
+- Docker and Docker Compose (optional, for containerized deployment)
+
+### Backend Setup
+
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Create environment configuration from template:
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Update `.env` with your PostgreSQL connection string and other configuration:
+   ```
+   DATABASE_URL="postgresql://user:password@localhost:5432/taskman"
+   JWT_SECRET="your-secret-key"
+   NODE_ENV="development"
+   ```
+
+5. Run database migrations:
+   ```bash
+   npx prisma migrate dev
+   ```
+
+6. Seed the database (optional):
+   ```bash
+   npx prisma db seed
+   ```
+
+7. Start the backend server:
+   ```bash
+   npm run dev
+   ```
+
+The backend will be available at `http://localhost:3000`.
+
+### Frontend Setup
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Create environment configuration from template:
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Update `.env` with your API endpoint:
+   ```
+   VITE_API_URL="http://localhost:3000"
+   ```
+
+5. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+The frontend will be available at `http://localhost:5173`.
+
+## Usage
+
+### Running Tests
+
+Run end-to-end tests with Playwright:
+
+```bash
+npm run test:e2e
+```
+
+Run tests in UI mode for interactive debugging:
+
+```bash
+npm run test:e2e:ui
+```
+
+Run tests in headed mode (visible browser):
+
+```bash
+npm run test:e2e:headed
+```
+
+View test report:
+
+```bash
+npm run test:e2e:report
+```
+
+### Color Auditing
+
+Verify color accessibility across the application:
+
+```bash
+npm run audit:colors
+```
+
+### Docker Deployment
+
+Build and run both services with Docker Compose:
+
+```bash
+docker-compose up --build
+```
+
+This starts:
+- Backend API on port 3000
+- Frontend on port 5173
+- PostgreSQL database on port 5432
 
 ## Project Structure
 
 ```
 TaskMan/
-├── backend/                 # Express API server
+├── backend/                      # Express API server
 │   ├── src/
-│   │   ├── routes/         # API endpoints
-│   │   ├── middleware/     # Express middleware
-│   │   ├── services/       # Business logic
-│   │   └── index.ts        # Server entry point
+│   │   ├── routes/              # API endpoints for projects, tasks, users, gamification
+│   │   ├── middleware/          # Authentication, error handling, validation
+│   │   ├── services/            # Business logic, database operations, XP/level calculations
+│   │   ├── index.ts             # Server entry point
+│   │   └── types/               # TypeScript type definitions
 │   ├── prisma/
-│   │   ├── schema.prisma   # Database schema
-│   │   └── seed.ts         # Database seeding
-│   └── Dockerfile          # Docker configuration
-├── frontend/               # React UI application
+│   │   ├── schema.prisma        # Database schema (users, projects, tasks, XP, levels)
+│   │   └── seed.ts              # Database seeding script
+│   ├── .env.example             # Environment variables template
+│   ├── Dockerfile               # Container configuration
+│   └── package.json             # Dependencies and scripts
+├── frontend/                     # React UI application
 │   ├── src/
-│   │   ├── pages/          # Route components
-│   │   ├── components/     # Reusable components
-│   │   ├── hooks/          # Custom React hooks
-│   │   ├── stores/         # Zustand stores
-│   │   └── main.tsx        # Entry point
-│   └── Dockerfile          # Docker configuration
-├── docker-compose.yml      # Local development setup
-├── RAILWAY_DEPLOYMENT.md   # Railway deployment guide
-├── IMPLEMENTATION_PLAN.md  # Detailed implementation notes
-└── PRD.md                  # Product requirements document
+│   │   ├── pages/               # Route components (Dashboard, Projects, Settings)
+│   │   ├── components/          # Reusable components (TaskCard, ProjectBoard, Login, Gamification)
+│   │   ├── hooks/               # Custom React hooks (useAuth, useTasks, useGamification)
+│   │   ├── stores/              # Zustand stores (authStore, tasksStore, gamificationStore)
+│   │   ├── main.tsx             # Vite entry point
+│   │   └── App.tsx              # Root component with routing
+│   ├── .env.example             # Environment variables template
+│   └── package.json             # Dependencies and scripts
+├── package.json                 # Root workspace configuration
+├── docker-compose.yml           # Multi-container orchestration
+└── README.md                    # This file
 ```
 
-## Getting Started
+## Known Issues & Development Notes
 
-### Prerequisites
-- Node.js 18+ and npm
-- PostgreSQL 14+
-- Git
+### Recent Fixes
+- **Mobile Login Redirect**: Fixed cross-origin cookie issues causing login loops (commit e95fb1c)
+- **CI/CD Pipeline**: Added TypeScript build step and removed broken CMS route (commits fb2d195, 49cd11c)
+- **Project Notifications**: Implemented auto-refresh and user notifications when added to projects (commits c6dac8a, 18213a3)
 
-### Local Development
+### Active Development
+The project is undergoing rapid iteration with focus on:
+- Stabilizing authentication flows across mobile and desktop platforms
+- Implementing and testing the gamification system (Phase 1 complete)
+- Resolving CI/CD pipeline issues
+- Improving documentation and test coverage
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd TaskMan
-   ```
-
-2. **Start with Docker Compose** (recommended)
-   ```bash
-   docker-compose up
-   ```
-   This starts:
-   - PostgreSQL database (port 5432)
-   - Backend API (port 4000)
-   - Frontend dev server (port 5173)
-
-3. **Or set up manually**
-
-   Backend:
-   ```bash
-   cd backend
-   npm install
-   cp .env.example .env
-   npm run prisma:migrate
-   npm run dev
-   ```
-
-   Frontend (in new terminal):
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-
-### Environment Variables
-
-Backend (`.env`):
-```env
-PORT=4000
-# IMPORTANT: When using Docker Compose, use 'postgres' (service name) not 'localhost'
-DATABASE_URL=postgresql://user:password@postgres:5432/taskman?schema=public
-JWT_SECRET=your-secret-key
-JWT_EXPIRES_IN=7d
-CORS_ORIGIN=http://localhost:5173
-NODE_ENV=development
-```
-
-Frontend (`.env.local`):
-```env
-VITE_API_URL=http://localhost:4000
-```
-
-**Docker vs Local:**
-- **Docker Compose**: Use `postgres` as the hostname (line 3 above) - services communicate using service names
-- **Local PostgreSQL**: Use `localhost` instead of `postgres`
-
-See `.env.example` for all available options.
-
-## Development
-
-### Running Tests
-```bash
-# Backend tests
-cd backend
-npm test
-
-# Frontend tests (if configured)
-cd frontend
-npm test
-```
-
-### Database Management
-```bash
-# Run migrations
-npm run prisma:migrate
-
-# View database in Prisma Studio
-npm run prisma:studio
-
-# Seed test data
-npm run prisma:seed
-```
-
-### Building for Production
-```bash
-# Backend
-cd backend
-npm run build
-
-# Frontend
-cd frontend
-npm run build
-```
-
-## Deployment
-
-### Railway
-For comprehensive Railway deployment instructions, see [RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md).
-
-Quick summary:
-1. Create empty Railway project
-2. Add PostgreSQL database
-3. Add backend service (from GitHub repo, root directory: `backend`)
-4. Generate backend URL and add to frontend environment
-5. Add frontend service (from GitHub repo, root directory: `frontend`)
-6. Update backend CORS_ORIGIN with frontend URL
-7. Services auto-deploy on git push to main
-
-## Documentation
-
-- **[RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md)** - Complete deployment guide for Railway
-- **[IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)** - Detailed implementation notes and architecture decisions
-- **[PRD.md](PRD.md)** - Product requirements and feature specifications
-
-## API Endpoints
-
-### Authentication
-- `POST /auth/register` - Create new account
-- `POST /auth/login` - User login
-- `POST /auth/logout` - User logout
-
-### Projects
-- `GET /projects` - List user's projects
-- `POST /projects` - Create new project
-- `GET /projects/:id` - Get project details
-- `PUT /projects/:id` - Update project
-- `DELETE /projects/:id` - Delete project
-
-### Tasks
-- `GET /projects/:projectId/tasks` - List project tasks
-- `POST /projects/:projectId/tasks` - Create task
-- `PUT /tasks/:id` - Update task
-- `DELETE /tasks/:id` - Delete task
-- `PATCH /tasks/:id/status` - Update task status
-
-### Health
-- `GET /health` - Server health check
-
-## Features
-
-- ✅ User authentication with JWT
-- ✅ Create and manage projects
-- ✅ Create, update, and organize tasks
-- ✅ Task status tracking
-- ✅ Drag-and-drop task management
-- ✅ Real-time API communication
-- ✅ Responsive design
-- ✅ Rate limiting and security headers
-- ✅ Database persistence with PostgreSQL
-
-## Performance & Robustness
-
-- Automatic database migrations on startup
-- Connection pooling for database efficiency
-- Rate limiting on API endpoints
-- CORS security configuration
-- Password hashing with bcrypt
-- JWT token expiration
-- Comprehensive error handling
-
-## Documentation Automation
-
-TaskMan treats `docs/PRD.md` as the single source of truth for feature behavior and UI expectations. The intent is to derive both the user manual and in-app help content from the same modular content blocks. For details on the planned modular documentation workflow and contributor expectations, see `docs/DOCUMENTATION_AUTOMATION.md`.
+If you encounter issues, check recent commits and open GitHub issues before filing new ones.
 
 ## Contributing
 
-1. Create a feature branch from main
-2. Make your changes
-3. Test thoroughly
-4. Commit with descriptive messages
-5. Push and create a pull request
+This project uses Husky for git hooks and lint-staged for pre-commit checks. All commits are automatically validated.
+
+```bash
+npm run prepare
+```
 
 ## License
 
-[Add your license here]
-
-## Support
-
-For issues or questions:
-1. Check existing documentation
-2. Review implementation notes in IMPLEMENTATION_PLAN.md
-3. Check deployment guide for common issues
-4. Create an issue with detailed information
+See LICENSE file in the repository for details.
+```
