@@ -25,7 +25,7 @@ A modern, full-stack task management application for organizing projects, tasks,
 - **Database**: PostgreSQL with Prisma ORM
 - **Authentication**: JWT (JSON Web Tokens)
 - **Security**: Helmet, CORS, Rate Limiting, bcrypt for password hashing
-- **Testing**: Playwright for end-to-end testing
+- **Testing**: Jest (unit and integration tests)
 
 ### Frontend
 - **Framework**: React 18 with Vite
@@ -35,7 +35,7 @@ A modern, full-stack task management application for organizing projects, tasks,
 - **Styling**: Tailwind CSS
 - **Drag & Drop**: dnd-kit
 - **Routing**: React Router v6
-- **Testing**: Playwright for end-to-end testing
+- **Testing**: Vitest (unit tests)
 
 ## Installation
 
@@ -83,7 +83,7 @@ A modern, full-stack task management application for organizing projects, tasks,
    npm run dev
    ```
 
-The backend will be available at `http://localhost:3000`.
+The backend will be available at `http://localhost:4000`.
 
 ### Frontend Setup
 
@@ -104,7 +104,7 @@ The backend will be available at `http://localhost:3000`.
 
 4. Update `.env` with your API endpoint:
    ```
-   VITE_API_URL="http://localhost:3000"
+   VITE_API_URL="http://localhost:4000"
    ```
 
 5. Start the development server:
@@ -159,7 +159,7 @@ docker-compose up --build
 ```
 
 This starts:
-- Backend API on port 3000
+- Backend API on port 4000
 - Frontend on port 5173
 - PostgreSQL database on port 5432
 
