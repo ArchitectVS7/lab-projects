@@ -95,7 +95,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: https://app.example.com
+        VITE_API_URL: https://app.example.com/api
     environment:
       PORT: 3000
     restart: unless-stopped
