@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { PrismaClient } from '@prisma/client';
+import { jest } from '@jest/globals';
 import app from '../src/app';
 import { calculateNextOccurrence } from '../src/lib/recurrence';
 

@@ -79,15 +79,16 @@ docker-compose down            # Stop all services
 
 - **State management**: Zustand stores in `src/store/` (auth, layout, timer, density, theme, socket, etc.)
 - **Data fetching**: TanStack React Query with API client in `src/lib/api.ts`
-- **Routing**: React Router v6
+- **Routing**: React Router v6 — pages include Dashboard, Tasks, Check-in (`/checkin`), Agent Queue (`/agents`)
 - **Real-time**: Socket.io client in `src/lib/socket.ts` with hooks in `src/hooks/`
 - **Styling**: Tailwind CSS with theme system and density settings
 - **Animations**: Framer Motion with performance optimizations
+- **Key components**: `DelegateModal` (AI agent delegation), `DomainPicker` (domain selection), `ProgressOverview`, `WeekView`
 
-### Database Schema (18 models)
+### Database Schema (28 models)
 
 Key models:
-- **User**: Authentication and profile
+- **User**: Authentication and profile (with XP, level, streak fields)
 - **Project**: Container for tasks with team members
 - **Task**: Core entity with status, priority, assignments, dependencies
 - **ProjectMember**: Project membership with roles
@@ -95,28 +96,32 @@ Key models:
 - **TimeEntry**: Time tracking with start/end/duration
 - **Comment**: Threaded comments on tasks with @mentions
 - **ActivityLog**: Audit trail for task changes
-- **Tag**: Project-scoped tags for tasks
+- **Tag/TaskTag**: Project-scoped tags for tasks
 - **CustomFieldDefinition/CustomFieldValue**: Extensible task metadata
 - **Attachment**: File uploads linked to tasks
 - **TaskDependency**: Task blocking relationships
 - **Notification**: User notifications
-- **ApiKey/Webhook**: API integration features
-- **Achievement/UserAchievement**: Gamification
+- **ApiKey/Webhook/WebhookLog**: API integration features
+- **Achievement/UserAchievement**: Gamification badges
+- **UserQuest/UserSkill/XPLog/StreakProtectionLog**: Gamification progression
+- **Domain/TaskDomain**: User-scoped life/work areas (e.g. Coding, Marketing); auto-seeded with 5 defaults on first fetch
+- **DailyCheckin**: Daily check-in records (priorities, energy level, blockers, focus domains)
+- **AgentDelegation**: AI agent task delegation with status tracking (QUEUED → IN_PROGRESS → COMPLETED/FAILED)
 
 ### Testing
 
-- **Backend**: Jest with ts-jest, supertest for API testing, 265 tests across 14 suites
+- **Backend**: Jest with ts-jest, supertest for API testing, ~440 tests across 24 suites
 - **Test database**: `taskapp_test` at `postgresql://taskapp:taskapp_secret@localhost:5432/taskapp_test`
 - **Test pattern**: `beforeAll` for setup, create users via API endpoints, `--runInBand --forceExit` flags
 - **Windows note**: Set env vars separately (not inline Unix-style)
-- **Coverage**: 61 endpoints tested across multiple phases (Auth, Projects, Tasks, Time tracking, Comments, etc.)
+- **Coverage**: Suites include Auth, Projects, Tasks, Time tracking, Comments, Analytics, Domains, Checkins, Agents, Webhooks, WebSocket, Gamification, etc.
 
 ### WebSocket Architecture
 
 - Socket.io server initialized in `src/index.ts` via `initializeSocket()`
 - Authentication: JWT extracted from cookie on connection
 - Rooms: User-specific (`user:<userId>`) and task-specific (`task:<taskId>`)
-- Events: Real-time updates for tasks, comments, notifications
+- Events: Real-time updates for tasks, comments, notifications, agent status (`agent:status`)
 - Client hooks: `useSocket`, `useTaskSocket` in frontend
 
 ### Activity Logging
@@ -182,12 +187,23 @@ VITE_API_URL=http://localhost:4000
 3. Add socket listener in frontend (`src/hooks/useSocket.ts` or `useTaskSocket.ts`)
 4. Update Zustand store or React Query cache
 
+## Pre-existing Errors Policy
+
+When running tests or linting reveals failures that existed before the current change set:
+
+1. **Never disclaim them away** — phrases like "pre-existing, not caused by my changes" are a red flag. They shift attention away from a real problem.
+2. **Always log them** — open a task (via the TaskCreate tool) describing the failure, root cause if known, and affected files. This ensures it is tracked and not forgotten.
+3. **Fix them when in scope** — if the error is fixable without large scope expansion (e.g., a broken Jest config), fix it in the same session before committing. Report what was done.
+4. **Escalate when out of scope** — if the fix would balloon scope, create the task, note it in the commit message, and tell the user explicitly.
+
+The goal is: no error silently disappears behind a disclaimer.
+
 ## Git Workflow
 
 - Main branch: `main`
 - Feature branches: `claude/[feature-name]-[hash]` prefix for PR branches
 - When resolving conflicts between implementation and test PRs: prefer the implementation that was co-designed with tests
-- Commits use descriptive messages, often include "Co-Authored-By: Claude Sonnet 4.5"
+- Commits use descriptive messages, often include "Co-Authored-By: Claude Sonnet 4.6"
 
 ## Known Issues & Workarounds
 

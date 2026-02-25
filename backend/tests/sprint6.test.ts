@@ -2,7 +2,11 @@ import request from 'supertest';
 import { PrismaClient } from '@prisma/client';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import app from '../src/app';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const prisma = new PrismaClient();
 
