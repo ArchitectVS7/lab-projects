@@ -39,6 +39,9 @@ model User {
   skills         UserSkill[]
   xpLogs         XPLog[]
   streakProtections StreakProtectionLog[]
+  domains          Domain[]
+  checkins         DailyCheckin[]
+  agentDelegations AgentDelegation[]
 
   @@map("users")
 }
@@ -91,6 +94,8 @@ model Task {
   attachments       Attachment[]
   dependsOn         TaskDependency[] @relation("DependentOn")
   dependedOnBy      TaskDependency[] @relation("DependsOnTask")
+  domains           TaskDomain[]
+  agentDelegations  AgentDelegation[]
 
   @@index([projectId])
   @@index([assigneeId])
@@ -495,4 +500,86 @@ enum QuestType {
   WEEKLY
   CHALLENGE
   PERSONAL
+}
+
+model Domain {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String
+  color     String   @default("#6366f1")
+  icon      String   @default("🔵")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks TaskDomain[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("domains")
+}
+
+model TaskDomain {
+  taskId   String @map("task_id")
+  domainId String @map("domain_id")
+
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  domain Domain @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, domainId])
+  @@map("task_domains")
+}
+
+model DailyCheckin {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  date         DateTime @db.Date
+  priorities   String   @db.Text
+  energyLevel  Int      @map("energy_level")
+  blockers     String?  @db.Text
+  focusDomains String[] @map("focus_domains")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+  @@map("daily_checkins")
+}
+
+enum AgentType {
+  RESEARCH
+  WRITING
+  SOCIAL_MEDIA
+  CODE
+  OUTREACH
+  ANALYTICS
+}
+
+enum AgentTaskStatus {
+  QUEUED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+model AgentDelegation {
+  id           String          @id @default(uuid())
+  taskId       String          @map("task_id")
+  userId       String          @map("user_id")
+  agentType    AgentType       @map("agent_type")
+  status       AgentTaskStatus @default(QUEUED)
+  instructions String?         @db.Text
+  result       String?         @db.Text
+  startedAt    DateTime?       @map("started_at")
+  completedAt  DateTime?       @map("completed_at")
+  createdAt    DateTime        @default(now()) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([userId, agentType])
+  @@map("agent_delegations")
 }

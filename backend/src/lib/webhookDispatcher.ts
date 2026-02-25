@@ -9,6 +9,8 @@ const WEBHOOK_EVENTS = [
   'project.created',
   'project.updated',
   'comment.added',
+  'task.delegated',
+  'task.agent_completed',
 ] as const;
 
 export type WebhookEvent = typeof WEBHOOK_EVENTS[number];

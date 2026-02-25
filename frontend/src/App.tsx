@@ -21,6 +21,8 @@ import ApiKeysPage from './pages/ApiKeysPage';
 import WebhooksPage from './pages/WebhooksPage';
 import HelpPage from './pages/HelpPage';
 import { HelpProvider } from './context/HelpContext';
+import CheckinPage from './pages/CheckinPage';
+import AgentQueuePage from './pages/AgentQueuePage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user);
@@ -81,6 +83,8 @@ export default function App() {
               <Route path="api-keys" element={<ApiKeysPage />} />
               <Route path="webhooks" element={<WebhooksPage />} />
               <Route path="profile" element={<ProfilePage />} />
+              <Route path="checkin" element={<CheckinPage />} />
+              <Route path="agents" element={<AgentQueuePage />} />
               <Route path="help" element={<HelpPage />} />
             </Route>
           </Routes>

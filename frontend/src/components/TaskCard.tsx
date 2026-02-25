@@ -1,11 +1,13 @@
 
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, type Transition } from 'framer-motion';
-import { Clock, Repeat, Pencil } from 'lucide-react';
+import { Clock, Repeat, Pencil, Zap } from 'lucide-react';
 import { usePerformanceAnimations } from '../hooks/usePerformanceAnimations';
 import clsx from 'clsx';
 import type { Task, TaskPriority, TaskStatus } from '../types';
 import { format } from 'date-fns';
+import DelegateModal from './DelegateModal';
 
 export const STATUS_LABELS: Record<TaskStatus, string> = {
     TODO: 'To Do',
@@ -57,6 +59,7 @@ export default function TaskCard({
     canEdit = false,
     isDraggable = false, // Handled by wrapper if true, essentially just affects hover styles here
 }: TaskCardProps) {
+    const [showDelegateModal, setShowDelegateModal] = useState(false);
     const navigate = useNavigate();
     const { getTaskCardHover } = usePerformanceAnimations();
     const taskCardHover = getTaskCardHover();
@@ -76,6 +79,7 @@ export default function TaskCard({
     };
 
     return (
+        <>
         <motion.div
             className={clsx(
                 "bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow",
@@ -100,6 +104,13 @@ export default function TaskCard({
                         <Pencil size={14} />
                     </button>
                 )}
+                <button
+                    onClick={(e) => { e.stopPropagation(); setShowDelegateModal(true); }}
+                    className="p-1 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-500 flex-shrink-0 mt-0.5 transition-colors"
+                    title="Delegate to AI agent"
+                >
+                    <Zap size={14} />
+                </button>
             </div>
 
             {(showDescription && task.description) && (
@@ -117,6 +128,12 @@ export default function TaskCard({
                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: task.project.color }} />
                         <span className="text-xs text-gray-500 dark:text-gray-400">{task.project.name}</span>
                     </div>
+                )}
+                {task.agentDelegations && task.agentDelegations.length > 0 && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+                        <Zap size={10} />
+                        {task.agentDelegations[0]!.agentType.replace('_', ' ')}
+                    </span>
                 )}
             </div>
 
@@ -176,5 +193,15 @@ export default function TaskCard({
                 )}
             </div>
         </motion.div>
+
+        {showDelegateModal && (
+            <DelegateModal
+                taskId={task.id}
+                taskTitle={task.title}
+                isOpen={showDelegateModal}
+                onClose={() => setShowDelegateModal(false)}
+            />
+        )}
+        </>
     );
 }

@@ -1,5 +1,5 @@
 import { useAuthStore } from '../store/auth';
-import type { User, Task, Project, ProjectMember, TaskStatus, TaskPriority, RecurringTask, RecurrenceFrequency, TimeEntry, Comment, ActivityLog, Tag, TaskTag, CustomFieldDefinition, CustomFieldType, CustomFieldValue, Attachment, CreatorMetricsData, DependencyList, DependencyGraph, CriticalPath, ApiKey, WebhookConfig, WebhookLog } from '../types';
+import type { User, Task, Project, ProjectMember, TaskStatus, TaskPriority, RecurringTask, RecurrenceFrequency, TimeEntry, Comment, ActivityLog, Tag, TaskTag, CustomFieldDefinition, CustomFieldType, CustomFieldValue, Attachment, CreatorMetricsData, DependencyList, DependencyGraph, CriticalPath, ApiKey, WebhookConfig, WebhookLog, Domain, TaskDomain, DailyCheckin, CheckinInput, CheckinStreak, AgentDelegation, AgentType, AgentTaskStatus } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
@@ -573,6 +573,51 @@ export const apiKeysApi = {
     request<void>(`/api/auth/api-keys/${id}`, { method: 'DELETE' }),
 };
 
+// --- Domains API ---
+
+export const domainsApi = {
+  getAll: () =>
+    request<Domain[]>('/api/domains'),
+
+  create: (data: { name: string; color?: string; icon?: string; sortOrder?: number }) =>
+    request<Domain>('/api/domains', { method: 'POST', body: JSON.stringify(data) }),
+
+  update: (id: string, data: { name?: string; color?: string; icon?: string; sortOrder?: number }) =>
+    request<Domain>(`/api/domains/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  delete: (id: string) =>
+    request<void>(`/api/domains/${id}`, { method: 'DELETE' }),
+
+  assignTask: (domainId: string, taskId: string) =>
+    request<TaskDomain>(`/api/domains/${domainId}/tasks/${taskId}`, { method: 'POST' }),
+
+  removeTask: (domainId: string, taskId: string) =>
+    request<void>(`/api/domains/${domainId}/tasks/${taskId}`, { method: 'DELETE' }),
+};
+
+// --- Daily Check-ins API ---
+
+export const checkinsApi = {
+  create: (data: CheckinInput) =>
+    request<DailyCheckin>('/api/checkins', { method: 'POST', body: JSON.stringify(data) }),
+
+  getToday: () =>
+    request<DailyCheckin>('/api/checkins/today'),
+
+  getAll: (params?: { startDate?: string; endDate?: string; limit?: number; offset?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.startDate) qs.set('startDate', params.startDate);
+    if (params?.endDate) qs.set('endDate', params.endDate);
+    if (params?.limit) qs.set('limit', String(params.limit));
+    if (params?.offset) qs.set('offset', String(params.offset));
+    const query = qs.toString();
+    return request<{ checkins: DailyCheckin[]; total: number }>(`/api/checkins${query ? `?${query}` : ''}`);
+  },
+
+  getStreak: () =>
+    request<CheckinStreak>('/api/checkins/streak'),
+};
+
 // --- Webhooks API ---
 
 export const webhooksApi = {
@@ -596,4 +641,23 @@ export const webhooksApi = {
 
   getLogs: (id: string) =>
     request<WebhookLog[]>(`/api/webhooks/${id}/logs`),
+};
+
+// --- Agents API ---
+
+export const agentsApi = {
+  delegate: (data: { taskId: string; agentType: AgentType; instructions?: string }) =>
+    request<AgentDelegation>('/api/agents/delegate', { method: 'POST', body: JSON.stringify(data) }),
+
+  getQueue: () =>
+    request<AgentDelegation[]>('/api/agents/queue'),
+
+  getQueueByType: (agentType: AgentType) =>
+    request<AgentDelegation[]>(`/api/agents/queue/${agentType}`),
+
+  updateStatus: (id: string, data: { status: AgentTaskStatus; result?: string }) =>
+    request<AgentDelegation>(`/api/agents/${id}/status`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  remove: (id: string) =>
+    request<void>(`/api/agents/${id}`, { method: 'DELETE' }),
 };

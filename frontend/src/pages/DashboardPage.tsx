@@ -5,6 +5,7 @@ import { Clock, CheckCircle2, AlertTriangle, ListTodo } from 'lucide-react';
 import InsightsWidget from '../components/InsightsWidget';
 import { DashboardSkeleton } from '../components/Skeletons';
 import EmptyState from '../components/EmptyState';
+import ProgressOverview from '../components/ProgressOverview';
 import { useAuthStore } from '../store/auth';
 import clsx from 'clsx';
 import type { Project } from '../types';
@@ -139,8 +140,11 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Recent Projects */}
-        <div>
+        {/* Progress Overview + Recent Projects */}
+        <div className="space-y-6">
+          <ProgressOverview />
+
+          <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Projects</h2>
             <Link to="/projects" className="text-sm text-[var(--primary-base)] hover:opacity-80 transition-opacity">View all →</Link>
@@ -161,6 +165,7 @@ export default function DashboardPage() {
               />
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>

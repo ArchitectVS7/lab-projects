@@ -73,6 +73,8 @@ export interface Task {
   assignee: Pick<User, 'id' | 'name' | 'avatarUrl'> | null;
   creator: Pick<User, 'id' | 'name'>;
   tags?: TaskTag[];
+  domains?: TaskDomain[];
+  agentDelegations?: Pick<AgentDelegation, 'id' | 'agentType' | 'status'>[];
   _count?: {
     dependsOn: number;
     dependedOnBy: number;
@@ -303,4 +305,67 @@ export interface Attachment {
   uploadedById: string;
   createdAt: string;
   uploadedBy: Pick<User, 'id' | 'name' | 'avatarUrl'>;
+}
+
+// --- Domain ---
+
+export interface Domain {
+  id: string;
+  userId: string;
+  name: string;
+  color: string;
+  icon: string;
+  sortOrder: number;
+  createdAt: string;
+  _count?: { tasks: number };
+}
+
+export interface TaskDomain {
+  taskId: string;
+  domainId: string;
+  domain: Domain;
+}
+
+// --- Daily Check-in ---
+
+export interface DailyCheckin {
+  id: string;
+  userId: string;
+  date: string;
+  priorities: string;
+  energyLevel: number;
+  blockers: string | null;
+  focusDomains: string[];
+  createdAt: string;
+}
+
+export interface CheckinStreak {
+  streak: number;
+  lastCheckin: string | null;
+}
+
+export interface CheckinInput {
+  priorities: string;
+  energyLevel: number;
+  blockers?: string;
+  focusDomains?: string[];
+}
+
+// --- Agent Delegation ---
+
+export type AgentType = 'RESEARCH' | 'WRITING' | 'SOCIAL_MEDIA' | 'CODE' | 'OUTREACH' | 'ANALYTICS';
+export type AgentTaskStatus = 'QUEUED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
+
+export interface AgentDelegation {
+  id: string;
+  taskId: string;
+  userId: string;
+  agentType: AgentType;
+  status: AgentTaskStatus;
+  instructions: string | null;
+  result: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  task?: Pick<Task, 'id' | 'title' | 'projectId'>;
 }
