@@ -6,7 +6,7 @@ import { useDensityStore } from '../store/density';
 import { pageTransition } from '../lib/animations';
 
 import { authApi } from '../lib/api';
-import { LayoutDashboard, CheckSquare, FolderKanban, Calendar, LogOut, User, Crosshair, BarChart3, GitBranch, Key, Globe } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, FolderKanban, Calendar, LogOut, User, Crosshair, BarChart3, GitBranch, Key, Globe, ClipboardList, Zap } from 'lucide-react';
 import ErrorBoundary from './ErrorBoundary';
 import TimerWidget from './TimerWidget';
 import clsx from 'clsx';
@@ -20,6 +20,8 @@ import KeyboardShortcutsModal from './KeyboardShortcutsModal';
 import { useCommandPalette } from '../hooks/useCommandPalette';
 import { HelpButton } from './Help/HelpButton';
 import { HelpSidebar } from './Help/HelpSidebar';
+import { FeatureDiscoveryToast } from './Help/FeatureDiscoveryToast';
+import { FeatureTutorial } from './Help/FeatureTutorial';
 import OnboardingModal from './OnboardingModal';
 import { CelebrationManager } from './Celebrations';
 import { XPBar, LevelBadge } from './Gamification';
@@ -27,6 +29,7 @@ import { useQuery } from '@tanstack/react-query';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/checkin', label: 'Check-in', icon: ClipboardList },
   { to: '/tasks', label: 'Tasks', icon: CheckSquare },
   { to: '/projects', label: 'Projects', icon: FolderKanban },
   { to: '/calendar', label: 'Calendar', icon: Calendar },
@@ -35,6 +38,7 @@ const navItems = [
   { to: '/dependencies', label: 'Dependencies', icon: GitBranch },
   { to: '/api-keys', label: 'API Keys', icon: Key },
   { to: '/webhooks', label: 'Webhooks', icon: Globe },
+  { to: '/agents', label: 'Agent Queue', icon: Zap },
 ];
 
 export default function Layout() {
@@ -192,6 +196,8 @@ export default function Layout() {
       <KeyboardShortcutsModal />
       <HelpSidebar />
       <OnboardingModal />
+      <FeatureDiscoveryToast />
+      <FeatureTutorial />
       <CelebrationManager />
     </div>
   );

@@ -562,7 +562,7 @@ export default function TasksPage() {
       const toRemove = existingIds.filter((id) => !formData.domainIds.includes(id));
       await Promise.all([
         ...toAdd.map((domainId) => domainsApi.assignTask(domainId, taskId)),
-        ...toRemove.map((domainId) => domainsApi.unassignTask(domainId, taskId)),
+        ...toRemove.map((domainId) => domainsApi.removeTask(domainId, taskId)),
       ]);
     };
 

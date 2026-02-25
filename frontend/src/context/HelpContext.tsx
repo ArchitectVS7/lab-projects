@@ -1,6 +1,7 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
+import { featureTutorials, FeatureTutorial } from '../data/featureTutorials';
 
 export interface ContentBlock {
     blockId: string;
@@ -26,14 +27,47 @@ interface HelpContextType {
     isLoading: boolean;
     suggestedBlocks: ContentBlock[];
     searchBlocks: (query: string) => ContentBlock[];
+    // Tutorial state
+    activeTutorial: FeatureTutorial | null;
+    tutorialStep: number;
+    openTutorial: (featureId: string) => void;
+    closeTutorial: () => void;
+    nextTutorialStep: () => void;
+    prevTutorialStep: () => void;
+    seenFeatures: string[];
+    markFeatureSeen: (id: string) => void;
+    pendingDiscovery: FeatureTutorial | null;
 }
 
 const HelpContext = createContext<HelpContextType | undefined>(undefined);
+
+const SEEN_FEATURES_KEY = 'tm_seenFeatures';
+
+function loadSeenFeatures(): string[] {
+    try {
+        const raw = localStorage.getItem(SEEN_FEATURES_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch {
+        return [];
+    }
+}
+
+function saveSeenFeatures(ids: string[]) {
+    try {
+        localStorage.setItem(SEEN_FEATURES_KEY, JSON.stringify(ids));
+    } catch {
+        // ignore storage errors
+    }
+}
 
 export function HelpProvider({ children }: { children: ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
     const [blocks, setBlocks] = useState<ContentBlock[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [activeTutorial, setActiveTutorial] = useState<FeatureTutorial | null>(null);
+    const [tutorialStep, setTutorialStep] = useState(0);
+    const [seenFeatures, setSeenFeatures] = useState<string[]>(loadSeenFeatures);
+    const [pendingDiscovery, setPendingDiscovery] = useState<FeatureTutorial | null>(null);
     const location = useLocation();
 
     // Load documentation on mount
@@ -57,24 +91,72 @@ export function HelpProvider({ children }: { children: ReactNode }) {
         fetchDocs();
     }, []);
 
+    // Watch route changes for unseen features
+    useEffect(() => {
+        const currentPath = location.pathname;
+        const match = featureTutorials.find(t => {
+            if (t.routePattern === '/') return currentPath === '/';
+            return currentPath === t.routePattern || currentPath.startsWith(t.routePattern + '/');
+        });
+
+        if (match && !seenFeatures.includes(match.featureId)) {
+            setPendingDiscovery(match);
+        } else {
+            setPendingDiscovery(null);
+        }
+    }, [location.pathname, seenFeatures]);
+
     const toggleHelp = () => setIsOpen(prev => !prev);
     const closeHelp = () => setIsOpen(false);
     const openHelp = () => setIsOpen(true);
+
+    const markFeatureSeen = useCallback((id: string) => {
+        setSeenFeatures(prev => {
+            if (prev.includes(id)) return prev;
+            const next = [...prev, id];
+            saveSeenFeatures(next);
+            return next;
+        });
+        setPendingDiscovery(prev => (prev?.featureId === id ? null : prev));
+    }, []);
+
+    const openTutorial = useCallback((featureId: string) => {
+        const tutorial = featureTutorials.find(t => t.featureId === featureId);
+        if (tutorial) {
+            setActiveTutorial(tutorial);
+            setTutorialStep(0);
+        }
+    }, []);
+
+    const closeTutorial = useCallback(() => {
+        setActiveTutorial(null);
+        setTutorialStep(0);
+    }, []);
+
+    const nextTutorialStep = useCallback(() => {
+        setTutorialStep(prev => {
+            if (activeTutorial && prev < activeTutorial.steps.length - 1) {
+                return prev + 1;
+            }
+            return prev;
+        });
+    }, [activeTutorial]);
+
+    const prevTutorialStep = useCallback(() => {
+        setTutorialStep(prev => Math.max(0, prev - 1));
+    }, []);
 
     // Find suggested blocks based on current route
     const suggestedBlocks = React.useMemo(() => {
         if (!blocks.length) return [];
 
-        // Normalize current path (remove trailing slash, etc.)
         const currentPath = location.pathname;
 
         return blocks.filter(block => {
             if (!block.metadata?.route) return false;
-
-            // Exact match or prefix match
             return currentPath === block.metadata.route ||
                 (block.metadata.route !== '/' && currentPath.startsWith(block.metadata.route));
-        }).sort((a, b) => (b.metadata.route?.length || 0) - (a.metadata.route?.length || 0)); // Prioritize more specific matches
+        }).sort((a, b) => (b.metadata.route?.length || 0) - (a.metadata.route?.length || 0));
     }, [blocks, location.pathname]);
 
     const searchBlocks = (query: string) => {
@@ -83,7 +165,7 @@ export function HelpProvider({ children }: { children: ReactNode }) {
         return blocks.filter(block =>
             block.title.toLowerCase().includes(lowerQuery) ||
             block.content.toLowerCase().includes(lowerQuery)
-        ).slice(0, 10); // Limit results
+        ).slice(0, 10);
     };
 
     return (
@@ -95,7 +177,16 @@ export function HelpProvider({ children }: { children: ReactNode }) {
             blocks,
             isLoading,
             suggestedBlocks,
-            searchBlocks
+            searchBlocks,
+            activeTutorial,
+            tutorialStep,
+            openTutorial,
+            closeTutorial,
+            nextTutorialStep,
+            prevTutorialStep,
+            seenFeatures,
+            markFeatureSeen,
+            pendingDiscovery,
         }}>
             {children}
         </HelpContext.Provider>
