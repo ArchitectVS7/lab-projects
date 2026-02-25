@@ -25,20 +25,23 @@ The existing infrastructure supports this exactly:
 - External agent calls `PUT /api/agents/:id/status` with an API key to report COMPLETED + result
 - User sees the status change in real time
 
-**This is worth keeping and completing.** The open question is what the "external agent" actually is and who operates it (see Discussion below).
+**This is worth keeping and completing.** The open question is what the "external agent" actually is (see Discussion below).
 
 ---
 
 ### 2. Task Decomposition Assistant
 
-**Use case:** User enters a high-level goal — "Launch the marketing site for Product X" — and an AI assistant breaks it into concrete sub-tasks, proposes assignments, due dates, and dependencies. The user reviews the proposed task tree and approves or edits it before anything is committed to the database.
+**Use case:** User is inside a **Project** and enters a high-level goal — "Launch the marketing site for Product X" — and an AI assistant breaks it into concrete sub-tasks, proposes assignments, due dates, and dependencies. The user reviews the proposed task tree and approves or edits it before anything is committed to the database.
+
+**Where it lives:** Inside the Project dialog/page, not the generic task creation flow. Projects are always long-running and multi-task by nature (active development, shipped products needing marketing, content creation, music production, etc.), so decomposition belongs in that context.
+
+**AI backend for this use case:** Native integration required — the AI needs to read the project's existing tasks and members, then write new tasks on approval. This means a configurable backend (see AI Backend section below).
 
 Key design constraints:
-- The AI must present a plan for **approval before writing** — no tasks are created automatically
-- The result should populate the existing task creation flow, not bypass it
-- The decomposition should respect the current project structure (members, roles)
-
-This would likely surface as a modal or side panel triggered from the "New Task" flow: a "Help me break this down" button that opens a conversation, produces a proposed task list, and feeds it into the bulk-create API on approval.
+- The AI presents a plan for **approval before writing** — no tasks are created automatically
+- The user can add, remove, or edit proposed tasks in the approval screen before confirming
+- The AI is given context: project name, existing tasks, team members
+- On approval, tasks are created via the normal bulk-create path (same validation, same permissions)
 
 ---
 
@@ -49,49 +52,79 @@ This would likely surface as a modal or side panel triggered from the "New Task"
 - "Help me think through an alternate approach"
 - "This is blocked — what are my options?"
 
-The AI has context: the task title, description, status, assignee, due date, dependencies, and recent comments. It does not take actions — it only advises. The user decides what (if anything) to do next.
+**Where it lives:** New tab in `TaskDetailModal` alongside Comments, Activity, and Files.
 
-This would likely live as a new tab in the `TaskDetailModal` alongside Comments, Activity, and Files.
+**AI backend for this use case:** Two modes, user-configurable:
+
+**Mode A — Open in Claude (lightweight):**
+A button that opens Claude.ai in a new tab with the task context pre-filled as the opening message. The conversation happens in the Claude.ai interface using the user's existing subscription. No API key required, benefits from Claude's session-based project memory, zero backend cost. Appropriate for open-ended advisory conversations.
+
+**Mode B — Native chat (integrated):**
+A chat panel inside TaskMan that calls the configured AI backend directly. Conversation history is stored in the database (see Memory Storage below). Appropriate when the user wants the conversation to stay inside TaskMan or wants the AI to take actions (e.g. update the task description based on the conversation).
+
+The choice between modes can be a user preference setting.
 
 ---
 
-## Discussion Required
+## AI Backend — Configurable by Design
 
-### Should we build an orchestrator?
+No single AI provider should be hardcoded. A settings screen (user-level or system-level) should let the operator choose:
 
-**The concern:** Building a reliable AI orchestrator — one that actually executes multi-step tasks, manages retries, handles partial failures, and produces safe outputs — is a significant product in itself. It is not a feature; it is a platform. Getting into that business would pull focus from TaskMan's core value.
+| Backend | Cost model | Good for |
+|---|---|---|
+| Anthropic API (Claude) | Pay per token | Native integration, task decomposition |
+| Open in Claude.ai | Flat subscription | Advisory chat, session memory |
+| Ollama (local model) | Free, self-hosted | Privacy-sensitive environments |
 
-**The alternative view:** We don't need to build an orchestrator. The handoff model already separates concerns cleanly:
-- TaskMan owns the queue, status tracking, and UI
-- The AI worker is an external service — could be a Claude API call wrapped in a small function, a third-party automation (Zapier, Make, n8n), or a future dedicated service
-- TaskMan only needs to fire the webhook and trust the callback
+For native integrations (decomposition, Mode B chat), the API key is stored as a backend environment variable — never exposed to the frontend. The frontend only knows which provider is active, not the key.
 
-**Tentative position:** We do not build an orchestrator. We make TaskMan an excellent **delegation target and status consumer**. Any AI that can receive a webhook and call a REST endpoint can integrate. This keeps the surface area small and the system composable.
+---
 
-### What is the right AI for Use Cases 2 and 3?
+## Memory Storage for Task Chat
 
-Both the decomposition assistant and the task chat would call an LLM directly from the backend (Claude API). The key questions:
+Storing conversation history in TaskMan's own database (like comments) is the right baseline. For enriched memory — summarization, semantic search across past conversations, facts that persist across tasks — an open-source memory layer is worth evaluating:
 
-- **Where does the API key live?** Backend environment variable — never exposed to the frontend.
-- **What is the context window?** For task chat, the task object + last N comments is manageable. For decomposition, the project member list and existing task titles would also be useful context.
-- **Do we stream responses?** Streaming would make the chat feel responsive. The backend would need a streaming endpoint (SSE or chunked response); the frontend would render incrementally.
-- **Do we store conversations?** For task chat, storing the conversation in the database (similar to comments) would be valuable for audit and continuity. For decomposition, the conversation only matters until the user approves or discards — ephemeral is fine.
+### [mem0](https://github.com/mem0ai/mem0) ⭐ Recommended starting point
+- Node.js SDK with TypeScript support
+- Can use SQLite locally or PostgreSQL (already in our stack)
+- Integrates with Vercel AI SDK
+- Simple API: `add`, `search`, `getAll` per user
+- Self-hostable, no external service required
 
-### Scope and priority
+### [Zep](https://www.getzep.com/)
+- TypeScript SDK
+- Temporal knowledge graph — tracks how facts change over time
+- More powerful for complex, long-running agent scenarios
+- More infrastructure to operate than mem0
+- Better fit if conversations become deeply cross-referenced
 
-| Feature | Complexity | Value | Readiness |
-|---|---|---|---|
-| Handoff + status signal (complete existing infra) | Low | High | Infrastructure exists |
-| Task decomposition assistant | Medium | High | Needs design + API integration |
-| Task-level chat | Medium | High | Needs design + API integration |
-| Full orchestrator | Very High | Uncertain | Not recommended |
+### Recommendation
+Start with mem0 on PostgreSQL (no new infrastructure, same DB we already use). If conversations grow complex enough to need relationship modeling across tasks and projects, revisit Zep.
+
+For the initial implementation, plain database storage (a `TaskChatMessage` model with `taskId`, `role`, `content`, `createdAt`) is sufficient and keeps the data in our schema without any new dependency. mem0 becomes relevant when we want semantic retrieval ("what did we decide about X last month?") rather than just chronological replay.
+
+---
+
+## What We Are Not Building
+
+**We are not building an orchestrator.** An orchestrator that executes multi-step tasks, manages retries, handles tool calls, and produces reliable outputs is a platform in itself — not a feature. It would pull focus from TaskMan's core value.
+
+TaskMan's role in the AI ecosystem is:
+1. A **task context provider** — gives AI the richest possible view of what needs to be done
+2. A **work queue** — tracks delegations and receives status callbacks
+3. A **task writer** — AI proposes, human approves, TaskMan creates
+
+The AI that does the actual work (for handoff scenarios) is an external service. Any agent that can receive a webhook and call a REST endpoint can integrate. This keeps the surface small and the system composable.
 
 ---
 
 ## Proposed Next Steps (not yet scheduled)
 
-1. **Decision meeting:** Confirm we are not building an orchestrator. Decide whether the "external agent" for handoff will be a first-party Claude integration or a third-party hook.
-2. **Design spike:** Wireframe the task decomposition flow — specifically the approval step. How does the user edit the proposed task list before committing?
-3. **Design spike:** Wireframe the task chat panel. Does it live in `TaskDetailModal`? Is it a floating assistant? Does it need its own route?
-4. **API key management:** Decide where the Anthropic API key is configured (env var, per-user setting, or org-level setting).
-5. **Implementation:** Once designs are approved, implement in order: task chat (simpler, self-contained) → task decomposition (more complex approval flow).
+1. **Decision:** Confirm which handoff scenario to support first — a simple Claude API call wrapper, or a third-party automation hook (Zapier/Make/n8n).
+2. **Design spike:** Approval screen for task decomposition inside the Project dialog. Specifically: how does the user edit the proposed task list? Inline editable rows? A separate confirmation modal?
+3. **Settings design:** What does the AI backend configuration screen look like? Per-user or system-wide?
+4. **Implementation order (suggested):**
+   - Task chat Mode A (open in Claude.ai tab) — trivial, immediate value, no backend work
+   - Task chat Mode B (native, stored history) — adds chat panel + `TaskChatMessage` model
+   - Task decomposition — largest scope, requires approval UX design first
+   - mem0 integration — add after native chat is working, when retrieval becomes useful
