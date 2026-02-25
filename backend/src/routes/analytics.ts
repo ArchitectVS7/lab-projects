@@ -2,6 +2,7 @@ import express from 'express';
 import prisma from '../lib/prisma.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
+import { calculateCheckinStreak } from '../lib/streakUtils.js';
 
 const router = express.Router();
 
@@ -61,6 +62,30 @@ router.get('/insights', authenticate, async (req: AuthRequest, res, next) => {
             ? (completedThisWeek > 0 ? 100 : 0)
             : Math.round(((completedThisWeek - completedLastWeek) / completedLastWeek) * 100);
 
+        // Check-in insights: last 14 days
+        const twoWeeksAgoCheckin = new Date();
+        twoWeeksAgoCheckin.setDate(twoWeeksAgoCheckin.getDate() - 14);
+
+        const recentCheckins = await prisma.dailyCheckin.findMany({
+            where: { userId, date: { gte: twoWeeksAgoCheckin } },
+            orderBy: { date: 'desc' },
+        });
+
+        const avgEnergy = recentCheckins.length > 0
+            ? recentCheckins.reduce((sum, c) => sum + c.energyLevel, 0) / recentCheckins.length
+            : 0;
+
+        // Calculate streak
+        const sortedDates = recentCheckins.map(c => c.date.toISOString().slice(0, 10)).sort().reverse();
+        const checkinStreak = calculateCheckinStreak(sortedDates);
+
+        // Energy trend: compare last 7 days avg vs previous 7 days avg
+        const last7 = recentCheckins.slice(0, 7);
+        const prev7 = recentCheckins.slice(7, 14);
+        const last7Avg = last7.length > 0 ? last7.reduce((s, c) => s + c.energyLevel, 0) / last7.length : 0;
+        const prev7Avg = prev7.length > 0 ? prev7.reduce((s, c) => s + c.energyLevel, 0) / prev7.length : 0;
+        const energyTrend = prev7Avg === 0 ? 0 : ((last7Avg - prev7Avg) / prev7Avg) * 100;
+
         res.json({
             velocity: {
                 thisWeek: completedThisWeek,
@@ -72,6 +97,7 @@ router.get('/insights', authenticate, async (req: AuthRequest, res, next) => {
                 tasksAnalyzed: recentTasks.length,
             },
             insight: generateInsight(completedThisWeek, velocityChange, mostProductiveDay),
+            checkinInsights: { avgEnergy, checkinStreak, energyTrend },
         });
     } catch (error) {
         next(error);

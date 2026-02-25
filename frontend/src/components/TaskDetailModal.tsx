@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { X, MessageSquare, History, Link2 } from 'lucide-react';
-import type { Task, Project, ProjectMember, TaskStatus, TaskPriority } from '../types';
+import type { Task, Project, ProjectMember, TaskStatus, TaskPriority, Domain } from '../types';
 import TaskTimePanel from './TaskTimePanel';
 import CommentList from './CommentList';
 import ActivityTimeline from './ActivityTimeline';
 import { useTaskSocket } from '../hooks/useTaskSocket';
 import DependencyPicker from './DependencyPicker';
 import FileAttachments from './FileAttachments';
+import DomainPicker from './DomainPicker';
 
 export interface TaskFormData {
   title: string;
@@ -17,11 +18,13 @@ export interface TaskFormData {
   status: TaskStatus;
   priority: TaskPriority;
   dueDate: string;
+  domainIds: string[];
 }
 
 export default function TaskDetailModal({
   task,
   projects,
+  domains = [],
   currentUserId,
   onClose,
   onSubmit,
@@ -29,6 +32,7 @@ export default function TaskDetailModal({
 }: {
   task: Task | null;
   projects: Project[];
+  domains?: Domain[];
   currentUserId: string;
   onClose: () => void;
   onSubmit: (data: TaskFormData) => void;
@@ -42,6 +46,7 @@ export default function TaskDetailModal({
     status: task.status,
     priority: task.priority,
     dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
+    domainIds: task.domains?.map((td) => td.domainId) ?? [],
   } : {
     title: '',
     description: '',
@@ -50,6 +55,7 @@ export default function TaskDetailModal({
     status: 'TODO',
     priority: 'MEDIUM',
     dueDate: '',
+    domainIds: [],
   });
 
   const [activeTab, setActiveTab] = useState<'comments' | 'attachments' | 'activity'>('comments');
@@ -70,9 +76,10 @@ export default function TaskDetailModal({
         status: task.status,
         priority: task.priority,
         dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
+        domainIds: task.domains?.map((td) => td.domainId) ?? [],
       });
     } else {
-      setForm({ title: '', description: '', projectId: '', assigneeId: '', status: 'TODO', priority: 'MEDIUM', dueDate: '' });
+      setForm({ title: '', description: '', projectId: '', assigneeId: '', status: 'TODO', priority: 'MEDIUM', dueDate: '', domainIds: [] });
     }
   }
 
@@ -221,6 +228,16 @@ export default function TaskDetailModal({
                 ))}
               </select>
             </div>
+            {domains.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Life Areas</label>
+                <DomainPicker
+                  selected={form.domainIds}
+                  onChange={(ids) => setForm((f) => ({ ...f, domainIds: ids }))}
+                  domains={domains}
+                />
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label>
               <input

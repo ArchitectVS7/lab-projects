@@ -3,10 +3,10 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tansta
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCorners, useDraggable } from '@dnd-kit/core';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
-import { tasksApi, projectsApi, recurringTasksApi, exportApi } from '../lib/api';
+import { tasksApi, projectsApi, recurringTasksApi, exportApi, domainsApi } from '../lib/api';
 import { useAuthStore } from '../store/auth';
 import { useCelebrationStore } from '../store/celebration';
-import { Plus, Table, Columns3, Calendar as CalendarIcon, Pencil, Trash2, Repeat, Download, Zap, Loader2, Shield, ShieldAlert, X } from 'lucide-react';
+import { Plus, Table, Columns3, Calendar as CalendarIcon, CalendarDays, Pencil, Trash2, Repeat, Download, Zap, Loader2, Shield, ShieldAlert, X } from 'lucide-react';
 import { format } from 'date-fns';
 import clsx from 'clsx';
 import type { Task, Project, TaskStatus, TaskPriority } from '../types';
@@ -16,10 +16,12 @@ import RecurrencePickerModal, { RecurrenceConfig } from '../components/Recurrenc
 import { TableSkeleton, KanbanSkeleton } from '../components/Skeletons';
 import { EmptyTasksState } from '../components/EmptyStates';
 import CalendarView from '../components/CalendarView';
+import WeekView from '../components/WeekView';
 import TaskDetailModal from '../components/TaskDetailModal';
 import type { TaskFormData } from '../components/TaskDetailModal';
 import { modalOverlay, modalContent } from '../lib/animations';
 import SmartTaskInput from '../components/SmartTaskInput';
+import DomainPicker from '../components/DomainPicker';
 
 import TaskCard from '../components/TaskCard';
 import KanbanColumn from '../components/KanbanColumn';
@@ -393,8 +395,8 @@ export default function TasksPage() {
   const { addCelebration } = useCelebrationStore();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [viewMode, setViewMode] = useState<'table' | 'kanban' | 'calendar'>(
-    () => (localStorage.getItem('task-view-mode') as 'table' | 'kanban' | 'calendar') || 'table'
+  const [viewMode, setViewMode] = useState<'table' | 'kanban' | 'calendar' | 'week'>(
+    () => (localStorage.getItem('task-view-mode') as 'table' | 'kanban' | 'calendar' | 'week') || 'table'
   );
   const [filters, setFilters] = useState<TaskFilters>({});
   const [modalOpen, setModalOpen] = useState(false);
@@ -405,6 +407,7 @@ export default function TasksPage() {
   const [taskForRecurrence, setTaskForRecurrence] = useState<Task | null>(null);
   const [exporting, setExporting] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [selectedDomainIds, setSelectedDomainIds] = useState<string[]>([]);
 
   // Read URL parameters on mount
   useEffect(() => {
@@ -441,15 +444,28 @@ export default function TasksPage() {
     initialPageParam: undefined as string | undefined,
   });
 
-  const tasks = useMemo(
+  const allTasks = useMemo(
     () => infiniteData?.pages.flatMap((page) => page.data) ?? [],
     [infiniteData]
   );
+
+  const tasks = useMemo(() => {
+    if (selectedDomainIds.length === 0) return allTasks;
+    return allTasks.filter((t) =>
+      t.domains?.some((d) => selectedDomainIds.includes(d.domainId))
+    );
+  }, [allTasks, selectedDomainIds]);
+
   const totalTasks = infiniteData?.pages[0]?.pagination.total ?? 0;
 
   const { data: projects = [] } = useQuery({
     queryKey: ['projects'],
     queryFn: projectsApi.getAll,
+  });
+
+  const { data: domains = [] } = useQuery({
+    queryKey: ['domains'],
+    queryFn: domainsApi.getAll,
   });
 
   const createMutation = useMutation({
@@ -530,7 +546,7 @@ export default function TasksPage() {
     bulkStatusMutation.mutate({ taskIds: [id], status });
   };
 
-  const handleSave = (formData: TaskFormData) => {
+  const handleSave = async (formData: TaskFormData) => {
     const payload = {
       title: formData.title.trim(),
       description: formData.description.trim() || undefined,
@@ -540,10 +556,40 @@ export default function TasksPage() {
       dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
     };
 
+    const applyDomainChanges = async (taskId: string) => {
+      const existingIds = editingTask?.domains?.map((td) => td.domainId) ?? [];
+      const toAdd = formData.domainIds.filter((id) => !existingIds.includes(id));
+      const toRemove = existingIds.filter((id) => !formData.domainIds.includes(id));
+      await Promise.all([
+        ...toAdd.map((domainId) => domainsApi.assignTask(domainId, taskId)),
+        ...toRemove.map((domainId) => domainsApi.unassignTask(domainId, taskId)),
+      ]);
+    };
+
     if (editingTask) {
-      updateMutation.mutate({ id: editingTask.id, data: payload });
+      updateMutation.mutate(
+        { id: editingTask.id, data: payload },
+        {
+          onSuccess: async () => {
+            await applyDomainChanges(editingTask.id);
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+          },
+        }
+      );
     } else {
-      createMutation.mutate({ ...payload, projectId: formData.projectId });
+      createMutation.mutate(
+        { ...payload, projectId: formData.projectId },
+        {
+          onSuccess: async (newTask) => {
+            if (formData.domainIds.length > 0) {
+              await Promise.all(
+                formData.domainIds.map((domainId) => domainsApi.assignTask(domainId, newTask.id))
+              );
+              queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            }
+          },
+        }
+      );
     }
   };
 
@@ -693,6 +739,16 @@ export default function TasksPage() {
               <CalendarIcon size={14} />
               Calendar
             </button>
+            <button
+              onClick={() => setViewMode('week')}
+              className={clsx(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors',
+                viewMode === 'week' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              )}
+            >
+              <CalendarDays size={14} />
+              Week
+            </button>
           </div>
           {/* Export Menu */}
           <div className="relative group">
@@ -811,11 +867,24 @@ export default function TasksPage() {
           </div>
         </div>
 
-        {(filters.projectId || filters.status || filters.priority || filters.hasBlockers || filters.isBlocking) && (
+        {/* Domain Filter */}
+        {domains.length > 0 && (
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Life Area</label>
+            <DomainPicker
+              selected={selectedDomainIds}
+              onChange={setSelectedDomainIds}
+              domains={domains}
+            />
+          </div>
+        )}
+
+        {(filters.projectId || filters.status || filters.priority || filters.hasBlockers || filters.isBlocking || selectedDomainIds.length > 0) && (
           <button
             onClick={() => {
               setFilters({});
               setSearchParams(new URLSearchParams());
+              setSelectedDomainIds([]);
             }}
             className="px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md border border-red-200 dark:border-red-800 transition-colors"
           >
@@ -870,7 +939,7 @@ export default function TasksPage() {
       </AnimatePresence>
 
       {/* Views */}
-      {tasks.length === 0 && !filters.projectId && !filters.status && !filters.priority && !filters.assigneeId && !filters.creatorId && !filters.hasBlockers && !filters.isBlocking ? (
+      {tasks.length === 0 && !filters.projectId && !filters.status && !filters.priority && !filters.assigneeId && !filters.creatorId && !filters.hasBlockers && !filters.isBlocking && selectedDomainIds.length === 0 ? (
         <EmptyTasksState onCreateTask={() => { setEditingTask(null); setModalOpen(true); }} />
       ) : viewMode === 'table' ? (
         <TableView
@@ -901,6 +970,8 @@ export default function TasksPage() {
           onEdit={handleEdit}
           onBulkStatus={handleBulkStatus}
         />
+      ) : viewMode === 'week' ? (
+        <WeekView tasks={tasks} onTaskClick={handleEdit} />
       ) : (
         <CalendarView
           tasks={tasks.filter((t) => t.dueDate)}
@@ -917,6 +988,7 @@ export default function TasksPage() {
           <TaskDetailModal
             task={editingTask}
             projects={projects}
+            domains={domains}
             currentUserId={currentUser!.id}
             onClose={() => { setModalOpen(false); setEditingTask(null); }}
             onSubmit={handleSave}

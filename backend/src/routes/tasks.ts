@@ -57,6 +57,12 @@ const taskInclude = {
       tag: true,
     },
   },
+  domains: {
+    include: { domain: true },
+  },
+  agentDelegations: {
+    select: { id: true, agentType: true, status: true },
+  },
   _count: {
     select: {
       dependsOn: true,
