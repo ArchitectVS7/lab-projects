@@ -1,71 +1,88 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useHelp } from '../../context/HelpContext';
 
 const TOAST_DURATION_MS = 6000;
+const PROGRESS_TICK_MS = 50;
+
+/**
+ * Module-scoped store for the currently-displayed feature snapshot.
+ * Using useSyncExternalStore so the value is available during render
+ * without violating React 19's ref-during-render rules.
+ */
+type Feature = { featureId: string; name: string; tagline: string; icon: string };
+let _latestFeature: Feature | null = null;
+let _listeners: Array<() => void> = [];
+
+function setLatestFeature(f: Feature | null) {
+  _latestFeature = f;
+  _listeners.forEach((l) => l());
+}
+
+function subscribeLatest(cb: () => void) {
+  _listeners.push(cb);
+  return () => {
+    _listeners = _listeners.filter((l) => l !== cb);
+  };
+}
+
+function getLatest() {
+  return _latestFeature;
+}
 
 export function FeatureDiscoveryToast() {
   const { pendingDiscovery, markFeatureSeen, openTutorial } = useHelp();
+  const displayedFeature = useSyncExternalStore(subscribeLatest, getLatest);
+
+  // Track which featureId we've already shown to avoid re-triggering.
+  const [shownFor, setShownFor] = useState<string | null>(null);
+  // Bumped each time a new toast should appear; the effect uses this as a trigger.
+  const [toastGeneration, setToastGeneration] = useState(0);
   const [visible, setVisible] = useState(false);
   const [progress, setProgress] = useState(100);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const currentFeatureRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    // Don't show if onboarding hasn't been completed yet
-    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
-    if (!hasSeenOnboarding) return;
+  // Detect new discovery: pendingDiscovery changed to something we haven't shown.
+  const newFeatureId = pendingDiscovery?.featureId ?? null;
+  const isNewDiscovery = newFeatureId !== null && newFeatureId !== shownFor;
 
-    if (!pendingDiscovery) {
-      setVisible(false);
-      return;
-    }
-
-    // New feature encountered — show toast
-    currentFeatureRef.current = pendingDiscovery.featureId;
-    markFeatureSeen(pendingDiscovery.featureId);
-    setProgress(100);
+  // Respond to new discoveries — state updates during render are batched by React.
+  if (isNewDiscovery && pendingDiscovery) {
+    setShownFor(newFeatureId);
+    setLatestFeature(pendingDiscovery as Feature);
+    markFeatureSeen(newFeatureId);
+    setToastGeneration((g) => g + 1);
     setVisible(true);
+    setProgress(100);
+  }
 
-    // Countdown progress bar
+  // Progress countdown + auto-dismiss timer (syncing with the interval — valid effect)
+  useEffect(() => {
+    if (!visible) return;
+
     const startTime = Date.now();
-    intervalRef.current = setInterval(() => {
+    const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
       const remaining = Math.max(0, 100 - (elapsed / TOAST_DURATION_MS) * 100);
       setProgress(remaining);
-    }, 50);
+      if (remaining <= 0) {
+        setVisible(false);
+        clearInterval(interval);
+      }
+    }, PROGRESS_TICK_MS);
 
-    // Auto-dismiss
-    timerRef.current = setTimeout(() => {
-      setVisible(false);
-    }, TOAST_DURATION_MS);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toastGeneration]);
 
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [pendingDiscovery, markFeatureSeen]);
-
-  const handleDismiss = () => {
+  const handleDismiss = useCallback(() => {
     setVisible(false);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (intervalRef.current) clearInterval(intervalRef.current);
-  };
+  }, []);
 
-  const handleLearnMore = () => {
-    if (currentFeatureRef.current) {
-      openTutorial(currentFeatureRef.current);
-    }
-    handleDismiss();
-  };
-
-  // Capture the feature at mount time so it stays stable during exit animation
-  const [displayedFeature, setDisplayedFeature] = useState(pendingDiscovery);
-  useEffect(() => {
-    if (pendingDiscovery) setDisplayedFeature(pendingDiscovery);
-  }, [pendingDiscovery]);
+  const handleLearnMore = useCallback(() => {
+    if (displayedFeature) openTutorial(displayedFeature.featureId);
+    setVisible(false);
+  }, [displayedFeature, openTutorial]);
 
   return (
     <AnimatePresence>
