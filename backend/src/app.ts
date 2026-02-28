@@ -25,6 +25,8 @@ import xpRoutes from './routes/xp.js';
 import domainRoutes from './routes/domains.js';
 import checkinRoutes from './routes/checkins.js';
 import agentRoutes from './routes/agents.js';
+import calendarRoutes from './routes/calendar.js';
+import importRoutes from './routes/import.js';
 import { apiKeyRateLimiter } from './middleware/apiKeyRateLimiter.js';
 import specs from './lib/swagger.js';
 import swaggerUi from 'swagger-ui-express';
@@ -87,6 +89,8 @@ app.use('/api/xp', xpRoutes);
 app.use('/api/domains', domainRoutes);
 app.use('/api/checkins', checkinRoutes);
 app.use('/api/agents', agentRoutes);
+app.use('/api/calendar', calendarRoutes);
+app.use('/api/import', importRoutes);
 
 // Health check -- verifies database connectivity
 app.get('/health', async (_req, res) => {
