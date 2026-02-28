@@ -189,14 +189,15 @@ VITE_API_URL=http://localhost:4000
 
 ## Pre-existing Errors Policy
 
-When running tests or linting reveals failures that existed before the current change set:
+When running tests, linting, or pre-commit hooks reveals failures — regardless of whether they were caused by the current change set:
 
 1. **Never disclaim them away** — phrases like "pre-existing, not caused by my changes" are a red flag. They shift attention away from a real problem.
-2. **Always log them** — open a task (via the TaskCreate tool) describing the failure, root cause if known, and affected files. This ensures it is tracked and not forgotten.
-3. **Fix them when in scope** — if the error is fixable without large scope expansion (e.g., a broken Jest config), fix it in the same session before committing. Report what was done.
-4. **Escalate when out of scope** — if the fix would balloon scope, create the task, note it in the commit message, and tell the user explicitly.
+2. **Never bypass or sidestep checks** — NEVER unstage files, skip hooks (`--no-verify`), or narrow the commit scope just to avoid errors. If a pre-commit hook fails, the correct response is to **fix the errors**, not dodge them. This is the highest-priority rule in this section.
+3. **Always log them** — open a task (via the TaskCreate tool) describing the failure, root cause if known, and affected files. This ensures it is tracked and not forgotten.
+4. **Fix them when in scope** — if the error is fixable without large scope expansion (e.g., a lint error, a broken Jest config), fix it in the same session before committing. Report what was done.
+5. **Escalate when out of scope** — if the fix would balloon scope, create the task, note it in the commit message, and tell the user explicitly. **Do not commit until the user acknowledges the error.** Even if the commit itself would pass, the error must be surfaced.
 
-The goal is: no error silently disappears behind a disclaimer.
+The goal is: no error silently disappears behind a disclaimer, a narrowed staging area, or a skipped hook.
 
 ## Git Workflow
 

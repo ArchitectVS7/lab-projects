@@ -77,6 +77,21 @@ export const authApi = {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
+
+  forgotPassword: (data: { email: string }) =>
+    request<{ message: string }>('/api/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  validateResetToken: (token: string) =>
+    request<{ valid: boolean }>(`/api/auth/validate-reset-token?token=${encodeURIComponent(token)}`),
+
+  resetPassword: (data: { token: string; newPassword: string }) =>
+    request<{ message: string }>('/api/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 };
 
 // --- Pagination ---

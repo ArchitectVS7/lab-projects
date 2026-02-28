@@ -47,6 +47,10 @@ model User {
   calendarToken          String?   @unique @map("calendar_token")
   calendarTokenCreatedAt DateTime? @map("calendar_token_created_at")
 
+  // Password reset
+  passwordResetTokenHash String?   @unique @map("password_reset_token_hash")
+  passwordResetExpiresAt DateTime? @map("password_reset_expires_at")
+
   @@map("users")
 }
 

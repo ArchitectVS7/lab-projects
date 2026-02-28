@@ -37,6 +37,9 @@ interface HelpContextType {
     seenFeatures: string[];
     markFeatureSeen: (id: string) => void;
     pendingDiscovery: FeatureTutorial | null;
+    // Onboarding gate
+    onboardingDone: boolean;
+    completeOnboarding: () => void;
 }
 
 const HelpContext = createContext<HelpContextType | undefined>(undefined);
@@ -68,6 +71,9 @@ export function HelpProvider({ children }: { children: ReactNode }) {
     const [tutorialStep, setTutorialStep] = useState(0);
     const [seenFeatures, setSeenFeatures] = useState<string[]>(loadSeenFeatures);
     const [pendingDiscovery, setPendingDiscovery] = useState<FeatureTutorial | null>(null);
+    const [onboardingDone, setOnboardingDone] = useState(() =>
+        !!localStorage.getItem('hasSeenOnboarding')
+    );
     const location = useLocation();
 
     // Load documentation on mount
@@ -91,8 +97,12 @@ export function HelpProvider({ children }: { children: ReactNode }) {
         fetchDocs();
     }, []);
 
-    // Watch route changes for unseen features
+    // Watch route changes for unseen features (only after onboarding is complete)
     useEffect(() => {
+        if (!onboardingDone) {
+            setPendingDiscovery(null);
+            return;
+        }
         const currentPath = location.pathname;
         const match = featureTutorials.find(t => {
             if (t.routePattern === '/') return currentPath === '/';
@@ -104,7 +114,7 @@ export function HelpProvider({ children }: { children: ReactNode }) {
         } else {
             setPendingDiscovery(null);
         }
-    }, [location.pathname, seenFeatures]);
+    }, [location.pathname, seenFeatures, onboardingDone]);
 
     const toggleHelp = () => setIsOpen(prev => !prev);
     const closeHelp = () => setIsOpen(false);
@@ -144,6 +154,11 @@ export function HelpProvider({ children }: { children: ReactNode }) {
 
     const prevTutorialStep = useCallback(() => {
         setTutorialStep(prev => Math.max(0, prev - 1));
+    }, []);
+
+    const completeOnboarding = useCallback(() => {
+        localStorage.setItem('hasSeenOnboarding', 'true');
+        setOnboardingDone(true);
     }, []);
 
     // Find suggested blocks based on current route
@@ -187,6 +202,8 @@ export function HelpProvider({ children }: { children: ReactNode }) {
             seenFeatures,
             markFeatureSeen,
             pendingDiscovery,
+            onboardingDone,
+            completeOnboarding,
         }}>
             {children}
         </HelpContext.Provider>

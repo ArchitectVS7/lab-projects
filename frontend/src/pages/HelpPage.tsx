@@ -1,107 +1,197 @@
-
-import React, { useState } from 'react';
-import { useHelp } from '../context/HelpContext';
-import { Search, Hash } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Search, ChevronRight } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import { userGuide, type GuideChapter } from '../data/userGuide';
 
 export default function HelpPage() {
-    const { blocks, isLoading } = useHelp();
-    const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeChapterId, setActiveChapterId] = useState(userGuide[0]?.id ?? '');
+  const chapterRefs = useRef<Record<string, HTMLElement | null>>({});
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
-    // Group blocks by level 1 headings (or level 2 if no level 1)
-    const sections = React.useMemo(() => {
-        if (!blocks.length) return [];
+  // Scrollspy via IntersectionObserver
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveChapterId(entry.target.id);
+            break;
+          }
+        }
+      },
+      { rootMargin: '-80px 0px -60% 0px', threshold: 0 }
+    );
 
-        const result: any[] = [];
-        let currentSection: any = null;
-
-        blocks.forEach(block => {
-            // Assuming level 2 are main sections based on blocks examined
-            if (block.level === 2) {
-                if (currentSection) result.push(currentSection);
-                currentSection = { ...block, children: [] };
-            } else if (block.level > 2 && currentSection) {
-                currentSection.children.push(block);
-            }
-        });
-
-        if (currentSection) result.push(currentSection);
-        return result;
-    }, [blocks]);
-
-    const filteredSections = searchQuery
-        ? sections.filter(section =>
-            section.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            section.children.some((child: any) =>
-                child.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                child.content.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-        )
-        : sections;
-
-    if (isLoading) {
-        return (
-            <div className="flex justify-center items-center fixed inset-0">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-            </div>
-        );
+    const obs = observerRef.current;
+    for (const el of Object.values(chapterRefs.current)) {
+      if (el) obs.observe(el);
     }
 
-    return (
-        <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-5xl mx-auto">
-                <div className="text-center mb-12">
-                    <h1 className="text-4xl font-extrabold text-gray-900 mb-4">Documentation</h1>
-                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                        Everything you need to know about the Unified Task Management Platform.
-                    </p>
+    return () => obs.disconnect();
+  }, []);
 
-                    <div className="mt-8 max-w-xl mx-auto relative">
-                        <input
-                            type="text"
-                            placeholder="Search the manual..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-12 pr-4 py-3 rounded-full border border-gray-300 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
-                        />
-                        <Search className="w-5 h-5 text-gray-400 absolute left-4 top-3.5" />
-                    </div>
-                </div>
+  // Filter chapters/sections by search query
+  const filteredGuide = useMemo(() => {
+    if (!searchQuery.trim()) return userGuide;
+    const q = searchQuery.toLowerCase();
+    return userGuide
+      .map((chapter) => {
+        const chapterMatch =
+          chapter.title.toLowerCase().includes(q) ||
+          chapter.description.toLowerCase().includes(q);
+        const matchingSections = chapter.sections.filter(
+          (s) =>
+            s.title.toLowerCase().includes(q) ||
+            s.content.toLowerCase().includes(q)
+        );
+        if (chapterMatch) return chapter; // show full chapter
+        if (matchingSections.length > 0)
+          return { ...chapter, sections: matchingSections };
+        return null;
+      })
+      .filter(Boolean) as GuideChapter[];
+  }, [searchQuery]);
 
-                <div className="space-y-12">
-                    {filteredSections.map((section: any) => (
-                        <div key={section.blockId} className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
-                            <div className="p-6 md:p-8 border-b border-gray-50 bg-gray-50/50">
-                                <h2 className="text-2xl font-bold text-gray-900" id={section.blockId}>
-                                    {section.title}
-                                </h2>
-                                <div className="mt-4 prose prose-indigo text-gray-600">
-                                    <p>{section.content.replace(/^[#*>-] /gm, '')}</p>
-                                </div>
-                            </div>
+  const scrollToChapter = (id: string) => {
+    chapterRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
-                            {section.children.length > 0 && (
-                                <div className="divide-y divide-gray-100">
-                                    {section.children.map((child: any) => (
-                                        <div key={child.blockId} className="p-6 md:p-8 hover:bg-gray-50 transition-colors" id={child.blockId}>
-                                            <div className="flex items-start gap-3">
-                                                <Hash className="w-5 h-5 text-gray-300 mt-1 flex-shrink-0" />
-                                                <div>
-                                                    <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                                                        {child.title}
-                                                    </h3>
-                                                    <div className="prose prose-sm text-gray-600 max-w-none">
-                                                        <p className="whitespace-pre-wrap font-sans">{child.content.replace(/^[#]+ .*$/gm, '').trim()}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            </div>
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Header */}
+      <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 sm:px-6 lg:px-8 py-5">
+        <div className="max-w-6xl mx-auto flex items-center gap-4">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex-shrink-0">User Guide</h1>
+          <div className="flex-1 max-w-md relative">
+            <input
+              type="text"
+              placeholder="Search the guide..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent text-sm transition-all"
+            />
+            <Search className="w-4 h-4 text-gray-400 dark:text-gray-500 absolute left-3 top-2.5" />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xs"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
+              {filteredGuide.length} {filteredGuide.length === 1 ? 'chapter' : 'chapters'}
+            </span>
+          )}
         </div>
-    );
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="flex gap-10">
+          {/* TOC sidebar — hidden on small screens, horizontal pills instead */}
+          <nav className="hidden lg:block w-64 flex-shrink-0">
+            <div className="sticky top-24 space-y-1">
+              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
+                Chapters
+              </p>
+              {filteredGuide.map((chapter) => (
+                <button
+                  key={chapter.id}
+                  onClick={() => scrollToChapter(chapter.id)}
+                  className={`w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    activeChapterId === chapter.id
+                      ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  <span className="text-base">{chapter.icon}</span>
+                  <span className="truncate">{chapter.title}</span>
+                  {activeChapterId === chapter.id && (
+                    <ChevronRight className="w-4 h-4 ml-auto flex-shrink-0" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </nav>
+
+          {/* Horizontal pill bar for small screens */}
+          <div className="lg:hidden w-full overflow-x-auto pb-4 -mt-2 mb-4">
+            <div className="flex gap-2 min-w-max">
+              {filteredGuide.map((chapter) => (
+                <button
+                  key={chapter.id}
+                  onClick={() => scrollToChapter(chapter.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
+                    activeChapterId === chapter.id
+                      ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-medium'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  <span>{chapter.icon}</span>
+                  <span>{chapter.title}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Main content */}
+          <main className="flex-1 min-w-0 space-y-16">
+            {filteredGuide.length === 0 && (
+              <div className="text-center py-20 text-gray-400 dark:text-gray-500">
+                <p className="text-lg">No results for "{searchQuery}"</p>
+                <p className="text-sm mt-1">Try a different search term.</p>
+              </div>
+            )}
+
+            {filteredGuide.map((chapter) => (
+              <section
+                key={chapter.id}
+                id={chapter.id}
+                ref={(el) => { chapterRefs.current[chapter.id] = el; }}
+              >
+                {/* Chapter header */}
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-3xl">{chapter.icon}</span>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      {chapter.title}
+                    </h2>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
+                      {chapter.description}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-6 space-y-10">
+                  {chapter.sections.map((section) => {
+                    const q = searchQuery.toLowerCase();
+                    const sectionMatches = q && (
+                      section.title.toLowerCase().includes(q) ||
+                      section.content.toLowerCase().includes(q)
+                    );
+                    return (
+                    <div key={section.id} id={section.id} className={sectionMatches ? 'border-l-2 border-indigo-400 dark:border-indigo-500 pl-4' : ''}>
+                      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">
+                        {section.title}
+                      </h3>
+                      <div className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed space-y-3 [&_strong]:font-semibold [&_strong]:text-gray-900 [&_strong]:dark:text-gray-100 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1 [&_code]:bg-gray-100 [&_code]:dark:bg-gray-800 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-indigo-600 [&_code]:dark:text-indigo-400 [&_code]:text-xs [&_a]:text-indigo-600 [&_a]:dark:text-indigo-400 [&_a]:underline">
+                        <ReactMarkdown>{section.content}</ReactMarkdown>
+                      </div>
+                    </div>
+                    );
+                  })}
+                </div>
+
+                {/* Divider between chapters */}
+                <hr className="mt-14 border-gray-200 dark:border-gray-700" />
+              </section>
+            ))}
+          </main>
+        </div>
+      </div>
+    </div>
+  );
 }

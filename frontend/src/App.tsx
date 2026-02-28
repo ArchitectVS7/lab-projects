@@ -23,6 +23,8 @@ import HelpPage from './pages/HelpPage';
 import { HelpProvider } from './context/HelpContext';
 import CheckinPage from './pages/CheckinPage';
 import AgentQueuePage from './pages/AgentQueuePage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user);
@@ -71,6 +73,8 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
             <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
+            <Route path="/forgot-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
+            <Route path="/reset-password" element={<GuestRoute><ResetPasswordPage /></GuestRoute>} />
             <Route path="/focus" element={<ProtectedRoute><FocusPage /></ProtectedRoute>} />
             <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
               <Route index element={<DashboardPage />} />

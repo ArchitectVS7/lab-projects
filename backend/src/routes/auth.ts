@@ -1,7 +1,9 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
+import { Resend } from 'resend';
 import prisma from '../lib/prisma.js';
 import { AppError } from '../middleware/errorHandler.js';
 import {
@@ -50,6 +52,20 @@ const updateProfileSchema = z.object({
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[a-z]/, 'Password must contain a lowercase letter')
+    .regex(/[A-Z]/, 'Password must contain an uppercase letter')
+    .regex(/\d/, 'Password must contain a digit'),
+});
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email().transform((v) => v.toLowerCase().trim()),
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
   newPassword: z
     .string()
     .min(8, 'Password must be at least 8 characters')
@@ -534,6 +550,132 @@ router.delete('/api-keys/:id', authenticate, async (req: AuthRequest, res: Respo
     });
 
     res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// --- Password Reset Helpers ---
+
+function buildResetEmailHtml(name: string, resetUrl: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="font-family: sans-serif; background: #f9fafb; padding: 40px 0; margin: 0;">
+  <div style="max-width: 480px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 40px;">
+    <h1 style="font-size: 22px; color: #111827; margin-top: 0;">Reset your password</h1>
+    <p style="color: #374151; font-size: 15px;">Hi ${name},</p>
+    <p style="color: #374151; font-size: 15px;">We received a request to reset your TaskMan password. Click the button below to choose a new password.</p>
+    <div style="text-align: center; margin: 32px 0;">
+      <a href="${resetUrl}" style="background: #4f46e5; color: #fff; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-size: 15px; font-weight: 600; display: inline-block;">Reset password</a>
+    </div>
+    <p style="color: #6b7280; font-size: 13px;">This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email.</p>
+    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+    <p style="color: #9ca3af; font-size: 12px; margin: 0;">TaskMan · If the button doesn't work, copy this link: <a href="${resetUrl}" style="color: #4f46e5;">${resetUrl}</a></p>
+  </div>
+</body>
+</html>`;
+}
+
+let _resend: Resend | null = null;
+function getResendClient(): Resend {
+  if (!process.env.RESEND_API_KEY) {
+    throw new AppError('Email service not configured', 500);
+  }
+  if (!_resend) {
+    _resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return _resend;
+}
+
+// --- Password Reset Routes ---
+
+router.post('/forgot-password', authLimiter, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email } = forgotPasswordSchema.parse(req.body);
+
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (user) {
+      const plainToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(plainToken).digest('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          passwordResetTokenHash: tokenHash,
+          passwordResetExpiresAt: expiresAt,
+        },
+      });
+
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const resetUrl = `${frontendUrl}/reset-password?token=${plainToken}`;
+
+      try {
+        const resend = getResendClient();
+        const emailFrom = process.env.EMAIL_FROM || 'TaskMan <noreply@taskman.app>';
+        await resend.emails.send({
+          from: emailFrom,
+          to: user.email,
+          subject: 'Reset your TaskMan password',
+          html: buildResetEmailHtml(user.name, resetUrl),
+        });
+      } catch (emailErr) {
+        console.error('Failed to send password reset email:', emailErr);
+      }
+    }
+
+    res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/validate-reset-token', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const token = req.query.token as string | undefined;
+    if (!token) {
+      throw new AppError('Reset token is invalid or has expired', 400);
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await prisma.user.findUnique({ where: { passwordResetTokenHash: tokenHash } });
+
+    if (!user || !user.passwordResetExpiresAt || user.passwordResetExpiresAt < new Date()) {
+      throw new AppError('Reset token is invalid or has expired', 400);
+    }
+
+    res.json({ valid: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/reset-password', authLimiter, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { token, newPassword } = resetPasswordSchema.parse(req.body);
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await prisma.user.findUnique({ where: { passwordResetTokenHash: tokenHash } });
+
+    if (!user || !user.passwordResetExpiresAt || user.passwordResetExpiresAt < new Date()) {
+      throw new AppError('Reset token is invalid or has expired', 400);
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        passwordResetTokenHash: null,
+        passwordResetExpiresAt: null,
+      },
+    });
+
+    res.json({ message: 'Password has been reset successfully. You can now log in.' });
   } catch (error) {
     next(error);
   }

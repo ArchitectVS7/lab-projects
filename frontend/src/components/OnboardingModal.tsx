@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Users, Trophy, Layout, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
+import { useHelp } from '../context/HelpContext';
 
 const steps = [
     {
@@ -36,6 +37,7 @@ export default function OnboardingModal() {
     const [isOpen, setIsOpen] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);
     const { user } = useAuthStore();
+    const { completeOnboarding } = useHelp();
 
     useEffect(() => {
         const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
@@ -55,7 +57,7 @@ export default function OnboardingModal() {
     };
 
     const handleClose = () => {
-        localStorage.setItem('hasSeenOnboarding', 'true');
+        completeOnboarding();
         setIsOpen(false);
     };
 

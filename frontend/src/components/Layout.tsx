@@ -113,10 +113,13 @@ export default function Layout() {
             </Link>
           ))}
         </nav>
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
-          <div className={clsx("flex flex-col gap-2", layout !== 'minimal' && "flex-row items-center")}>
-            <ThemeToggle />
-            <NotificationCenter />
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3 overflow-y-auto">
+          <div className="flex items-center justify-between">
+            <ConnectionStatus />
+            <div className="flex items-center gap-1">
+              <NotificationCenter />
+              <HelpButton />
+            </div>
           </div>
 
           {layout !== 'minimal' && xpProgress && (
@@ -139,9 +142,8 @@ export default function Layout() {
             </div>
           )}
 
-          <div className="flex items-center justify-between">
-            <ConnectionStatus />
-            <HelpButton />
+          <div className={clsx("flex flex-col gap-2", layout !== 'minimal' && "flex-row items-center")}>
+            <ThemeToggle />
           </div>
 
           <div className="space-y-1">
