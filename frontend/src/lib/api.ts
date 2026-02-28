@@ -643,6 +643,19 @@ export const webhooksApi = {
     request<WebhookLog[]>(`/api/webhooks/${id}/logs`),
 };
 
+// --- Calendar API ---
+
+export const calendarApi = {
+  getTokenStatus: () =>
+    request<{ hasToken: boolean; feedUrl: string | null; createdAt: string | null }>('/api/calendar/token/status'),
+
+  generateToken: () =>
+    request<{ token: string; feedUrl: string }>('/api/calendar/token', { method: 'POST' }),
+
+  revokeToken: () =>
+    request<void>('/api/calendar/token', { method: 'DELETE' }),
+};
+
 // --- Agents API ---
 
 export const agentsApi = {

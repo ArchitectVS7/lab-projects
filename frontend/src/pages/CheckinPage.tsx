@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { checkinsApi, domainsApi } from '../lib/api';
 import { ClipboardList, Zap, Flame } from 'lucide-react';
@@ -6,6 +6,7 @@ import type { Domain } from '../types';
 
 export default function CheckinPage() {
   const queryClient = useQueryClient();
+  const [initializedFor, setInitializedFor] = useState<string | null>(null);
   const [priorities, setPriorities] = useState('');
   const [energyLevel, setEnergyLevel] = useState(5);
   const [blockers, setBlockers] = useState('');
@@ -37,14 +38,15 @@ export default function CheckinPage() {
     queryFn: domainsApi.getAll,
   });
 
-  useEffect(() => {
-    if (todayCheckin) {
-      setPriorities(todayCheckin.priorities);
-      setEnergyLevel(todayCheckin.energyLevel);
-      setBlockers(todayCheckin.blockers ?? '');
-      setSelectedDomains(todayCheckin.focusDomains);
-    }
-  }, [todayCheckin]);
+  // Populate form from loaded checkin — state update during render is batched by React
+  // and avoids the cascading render issue that useEffect would cause.
+  if (todayCheckin && todayCheckin.id !== initializedFor) {
+    setInitializedFor(todayCheckin.id);
+    setPriorities(todayCheckin.priorities);
+    setEnergyLevel(todayCheckin.energyLevel);
+    setBlockers(todayCheckin.blockers ?? '');
+    setSelectedDomains(todayCheckin.focusDomains);
+  }
 
   const saveMutation = useMutation({
     mutationFn: checkinsApi.create,

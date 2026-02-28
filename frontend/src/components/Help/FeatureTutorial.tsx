@@ -153,8 +153,11 @@ export function FeatureTutorial() {
     setTooltipPos(style);
   }, [activeTutorial, currentStep]);
 
-  // Recalculate on step change and resize
+  // Recalculate on step change and resize.
+  // useLayoutEffect + setState is the correct React pattern for synchronous DOM
+  // measurement before paint — suppressing the set-state-in-effect rule here.
   useLayoutEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     updatePositions();
   }, [updatePositions]);
 

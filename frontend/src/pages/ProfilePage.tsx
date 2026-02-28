@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { authApi } from '../lib/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { authApi, calendarApi } from '../lib/api';
 import { useAuthStore } from '../store/auth';
 import { useToastStore } from '../store/toast';
-import { User, Lock, Palette, Trophy, Database } from 'lucide-react';
+import { User, Lock, Palette, Trophy, Database, Calendar, Copy, RefreshCw, X, QrCode } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import ThemePicker from '../components/ThemePicker';
 import LayoutSwitcher from '../components/LayoutSwitcher';
 import DensityPicker from '../components/DensityPicker';
@@ -67,6 +68,46 @@ export default function ProfilePage() {
     },
     onError: (err: Error) => addToast(err.message, 'error'),
   });
+
+  // Calendar feed
+  const [showQR, setShowQR] = useState(false);
+  const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
+  const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
+
+  const calendarStatus = useQuery({
+    queryKey: ['calendarTokenStatus'],
+    queryFn: calendarApi.getTokenStatus,
+  });
+
+  // feedUrl comes from the status query — always available while a token is active
+  const feedUrl = calendarStatus.data?.feedUrl ?? null;
+
+  const generateTokenMutation = useMutation({
+    mutationFn: calendarApi.generateToken,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendarTokenStatus'] });
+      addToast('Calendar feed URL generated', 'success');
+      setShowRegenerateConfirm(false);
+    },
+    onError: (err: Error) => addToast(err.message, 'error'),
+  });
+
+  const revokeTokenMutation = useMutation({
+    mutationFn: calendarApi.revokeToken,
+    onSuccess: () => {
+      setShowRevokeConfirm(false);
+      queryClient.invalidateQueries({ queryKey: ['calendarTokenStatus'] });
+      addToast('Calendar feed revoked', 'success');
+    },
+    onError: (err: Error) => addToast(err.message, 'error'),
+  });
+
+  const copyFeedUrl = () => {
+    if (feedUrl) {
+      navigator.clipboard.writeText(feedUrl);
+      addToast('Feed URL copied to clipboard', 'success');
+    }
+  };
 
   const handleProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,6 +207,128 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* Calendar Sync */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <Calendar size={20} className="text-orange-500" />
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Calendar Sync</h2>
+        </div>
+
+        {!calendarStatus.data?.hasToken ? (
+          <>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Subscribe to your tasks in any calendar app (iOS Calendar, Google Calendar, Outlook).
+              Tasks with due dates appear as all-day events.
+            </p>
+            <button
+              onClick={() => generateTokenMutation.mutate()}
+              disabled={generateTokenMutation.isPending}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md disabled:opacity-50"
+            >
+              {generateTokenMutation.isPending ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+              ) : (
+                <Calendar size={16} />
+              )}
+              Generate Feed URL
+            </button>
+          </>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Paste this URL into your calendar app once to subscribe. Your tasks stay in sync automatically — the URL never changes unless you regenerate it.
+            </p>
+            {feedUrl && (
+              <>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={feedUrl}
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md text-sm font-mono"
+                  />
+                  <button
+                    onClick={copyFeedUrl}
+                    className="flex items-center gap-1 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md border border-gray-300 dark:border-gray-600"
+                  >
+                    <Copy size={14} />
+                    Copy
+                  </button>
+                  <button
+                    onClick={() => setShowQR((v) => !v)}
+                    className="flex items-center gap-1 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md border border-gray-300 dark:border-gray-600"
+                  >
+                    <QrCode size={14} />
+                    QR
+                  </button>
+                </div>
+                {showQR && (
+                  <div className="flex flex-col items-center gap-2 p-4 bg-white rounded-lg border border-gray-200 dark:border-gray-600 w-fit">
+                    <QRCodeSVG value={feedUrl} size={180} />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center max-w-[180px]">
+                      Scan with your phone camera to subscribe
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+            <div className="flex gap-2">
+              {showRegenerateConfirm ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-amber-600 dark:text-amber-400">This will invalidate the current URL — update all subscriptions.</span>
+                  <button
+                    onClick={() => generateTokenMutation.mutate()}
+                    disabled={generateTokenMutation.isPending}
+                    className="px-3 py-1.5 text-xs text-white bg-amber-600 hover:bg-amber-700 rounded-md"
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    onClick={() => setShowRegenerateConfirm(false)}
+                    className="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowRegenerateConfirm(true)}
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40 rounded-md border border-amber-200 dark:border-amber-800"
+                >
+                  <RefreshCw size={12} />
+                  Regenerate URL
+                </button>
+              )}
+              {showRevokeConfirm ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-red-600 dark:text-red-400">Calendar apps will lose access.</span>
+                  <button
+                    onClick={() => revokeTokenMutation.mutate()}
+                    disabled={revokeTokenMutation.isPending}
+                    className="px-3 py-1.5 text-xs text-white bg-red-600 hover:bg-red-700 rounded-md"
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    onClick={() => setShowRevokeConfirm(false)}
+                    className="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowRevokeConfirm(true)}
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-md border border-red-200 dark:border-red-800"
+                >
+                  <X size={12} />
+                  Revoke
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Profile Info */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
