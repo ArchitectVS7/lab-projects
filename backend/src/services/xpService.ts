@@ -26,20 +26,23 @@ interface TaskXPData {
 }
 
 /**
- * Calculate XP for a completed task
- * Formula: XP = (BasePoints × PriorityMultiplier + ComplexityBonus) × TimeBonusFactor
+ * Calculate XP for a completed task.
+ * Formula: XP = (PriorityBase + ComplexityBonus) × TimeBonusFactor
+ *
+ * Priority base values (per commercialization plan):
+ *   LOW=10, MEDIUM=25, HIGH=50, URGENT=100
  */
 export async function calculateTaskXP(task: TaskXPData): Promise<XPCalculation> {
-  const baseXP = 20;
-
-  // Priority multiplier
-  const priorityMultipliers: Record<Priority, number> = {
-    LOW: 1.0,
-    MEDIUM: 1.2,
-    HIGH: 1.5,
-    URGENT: 2.0,
+  // Priority base XP — intentionally weighted, not arbitrary multipliers
+  const priorityBaseXP: Record<Priority, number> = {
+    LOW: 10,
+    MEDIUM: 25,
+    HIGH: 50,
+    URGENT: 100,
   };
-  const priorityMultiplier = priorityMultipliers[task.priority] || 1.0;
+  const baseXP = priorityBaseXP[task.priority] ?? 25;
+  // Keep priorityMultiplier as 1 — the base values already encode priority weight
+  const priorityMultiplier = 1;
 
   // Complexity bonus
   let complexityBonus = 0;
@@ -58,13 +61,13 @@ export async function calculateTaskXP(task: TaskXPData): Promise<XPCalculation> 
       // Completed early: +10% per day, max 50%
       timeBonusFactor = 1 + Math.min(daysEarly * 0.1, 0.5);
     } else if (daysEarly < 0) {
-      // Overdue: -10%, but minimum 50% of total XP
+      // Overdue: -10%, minimum 50% of total XP
       timeBonusFactor = 0.9;
     }
   }
 
   // Calculate total XP (minimum 50% of base calculation)
-  const baseCalculation = baseXP * priorityMultiplier + complexityBonus;
+  const baseCalculation = baseXP + complexityBonus;
   const totalXP = Math.max(
     Math.floor(baseCalculation * timeBonusFactor),
     Math.floor(baseCalculation * 0.5)
@@ -261,9 +264,20 @@ export async function calculateHistoricalXP(userId: string): Promise<number> {
 }
 
 /**
- * Apply retroactive XP to a user (one-time operation)
+ * Apply retroactive XP to a user (one-time operation).
+ * Idempotent: returns { alreadyApplied: true } if run before.
  */
-export async function applyRetroactiveXP(userId: string): Promise<void> {
+export async function applyRetroactiveXP(
+  userId: string
+): Promise<{ alreadyApplied: boolean; xpAwarded: number }> {
+  const existing = await prisma.xPLog.findFirst({
+    where: { userId, source: 'Retroactive XP calculation' },
+  });
+
+  if (existing) {
+    return { alreadyApplied: true, xpAwarded: 0 };
+  }
+
   const totalXP = await calculateHistoricalXP(userId);
 
   if (totalXP > 0) {
@@ -271,22 +285,20 @@ export async function applyRetroactiveXP(userId: string): Promise<void> {
 
     await prisma.user.update({
       where: { id: userId },
-      data: {
-        xp: totalXP,
-        level: newLevel
-      }
+      data: { xp: totalXP, level: newLevel },
     });
 
-    // Log the retroactive XP
     await prisma.xPLog.create({
       data: {
         userId,
         xpGained: totalXP,
         source: 'Retroactive XP calculation',
         timestamp: new Date(),
-      }
+      },
     });
   }
+
+  return { alreadyApplied: false, xpAwarded: totalXP };
 }
 
 /**

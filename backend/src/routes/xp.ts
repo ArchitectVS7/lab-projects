@@ -40,10 +40,14 @@ router.get('/progress', async (req: AuthRequest, res: Response, next: NextFuncti
  */
 router.post('/retroactive', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    await applyRetroactiveXP(req.userId!);
+    const { alreadyApplied, xpAwarded } = await applyRetroactiveXP(req.userId!);
     const progress = await getUserXPProgress(req.userId!);
     res.json({
-      message: 'Retroactive XP applied successfully',
+      message: alreadyApplied
+        ? 'Retroactive XP was already applied for this account.'
+        : 'Retroactive XP applied successfully',
+      alreadyApplied,
+      xpAwarded,
       progress,
     });
   } catch (error) {

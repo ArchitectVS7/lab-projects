@@ -439,12 +439,16 @@ model WebhookLog {
   @@map("webhook_logs")
 }
 model Achievement {
-  id          String   @id @default(uuid())
-  code        String   @unique
-  name        String
-  description String
-  icon        String?
-  createdAt   DateTime @default(now()) @map("created_at")
+  id             String               @id @default(uuid())
+  code           String               @unique
+  name           String
+  description    String
+  icon           String?
+  category       AchievementCategory? // nullable so existing rows are unaffected
+  rarity         AchievementRarity?   // nullable so existing rows are unaffected
+  xpReward       Int                  @default(0) @map("xp_reward")
+  unlockCriteria Json?                @map("unlock_criteria")
+  createdAt      DateTime             @default(now()) @map("created_at")
 
   userAchievements UserAchievement[]
 
@@ -521,6 +525,24 @@ enum QuestType {
   WEEKLY
   CHALLENGE
   PERSONAL
+}
+
+enum AchievementCategory {
+  PRODUCTIVITY
+  STREAK
+  SPEED
+  ORGANIZER
+  TEAM
+  EXPLORER
+  MILESTONE
+  QUEST
+}
+
+enum AchievementRarity {
+  COMMON
+  RARE
+  EPIC
+  LEGENDARY
 }
 
 model Domain {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { X, MessageSquare, History, Link2 } from 'lucide-react';
+import { X, MessageSquare, History, Link2, Sparkles } from 'lucide-react';
 import type { Task, Project, ProjectMember, TaskStatus, TaskPriority, Domain } from '../types';
 import TaskTimePanel from './TaskTimePanel';
 import CommentList from './CommentList';
@@ -107,6 +107,24 @@ export default function TaskDetailModal({
     setForm((f) => ({ ...f, assigneeId: '' }));
   }
 
+  const [claudeCopied, setClaudeCopied] = useState(false);
+
+  const handleOpenInClaude = () => {
+    if (!task) return;
+    const lines: string[] = [
+      `Task: ${task.title}`,
+      `Status: ${task.status.replace('_', ' ')}`,
+      `Priority: ${task.priority}`,
+    ];
+    if (task.dueDate) lines.push(`Due: ${task.dueDate.split('T')[0]}`);
+    if (task.description) lines.push(`\nDescription:\n${task.description}`);
+    const context = lines.join('\n');
+    navigator.clipboard.writeText(context).catch(() => {/* ignore clipboard errors */});
+    setClaudeCopied(true);
+    setTimeout(() => setClaudeCopied(false), 2500);
+    window.open('https://claude.ai', '_blank', 'noopener,noreferrer');
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(form);
@@ -135,9 +153,22 @@ export default function TaskDetailModal({
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             {task ? 'Task Details' : 'New Task'}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            {task && (
+              <button
+                type="button"
+                onClick={handleOpenInClaude}
+                title="Copy task context and open Claude.ai"
+                className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:text-indigo-300 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 transition-colors"
+              >
+                <Sparkles size={13} />
+                {claudeCopied ? 'Copied!' : 'Ask Claude'}
+              </button>
+            )}
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Body */}
