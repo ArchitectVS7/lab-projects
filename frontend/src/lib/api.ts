@@ -689,3 +689,54 @@ export const agentsApi = {
   remove: (id: string) =>
     request<void>(`/api/agents/${id}`, { method: 'DELETE' }),
 };
+
+// --- Billing API ---
+
+export interface PlanInfo {
+  tier: string;
+  name: string;
+  price?: number;
+  monthlyPrice?: number;
+  annualPrice?: number;
+  monthlyPricePerSeat?: number;
+  annualPricePerSeat?: number;
+  minSeats?: number;
+  features: string[];
+  limits: Record<string, number>;
+  prices?: { monthly: string; annual: string };
+}
+
+export interface BillingStatus {
+  plan: 'FREE' | 'PRO' | 'TEAM';
+  subscription: {
+    status: string;
+    planTier: string;
+    seats: number;
+    currentPeriodEnd: string;
+    cancelAtPeriodEnd: boolean;
+  } | null;
+  usage: {
+    ai_delegation: {
+      used: number;
+      limit: number;
+      periodEnd: string;
+    };
+  };
+}
+
+export const billingApi = {
+  getPlans: () =>
+    request<{ plans: PlanInfo[] }>('/api/billing/plans'),
+
+  getStatus: () =>
+    request<BillingStatus>('/api/billing/status'),
+
+  createCheckout: (data: { priceId: string; seats?: number }) =>
+    request<{ url: string }>('/api/billing/checkout', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  openPortal: () =>
+    request<{ url: string }>('/api/billing/portal', { method: 'POST' }),
+};

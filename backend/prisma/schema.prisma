@@ -51,6 +51,19 @@ model User {
   passwordResetTokenHash String?   @unique @map("password_reset_token_hash")
   passwordResetExpiresAt DateTime? @map("password_reset_expires_at")
 
+  // Billing / plan
+  plan                    PlanTier  @default(FREE)
+  stripeCustomerId        String?   @unique @map("stripe_customer_id")
+  subscription            Subscription?
+
+  // Abuse prevention
+  registrationFingerprint String?   @map("registration_fingerprint")
+  registrationIp          String?   @map("registration_ip")
+
+  // Email verification
+  emailVerified           Boolean   @default(false) @map("email_verified")
+  emailVerifyTokenHash    String?   @unique @map("email_verify_token_hash")
+
   @@map("users")
 }
 
@@ -571,6 +584,20 @@ enum AgentTaskStatus {
   FAILED
 }
 
+enum PlanTier {
+  FREE
+  PRO
+  TEAM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  TRIALING
+  UNPAID
+}
+
 model AgentDelegation {
   id           String          @id @default(uuid())
   taskId       String          @map("task_id")
@@ -590,4 +617,41 @@ model AgentDelegation {
   @@index([userId])
   @@index([userId, agentType])
   @@map("agent_delegations")
+}
+
+model Subscription {
+  id                   String             @id @default(uuid())
+  userId               String             @unique @map("user_id")
+  stripeSubscriptionId String             @unique @map("stripe_subscription_id")
+  stripePriceId        String             @map("stripe_price_id")
+  status               SubscriptionStatus @default(ACTIVE)
+  planTier             PlanTier           @map("plan_tier")
+  seats                Int                @default(1)
+  currentPeriodStart   DateTime           @map("current_period_start")
+  currentPeriodEnd     DateTime           @map("current_period_end")
+  cancelAtPeriodEnd    Boolean            @default(false) @map("cancel_at_period_end")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([stripeSubscriptionId])
+  @@index([userId])
+  @@map("subscriptions")
+}
+
+model UsageRecord {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  feature      String   // e.g. "ai_delegation", "attachment_upload"
+  count        Int      @default(0)
+  periodStart  DateTime @map("period_start")
+  periodEnd    DateTime @map("period_end")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, feature, periodStart])
+  @@index([userId, feature])
+  @@index([periodStart, periodEnd])
+  @@map("usage_records")
 }

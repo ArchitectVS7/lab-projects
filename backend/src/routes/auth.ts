@@ -14,6 +14,7 @@ import {
   setAuthCookie,
   clearAuthCookie,
 } from '../middleware/auth.js';
+import { requirePlan, PlanRequest } from '../middleware/planEnforcement.js';
 
 const router = Router();
 
@@ -131,8 +132,19 @@ router.post('/register', authLimiter, async (req: Request, res: Response, next: 
 
     const passwordHash = await bcrypt.hash(data.password, 12);
 
+    // Abuse prevention: capture registration fingerprint (IP + User-Agent hash)
+    const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || '';
+    const ua = req.headers['user-agent'] || '';
+    const fingerprint = crypto.createHash('sha256').update(`${ip}:${ua}`).digest('hex');
+
     const user = await prisma.user.create({
-      data: { email: data.email, passwordHash, name: data.name },
+      data: {
+        email: data.email,
+        passwordHash,
+        name: data.name,
+        registrationFingerprint: fingerprint,
+        registrationIp: ip,
+      },
       select: userSelect,
     });
 
@@ -254,6 +266,8 @@ router.get('/me', authenticate, async (req: AuthRequest, res: Response, next: Ne
       where: { id: req.userId },
       select: {
         ...userSelect,
+        plan: true,
+        emailVerified: true,
         achievements: {
           include: {
             achievement: true,
@@ -449,7 +463,7 @@ const createApiKeySchema = z.object({
  *                 key:
  *                   type: string
  */
-router.post('/api-keys', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+router.post('/api-keys', authenticate, requirePlan('PRO', 'TEAM'), async (req: PlanRequest, res: Response, next: NextFunction) => {
   try {
     const data = createApiKeySchema.parse(req.body);
     const { plainKey, keyHash } = await generateApiKey(req.userId!);

@@ -32,19 +32,21 @@ describe('API Keys', () => {
     await prisma.project.deleteMany();
     await prisma.user.deleteMany();
 
-    // Register user1
+    // Register user1 (upgrade to PRO — API key creation is gated)
     const res1 = await request(app)
       .post('/api/auth/register')
       .send({ email: 'apikey-user1@test.com', password: 'Password1', name: 'API Key User 1' });
     user1Cookie = extractAuthCookie(res1)!;
     user1Id = res1.body.user.id;
+    await prisma.user.update({ where: { id: user1Id }, data: { plan: 'PRO' } });
 
-    // Register user2
+    // Register user2 (upgrade to PRO — API key creation is gated)
     const res2 = await request(app)
       .post('/api/auth/register')
       .send({ email: 'apikey-user2@test.com', password: 'Password1', name: 'API Key User 2' });
     user2Cookie = extractAuthCookie(res2)!;
     user2Id = res2.body.user.id;
+    await prisma.user.update({ where: { id: user2Id }, data: { plan: 'PRO' } });
 
     // Create an API key for user1 (used across several tests)
     const keyRes = await request(app)

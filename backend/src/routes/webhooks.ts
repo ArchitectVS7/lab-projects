@@ -4,6 +4,7 @@ import { z } from 'zod';
 import prisma from '../lib/prisma.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
+import { requirePlan, PlanRequest } from '../middleware/planEnforcement.js';
 import { ALLOWED_WEBHOOK_EVENTS } from '../lib/webhookDispatcher.js';
 
 const router = Router();
@@ -31,7 +32,7 @@ const updateWebhookSchema = z.object({
 // --- Routes ---
 
 // POST /api/webhooks - Create webhook
-router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
+router.post('/', requirePlan('PRO', 'TEAM'), async (req: PlanRequest, res: Response, next: NextFunction) => {
   try {
     const data = createWebhookSchema.parse(req.body);
     const secret = crypto.randomBytes(32).toString('hex');

@@ -56,13 +56,14 @@ describe('Milestone Import API', () => {
       where: { email: { startsWith: 'import-' } },
     });
 
-    // Register owner
+    // Register owner (upgrade to PRO — API key creation is gated)
     const ownerRes = await request(app)
       .post('/api/auth/register')
       .send({ email: 'import-owner@example.com', password: 'Password1', name: 'Import Owner' });
     expect(ownerRes.status).toBe(201);
     ownerCookie = extractAuthCookie(ownerRes)!;
     ownerId = ownerRes.body.user.id;
+    await prisma.user.update({ where: { id: ownerId }, data: { plan: 'PRO' } });
 
     // Register member
     const memberRes = await request(app)

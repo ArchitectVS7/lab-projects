@@ -25,6 +25,7 @@ import CheckinPage from './pages/CheckinPage';
 import AgentQueuePage from './pages/AgentQueuePage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import BillingPage from './pages/BillingPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user);
@@ -89,6 +90,7 @@ export default function App() {
               <Route path="profile" element={<ProfilePage />} />
               <Route path="checkin" element={<CheckinPage />} />
               <Route path="agents" element={<AgentQueuePage />} />
+              <Route path="billing" element={<BillingPage />} />
               <Route path="help" element={<HelpPage />} />
             </Route>
           </Routes>

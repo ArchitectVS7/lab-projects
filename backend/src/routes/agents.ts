@@ -3,6 +3,8 @@ import { z } from 'zod';
 import prisma from '../lib/prisma.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
+import { requirePlan, requireQuota, PlanRequest } from '../middleware/planEnforcement.js';
+import { incrementUsage } from '../lib/usage.js';
 import { dispatchWebhooks } from '../lib/webhookDispatcher.js';
 import { getIO } from '../lib/socket.js';
 
@@ -21,49 +23,58 @@ const updateStatusSchema = z.object({
 
 const VALID_AGENT_TYPES = ['RESEARCH', 'WRITING', 'SOCIAL_MEDIA', 'CODE', 'OUTREACH', 'ANALYTICS'] as const;
 
-// POST /api/agents/delegate — Create delegation
-router.post('/delegate', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const data = delegateSchema.parse(req.body);
+// POST /api/agents/delegate — Create delegation (Pro/Team only, quota-enforced)
+router.post(
+  '/delegate',
+  authenticate,
+  requirePlan('PRO', 'TEAM'),
+  requireQuota('ai_delegation'),
+  async (req: PlanRequest, res: Response, next: NextFunction) => {
+    try {
+      const data = delegateSchema.parse(req.body);
 
-    // Verify task exists and user owns/has access to it
-    const task = await prisma.task.findUnique({ where: { id: data.taskId } });
-    if (!task) throw new AppError('Task not found', 404);
+      // Verify task exists and user owns/has access to it
+      const task = await prisma.task.findUnique({ where: { id: data.taskId } });
+      if (!task) throw new AppError('Task not found', 404);
 
-    const isCreatorOrAssignee =
-      task.creatorId === req.userId || task.assigneeId === req.userId;
+      const isCreatorOrAssignee =
+        task.creatorId === req.userId || task.assigneeId === req.userId;
 
-    if (!isCreatorOrAssignee) {
-      const membership = await prisma.projectMember.findUnique({
-        where: { projectId_userId: { projectId: task.projectId, userId: req.userId! } },
-      });
-      if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
-        throw new AppError('You do not have access to this task', 403);
+      if (!isCreatorOrAssignee) {
+        const membership = await prisma.projectMember.findUnique({
+          where: { projectId_userId: { projectId: task.projectId, userId: req.userId! } },
+        });
+        if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
+          throw new AppError('You do not have access to this task', 403);
+        }
       }
-    }
 
-    const delegation = await prisma.agentDelegation.create({
-      data: {
-        taskId: data.taskId,
-        userId: req.userId!,
-        agentType: data.agentType,
-        instructions: data.instructions,
-      },
-    });
+      const delegation = await prisma.agentDelegation.create({
+        data: {
+          taskId: data.taskId,
+          userId: req.userId!,
+          agentType: data.agentType,
+          instructions: data.instructions,
+        },
+      });
 
-    // Fire webhook (fire-and-forget)
-    void dispatchWebhooks('task.delegated', { delegation, taskId: data.taskId }, req.userId!);
+      // Track usage
+      await incrementUsage(req.userId!, 'ai_delegation');
 
-    // Emit socket event
-    getIO()?.to(`user:${req.userId}`).emit('agent:status', {
-      id: delegation.id,
-      status: 'QUEUED',
-      agentType: delegation.agentType,
-    });
+      // Fire webhook (fire-and-forget)
+      void dispatchWebhooks('task.delegated', { delegation, taskId: data.taskId }, req.userId!);
 
-    res.status(201).json(delegation);
-  } catch (error) { next(error); }
-});
+      // Emit socket event
+      getIO()?.to(`user:${req.userId}`).emit('agent:status', {
+        id: delegation.id,
+        status: 'QUEUED',
+        agentType: delegation.agentType,
+      });
+
+      res.status(201).json(delegation);
+    } catch (error) { next(error); }
+  }
+);
 
 // GET /api/agents/queue — All delegations for current user
 router.get('/queue', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {

@@ -1,11 +1,15 @@
 // --- User ---
 
+export type PlanTier = 'FREE' | 'PRO' | 'TEAM';
+
 export interface User {
   id: string;
   email: string;
   name: string;
   avatarUrl: string | null;
   createdAt: string;
+  plan?: PlanTier;
+  emailVerified?: boolean;
   achievements?: UserAchievement[];
 }
 

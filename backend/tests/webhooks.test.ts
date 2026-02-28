@@ -41,7 +41,7 @@ describe('Webhooks', () => {
     await prisma.project.deleteMany();
     await prisma.user.deleteMany();
 
-    // Register user1
+    // Register user1 (upgrade to PRO — webhooks are gated)
     const user1Res = await request(app)
       .post('/api/auth/register')
       .send({ email: 'wh-user1@test.com', password: 'Password1', name: 'Webhook User1' });
@@ -50,8 +50,9 @@ describe('Webhooks', () => {
       email: 'wh-user1@test.com',
       cookie: extractAuthCookie(user1Res)!,
     };
+    await prisma.user.update({ where: { id: user1.id }, data: { plan: 'PRO' } });
 
-    // Register user2
+    // Register user2 (upgrade to PRO — webhooks are gated)
     const user2Res = await request(app)
       .post('/api/auth/register')
       .send({ email: 'wh-user2@test.com', password: 'Password1', name: 'Webhook User2' });
@@ -60,6 +61,7 @@ describe('Webhooks', () => {
       email: 'wh-user2@test.com',
       cookie: extractAuthCookie(user2Res)!,
     };
+    await prisma.user.update({ where: { id: user2.id }, data: { plan: 'PRO' } });
 
     // Create a project by user1
     const projRes = await request(app)

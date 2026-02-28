@@ -31,13 +31,14 @@ describe('Agent Delegation API', () => {
     await prisma.project.deleteMany();
     await prisma.user.deleteMany();
 
-    // Register primary test user
+    // Register primary test user and upgrade to PRO (agent delegation is gated)
     const regRes = await request(app)
       .post('/api/auth/register')
       .send({ email: 'agent-test@example.com', password: 'Password1', name: 'Agent Tester' });
     expect(regRes.status).toBe(201);
     authCookie = extractAuthCookie(regRes)!;
     userId = regRes.body.user.id;
+    await prisma.user.update({ where: { id: userId }, data: { plan: 'PRO' } });
 
     // Create a project
     const projRes = await request(app)

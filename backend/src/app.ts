@@ -27,6 +27,7 @@ import checkinRoutes from './routes/checkins.js';
 import agentRoutes from './routes/agents.js';
 import calendarRoutes from './routes/calendar.js';
 import importRoutes from './routes/import.js';
+import billingRoutes from './routes/billing.js';
 import { apiKeyRateLimiter } from './middleware/apiKeyRateLimiter.js';
 import specs from './lib/swagger.js';
 import swaggerUi from 'swagger-ui-express';
@@ -62,6 +63,10 @@ app.use(cors({
 
 console.log('CORS allowed origins:', allowedOrigins);
 app.use(morgan('dev'));
+
+// Stripe webhook needs raw body for signature verification — must come before express.json()
+app.use('/api/billing/webhook', express.raw({ type: 'application/json' }));
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(apiKeyRateLimiter);
@@ -91,6 +96,7 @@ app.use('/api/checkins', checkinRoutes);
 app.use('/api/agents', agentRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/import', importRoutes);
+app.use('/api/billing', billingRoutes);
 
 // Health check -- verifies database connectivity
 app.get('/health', async (_req, res) => {
