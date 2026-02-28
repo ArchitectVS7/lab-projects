@@ -43,6 +43,10 @@ model User {
   checkins         DailyCheckin[]
   agentDelegations AgentDelegation[]
 
+  // Calendar feed
+  calendarToken          String?   @unique @map("calendar_token")
+  calendarTokenCreatedAt DateTime? @map("calendar_token_created_at")
+
   @@map("users")
 }
 
