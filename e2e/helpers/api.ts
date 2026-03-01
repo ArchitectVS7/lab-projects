@@ -1,83 +1,140 @@
-import { APIRequestContext } from '@playwright/test';
+import { type Page, APIRequestContext } from '@playwright/test';
+
+const BASE_URL = 'http://localhost:4000';
+
+// --- Standalone helpers (use page.request, shares auth cookies with the browser) ---
+
+// Per-page default project cache so tests don't create a new project per task
+const defaultProjectCache = new WeakMap<object, Promise<{ id: string; name: string }>>();
+
+// Per-page title→id map for resolving blockedBy references
+const taskTitleCache = new WeakMap<object, Map<string, string>>();
+
+function getTaskTitleMap(page: Page): Map<string, string> {
+  if (!taskTitleCache.has(page)) taskTitleCache.set(page, new Map());
+  return taskTitleCache.get(page)!;
+}
+
+export async function createProject(
+  page: Page,
+  name?: string,
+): Promise<{ id: string; name: string }> {
+  const projectName = name ?? `E2E Project ${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const res = await page.request.post(`${BASE_URL}/api/projects`, {
+    data: { name: projectName },
+  });
+  if (!res.ok()) throw new Error(`createProject failed (${res.status()}): ${await res.text()}`);
+  return res.json();
+}
+
+async function getDefaultProject(page: Page): Promise<{ id: string }> {
+  if (!defaultProjectCache.has(page)) {
+    defaultProjectCache.set(page, createProject(page));
+  }
+  return defaultProjectCache.get(page)!;
+}
+
+export async function createTask(
+  page: Page,
+  options: {
+    title: string;
+    priority?: string;
+    status?: string;
+    projectId?: string;
+    blockedBy?: string[];
+    dueDate?: string;
+  },
+): Promise<{ id: string; title: string }> {
+  const projectId = options.projectId ?? (await getDefaultProject(page)).id;
+  const res = await page.request.post(`${BASE_URL}/api/tasks`, {
+    data: {
+      projectId,
+      title: options.title,
+      status: options.status ?? 'TODO',
+      priority: options.priority ?? 'MEDIUM',
+      position: 0,
+      ...(options.dueDate && { dueDate: new Date(options.dueDate).toISOString() }),
+    },
+  });
+  if (!res.ok()) throw new Error(`createTask failed (${res.status()}): ${await res.text()}`);
+  const task = await res.json();
+
+  // Register by title for blockedBy resolution within the same test
+  getTaskTitleMap(page).set(options.title, task.id);
+
+  if (options.blockedBy?.length) {
+    for (const blockingTitle of options.blockedBy) {
+      const blockingId = getTaskTitleMap(page).get(blockingTitle);
+      if (blockingId) {
+        await page.request.post(`${BASE_URL}/api/tasks/${task.id}/dependencies`, {
+          data: { blockingTaskId: blockingId },
+        });
+      }
+    }
+  }
+
+  return task;
+}
+
+// --- Class-based helper (uses APIRequestContext, for tests that need a separate request context) ---
 
 export class ApiHelper {
-    private request: APIRequestContext;
-    private baseUrl: string;
-    private token: string | null = null;
+  private request: APIRequestContext;
+  private baseUrl: string;
 
-    constructor(request: APIRequestContext, baseUrl: string = 'http://127.0.0.1:4000') {
-        this.request = request;
-        this.baseUrl = baseUrl;
+  constructor(request: APIRequestContext, baseUrl = BASE_URL) {
+    this.request = request;
+    this.baseUrl = baseUrl;
+  }
+
+  async login(email: string, password: string) {
+    const response = await this.request.post(`${this.baseUrl}/api/auth/login`, {
+      data: { email, password },
+    });
+    if (!response.ok()) {
+      throw new Error(`Login failed: ${response.status()} ${await response.text()}`);
     }
+    return response.json();
+  }
 
-    async login(email: string, password: string) {
-        const response = await this.request.post(`${this.baseUrl}/api/auth/login`, {
-            data: { email, password }
-        });
-        if (!response.ok()) {
-            throw new Error(`Login failed: ${response.status()} ${await response.text()}`);
-        }
-        const data = await response.json();
-        this.token = data.user.id; // Wait, login returns { message, user }. No token in body? 
-        // Token is in cookie. But for API calls via request, we need it in header?
-        // Middleware `authenticate` checks `req.cookies.token || header`.
-        // If we use `request` from playwright which shares state with `page` (if using same context), cookies might be set.
-        // But `request` fixture is separate usually unless using `page.request`.
-        // If `setAuthCookie` sets cookie, verify if response has set-cookie.
+  async createProject(name: string, description: string = '') {
+    const response = await this.request.post(`${this.baseUrl}/api/projects`, {
+      data: { name, description },
+    });
+    if (!response.ok()) throw new Error(`Create project failed: ${await response.text()}`);
+    return response.json();
+  }
 
-        // Actually, the previous implementation assumed token in response.
-        // Backend: `setAuthCookie(res, token)`.
-        // Response body: `{ message, user }`. No token.
-        // So we must rely on Cookies.
+  async createTask(projectId: string, title: string, options: { status?: string; priority?: string; dueDate?: string } = {}) {
+    const { status = 'TODO', priority = 'MEDIUM', dueDate } = options;
+    const response = await this.request.post(`${this.baseUrl}/api/tasks`, {
+      data: {
+        projectId, title, status, priority, position: 0,
+        ...(dueDate && { dueDate: new Date(dueDate).toISOString() }),
+      },
+    });
+    if (!response.ok()) throw new Error(`Create task failed: ${await response.text()}`);
+    return response.json();
+  }
 
-        // If we use the SAME `request` context, it handles cookies.
-        return data;
-    }
+  async updateTask(taskId: string, data: Record<string, unknown>) {
+    const response = await this.request.put(`${this.baseUrl}/api/tasks/${taskId}`, { data });
+    if (!response.ok()) throw new Error(`Update task failed: ${await response.text()}`);
+    return response.json();
+  }
 
-    async createProject(name: string, description: string = '') {
-        const response = await this.request.post(`${this.baseUrl}/api/projects`, {
-            // Headers usually handled by cookie if login was done on same context
-            headers: this.getHeaders(),
-            data: { name, description }
-        });
-        if (!response.ok()) throw new Error(`Create project failed: ${await response.text()}`);
-        return await response.json();
-    }
+  async addDependency(blockedId: string, blockingId: string) {
+    const response = await this.request.post(`${this.baseUrl}/api/tasks/${blockedId}/dependencies`, {
+      data: { blockingTaskId: blockingId },
+    });
+    if (!response.ok()) throw new Error(`Add dependency failed: ${await response.text()}`);
+    return response.json();
+  }
 
-    async createTask(projectId: string, title: string, options: { status?: string; priority?: string } = {}) {
-        const { status = 'TODO', priority = 'MEDIUM' } = options;
-        const response = await this.request.post(`${this.baseUrl}/api/tasks`, {
-            headers: this.getHeaders(),
-            data: { projectId, title, status, priority, position: 0 }
-        });
-        if (!response.ok()) throw new Error(`Create task failed: ${await response.text()}`);
-        return await response.json();
-    }
-
-    async addDependency(blockedId: string, blockingId: string) {
-        // blockedId in URL, blockingId in body as blockingTaskId
-        const response = await this.request.post(`${this.baseUrl}/api/tasks/${blockedId}/dependencies`, {
-            headers: this.getHeaders(),
-            data: { blockingTaskId: blockingId }
-        });
-        if (!response.ok()) throw new Error(`Add dependency failed: ${await response.text()}`);
-        return await response.json();
-    }
-
-    async removeDependency(blockedId: string, dependencyId: string) {
-        const response = await this.request.delete(`${this.baseUrl}/api/tasks/${blockedId}/dependencies/${dependencyId}`, {
-            headers: this.getHeaders()
-        });
-        if (!response.ok()) throw new Error(`Remove dependency failed: ${await response.text()}`);
-    }
-
-    private getHeaders() {
-        // If using cookies, no auth header needed?
-        // But if we want to be explicit, we'd need the token.
-        // If login response doesn't give token, we can't set Auth header easily without parsing Set-Cookie.
-        // Playwright `request` handles cookies automatically.
-        return {
-            'Content-Type': 'application/json'
-        };
-    }
+  async removeDependency(blockedId: string, dependencyId: string) {
+    const response = await this.request.delete(
+      `${this.baseUrl}/api/tasks/${blockedId}/dependencies/${dependencyId}`,
+    );
+    if (!response.ok()) throw new Error(`Remove dependency failed: ${await response.text()}`);
+  }
 }

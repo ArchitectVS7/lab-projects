@@ -22,7 +22,7 @@ test.describe('Focus Mode', () => {
         // Navigate to focus mode
         await page.getByRole('link', { name: /focus/i }).click();
         await expect(page).toHaveURL('/focus');
-        await expect(page.getByRole('heading', { name: /focus mode/i })).toBeVisible();
+        await expect(page.getByRole('heading', { name: /focus session/i })).toBeVisible();
     });
 
     test('displays top 3 priority tasks', async ({ page }) => {
@@ -39,9 +39,9 @@ test.describe('Focus Mode', () => {
         await page.goto('/focus');
         await page.waitForTimeout(2000); // Wait for tasks to load
 
-        // Should display only top 3 tasks
-        const taskCards = page.locator('.bg-white\\/10, [class*="backdrop-blur"]').filter({ hasText: /high|medium|low/i });
-        const count = await taskCards.count();
+        // Each focus task card has a "Complete" button — count those
+        const completeBtns = page.getByRole('button', { name: 'Complete' });
+        const count = await completeBtns.count();
 
         // Should show at most 3 tasks
         expect(count).toBeLessThanOrEqual(3);
@@ -52,8 +52,8 @@ test.describe('Focus Mode', () => {
         await page.goto('/focus');
         await page.waitForTimeout(1000);
 
-        // Should show empty state message
-        await expect(page.getByText(/no.*tasks.*focus|nothing.*to.*do|all.*caught.*up/i)).toBeVisible({ timeout: 5000 });
+        // Should show empty state message (exact to avoid matching sibling element)
+        await expect(page.getByText('All clear for now', { exact: true })).toBeVisible({ timeout: 5000 });
     });
 
     test('displays task with priority badge', async ({ page }) => {
@@ -66,8 +66,8 @@ test.describe('Focus Mode', () => {
         // Verify task is displayed
         await expect(page.getByText('Urgent Task')).toBeVisible();
 
-        // Verify priority badge is shown
-        await expect(page.getByText(/urgent/i)).toBeVisible();
+        // Verify priority badge is shown (exact: true to avoid substring-matching title "Urgent Task")
+        await expect(page.getByText('URGENT', { exact: true })).toBeVisible();
     });
 
     test('completes task with button click', async ({ page }) => {

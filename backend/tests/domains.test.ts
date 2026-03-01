@@ -45,7 +45,7 @@ async function createTask(cookie: string, projectId: string, title = 'Test Task'
 describe('Domains API', () => {
   const user1Email = 'domains-user1@example.com';
   const user2Email = 'domains-user2@example.com';
-  const password = 'Password1';
+  const password = 'P@ssword1234';
 
   let user1Cookie: string;
   let user2Cookie: string;

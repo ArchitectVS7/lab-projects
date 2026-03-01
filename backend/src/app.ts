@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import { randomUUID } from 'crypto';
 import prisma from './lib/prisma.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/auth.js';
@@ -29,6 +30,7 @@ import calendarRoutes from './routes/calendar.js';
 import importRoutes from './routes/import.js';
 import billingRoutes from './routes/billing.js';
 import { apiKeyRateLimiter } from './middleware/apiKeyRateLimiter.js';
+import { userRateLimiter, tryAuthenticate } from './middleware/userRateLimiter.js';
 import specs from './lib/swagger.js';
 import swaggerUi from 'swagger-ui-express';
 
@@ -44,6 +46,16 @@ const app = express();
 app.set('trust proxy', 1);
 
 app.use(helmet());
+
+// Assign a unique request ID to every incoming request for traceability.
+// The ID is available via res.locals.requestId and echoed in the response
+// header so clients/support can correlate logs to error responses.
+app.use((_req, res, next) => {
+  res.locals.requestId = randomUUID();
+  res.setHeader('X-Request-Id', res.locals.requestId as string);
+  res.setHeader('X-API-Version', '1');
+  next();
+});
 
 // CORS: support comma-separated origins for Railway multi-service deployments
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
@@ -64,12 +76,18 @@ app.use(cors({
 console.log('CORS allowed origins:', allowedOrigins);
 app.use(morgan('dev'));
 
-// Stripe webhook needs raw body for signature verification — must come before express.json()
+// CRITICAL: express.raw() MUST come before express.json() for Stripe webhook signature verification
+// Moving or reordering these middlewares will break Stripe webhook processing
 app.use('/api/billing/webhook', express.raw({ type: 'application/json' }));
 
 app.use(express.json());
 app.use(cookieParser());
 app.use(apiKeyRateLimiter);
+
+// Per-user rate limiting for all authenticated /api requests.
+// tryAuthenticate decodes the token without rejecting unauthenticated requests;
+// userRateLimiter then keys on req.userId and skips if no user was identified.
+app.use('/api', tryAuthenticate, userRateLimiter);
 
 // Swagger UI
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(specs));

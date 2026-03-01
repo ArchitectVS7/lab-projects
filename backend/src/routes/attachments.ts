@@ -99,7 +99,7 @@ router.get('/task/:taskId', async (req: AuthRequest, res: Response, next: NextFu
     if (!task) throw new AppError('Task not found', 404);
 
     const membership = await getProjectMembership(req.userId!, task.projectId);
-    if (!membership) throw new AppError('Not a member of this project', 403);
+    if (!membership) throw new AppError('Task not found', 404);
 
     const attachments = await prisma.attachment.findMany({
       where: { taskId: req.params.taskId },
@@ -121,7 +121,7 @@ router.get('/:id/download', async (req: AuthRequest, res: Response, next: NextFu
     if (!attachment) throw new AppError('Attachment not found', 404);
 
     const membership = await getProjectMembership(req.userId!, attachment.task.projectId);
-    if (!membership) throw new AppError('Not a member of this project', 403);
+    if (!membership) throw new AppError('Attachment not found', 404);
 
     if (!fs.existsSync(attachment.path)) {
       throw new AppError('File not found on server', 404);
@@ -144,6 +144,11 @@ router.delete('/:id', async (req: AuthRequest, res: Response, next: NextFunction
     const membership = await getProjectMembership(req.userId!, attachment.task.projectId);
     const isUploader = attachment.uploadedById === req.userId;
     const isAdminOrOwner = membership && ['OWNER', 'ADMIN'].includes(membership.role);
+
+    // Non-members (who are also not the uploader) should not know the attachment exists
+    if (!membership && !isUploader) {
+      throw new AppError('Attachment not found', 404);
+    }
 
     if (!isUploader && !isAdminOrOwner) {
       throw new AppError('Cannot delete this attachment', 403);

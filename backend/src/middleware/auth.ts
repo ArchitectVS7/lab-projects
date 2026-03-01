@@ -46,29 +46,20 @@ export const clearAuthCookie = (res: Response): void => {
 /**
  * Generate a new API key for a user.
  * Format: taskman_<base64(userId:randomHex)>
- * Returns { plainKey, keyHash } -- plainKey shown ONCE, keyHash stored.
+ * Returns { plainKey, keyHash, keyLookupHash }
+ *   - plainKey:      shown ONCE to the user, never stored
+ *   - keyHash:       bcrypt hash stored for verification
+ *   - keyLookupHash: SHA-256 of plainKey stored in plaintext for O(1) DB lookup,
+ *                    eliminating the N+1 findMany + bcrypt loop
  */
-export async function generateApiKey(userId: string): Promise<{ plainKey: string; keyHash: string }> {
+export async function generateApiKey(userId: string): Promise<{ plainKey: string; keyHash: string; keyLookupHash: string }> {
   const randomPart = crypto.randomBytes(32).toString('hex');
   const plainKey = `taskman_${Buffer.from(`${userId}:${randomPart}`).toString('base64')}`;
   const keyHash = await bcrypt.hash(plainKey, 10);
-  return { plainKey, keyHash };
+  const keyLookupHash = crypto.createHash('sha256').update(plainKey).digest('hex');
+  return { plainKey, keyHash, keyLookupHash };
 }
 
-/**
- * Decode an API key to extract the userId prefix.
- */
-function decodeApiKeyUserId(apiKey: string): string | null {
-  try {
-    const payload = apiKey.replace('taskman_', '');
-    const decoded = Buffer.from(payload, 'base64').toString('utf8');
-    const colonIndex = decoded.indexOf(':');
-    if (colonIndex === -1) return null;
-    return decoded.substring(0, colonIndex);
-  } catch {
-    return null;
-  }
-}
 
 const extractToken = (req: Request): string | null => {
   // 1. Try HTTP-only cookie (primary)
@@ -93,39 +84,33 @@ export const authenticate = async (
   const apiKey = req.headers['x-api-key'] as string | undefined;
   if (apiKey && apiKey.startsWith('taskman_')) {
     try {
-      const userId = decodeApiKeyUserId(apiKey);
-      if (!userId) {
-        return next(new AppError('Invalid API key', 401));
-      }
+      // Compute the lookup hash from the presented key so we can fetch exactly
+      // one record from the DB — no N+1 findMany, no bcrypt loop over all user keys.
+      const keyLookupHash = crypto.createHash('sha256').update(apiKey).digest('hex');
 
-      const keys = await prisma.apiKey.findMany({
-        where: { userId },
+      const keyRecord = await prisma.apiKey.findUnique({
+        where: { keyLookupHash },
       });
 
-      let matched = false;
-      let matchedKeyId: string | null = null;
-      for (const key of keys) {
-        if (await bcrypt.compare(apiKey, key.keyHash)) {
-          matched = true;
-          matchedKeyId = key.id;
-          break;
-        }
-      }
+      // Always run bcrypt.compare to avoid short-circuit timing differences.
+      // If no record was found, compare against a dummy hash so response time
+      // is indistinguishable from a real key that simply doesn't match.
+      const dummyHash = '$2a$10$dummyhashfortimingnormalizationXXXXXXXXXXXXXXXXXXXXXXX';
+      const hashToCompare = keyRecord?.keyHash ?? dummyHash;
+      const matched = await bcrypt.compare(apiKey, hashToCompare);
 
-      if (!matched) {
+      if (!keyRecord || !matched) {
         return next(new AppError('Invalid API key', 401));
       }
 
-      req.userId = userId;
+      req.userId = keyRecord.userId;
       req.authMethod = 'apikey';
 
       // Update lastUsedAt in background (non-blocking)
-      if (matchedKeyId) {
-        prisma.apiKey.update({
-          where: { id: matchedKeyId },
-          data: { lastUsedAt: new Date() },
-        }).catch(() => {});
-      }
+      prisma.apiKey.update({
+        where: { id: keyRecord.id },
+        data: { lastUsedAt: new Date() },
+      }).catch((err) => console.error('[auth] Failed to update API key lastUsedAt:', err));
 
       return next();
     } catch {

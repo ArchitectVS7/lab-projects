@@ -14,7 +14,7 @@ describe('Phase 4: Seed Data Verification', () => {
         await prisma.user.deleteMany();
 
         // Run seed script logic inline (same as seed.ts)
-        const passwordHash = await bcrypt.hash('Password123', 12);
+        const passwordHash = await bcrypt.hash('TestPass1@secure', 12);
 
         const alice = await prisma.user.create({
             data: { email: 'alice@example.com', passwordHash, name: 'Alice Johnson' },
@@ -111,20 +111,20 @@ describe('Phase 4: Seed Data Verification', () => {
         expect(tasks).toHaveLength(10);
     });
 
-    it('alice can login with Password123', async () => {
+    it('alice can login with TestPass1@secure', async () => {
         const res = await request(app)
             .post('/api/auth/login')
-            .send({ email: 'alice@example.com', password: 'Password123' });
+            .send({ email: 'alice@example.com', password: 'TestPass1@secure' });
 
         expect(res.status).toBe(200);
         expect(res.body.user.email).toBe('alice@example.com');
         expect(res.body.user.name).toBe('Alice Johnson');
     });
 
-    it('bob can login with Password123', async () => {
+    it('bob can login with TestPass1@secure', async () => {
         const res = await request(app)
             .post('/api/auth/login')
-            .send({ email: 'bob@example.com', password: 'Password123' });
+            .send({ email: 'bob@example.com', password: 'TestPass1@secure' });
 
         expect(res.status).toBe(200);
         expect(res.body.user.email).toBe('bob@example.com');
@@ -134,7 +134,7 @@ describe('Phase 4: Seed Data Verification', () => {
     it('alice sees 3 projects (2 owned, 1 as admin)', async () => {
         const loginRes = await request(app)
             .post('/api/auth/login')
-            .send({ email: 'alice@example.com', password: 'Password123' });
+            .send({ email: 'alice@example.com', password: 'TestPass1@secure' });
 
         const cookies = loginRes.headers['set-cookie'];
         const cookie = Array.isArray(cookies)
@@ -162,7 +162,7 @@ describe('Phase 4: Seed Data Verification', () => {
     it('bob sees 3 projects (1 owned, 1 as member, 1 as viewer)', async () => {
         const loginRes = await request(app)
             .post('/api/auth/login')
-            .send({ email: 'bob@example.com', password: 'Password123' });
+            .send({ email: 'bob@example.com', password: 'TestPass1@secure' });
 
         const cookies = loginRes.headers['set-cookie'];
         const cookie = Array.isArray(cookies)

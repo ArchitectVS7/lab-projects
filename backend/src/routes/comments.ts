@@ -12,13 +12,34 @@ const router = Router();
 
 // --- Zod Schemas ---
 
+const DANGEROUS_PATTERNS = [
+  /<script/i,
+  /javascript:/i,
+  /on\w+\s*=/i, // onerror=, onclick=, etc.
+  /<iframe/i,
+  /<object/i,
+  /<embed/i,
+];
+
+function isSafeContent(val: string): boolean {
+  return !DANGEROUS_PATTERNS.some((p) => p.test(val));
+}
+
 const createCommentSchema = z.object({
-  content: z.string().min(1, 'Content is required').max(5000, 'Content must be 5000 characters or less'),
+  content: z
+    .string()
+    .min(1, 'Content is required')
+    .max(50000, 'Content must be 50000 characters or less')
+    .refine(isSafeContent, 'Comment contains disallowed content'),
   parentId: z.string().uuid('Invalid parent comment ID').optional(),
 });
 
 const updateCommentSchema = z.object({
-  content: z.string().min(1, 'Content is required').max(5000, 'Content must be 5000 characters or less'),
+  content: z
+    .string()
+    .min(1, 'Content is required')
+    .max(50000, 'Content must be 50000 characters or less')
+    .refine(isSafeContent, 'Comment contains disallowed content'),
 });
 
 // --- UUID validation helper ---

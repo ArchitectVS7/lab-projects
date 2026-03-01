@@ -32,7 +32,7 @@ beforeAll(async () => {
   // Create test users
   const aliceRes = await request(app).post('/api/auth/register').send({
     email: 'alice@recurring.test',
-    password: 'Pass1234',
+    password: 'TestPass1@secure',
     name: 'Alice',
   });
   alice = {
@@ -42,7 +42,7 @@ beforeAll(async () => {
 
   const bobRes = await request(app).post('/api/auth/register').send({
     email: 'bob@recurring.test',
-    password: 'Pass1234',
+    password: 'TestPass1@secure',
     name: 'Bob',
   });
   bob = {
@@ -224,12 +224,13 @@ describe('GET /api/recurring-tasks/:id', () => {
     expect(res.body.interval).toBe(2);
   });
 
-  it('rejects access by user without project membership → 403', async () => {
+  it('rejects access by user without project membership → 404', async () => {
     const res = await request(app)
       .get(`/api/recurring-tasks/${recurringId}`)
       .set('Cookie', bob.cookie);
 
-    expect(res.status).toBe(403);
+    // Returns 404 (not 403) to avoid leaking the existence of the recurring task
+    expect(res.status).toBe(404);
   });
 
   it('returns 404 for non-existent id', async () => {

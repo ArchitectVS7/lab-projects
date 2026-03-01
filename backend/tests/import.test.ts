@@ -59,7 +59,7 @@ describe('Milestone Import API', () => {
     // Register owner (upgrade to PRO — API key creation is gated)
     const ownerRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'import-owner@example.com', password: 'Password1', name: 'Import Owner' });
+      .send({ email: 'import-owner@example.com', password: 'TestPass1@secure', name: 'Import Owner' });
     expect(ownerRes.status).toBe(201);
     ownerCookie = extractAuthCookie(ownerRes)!;
     ownerId = ownerRes.body.user.id;
@@ -68,14 +68,14 @@ describe('Milestone Import API', () => {
     // Register member
     const memberRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'import-member@example.com', password: 'Password1', name: 'Import Member' });
+      .send({ email: 'import-member@example.com', password: 'TestPass1@secure', name: 'Import Member' });
     expect(memberRes.status).toBe(201);
     memberCookie = extractAuthCookie(memberRes)!;
 
     // Register viewer
     const viewerRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'import-viewer@example.com', password: 'Password1', name: 'Import Viewer' });
+      .send({ email: 'import-viewer@example.com', password: 'TestPass1@secure', name: 'Import Viewer' });
     expect(viewerRes.status).toBe(201);
     viewerCookie = extractAuthCookie(viewerRes)!;
 
@@ -263,7 +263,7 @@ describe('Milestone Import API', () => {
       // Register a fresh user who is NOT a member of the project
       const freshRes = await request(app)
         .post('/api/auth/register')
-        .send({ email: 'import-outsider@example.com', password: 'Password1', name: 'Outsider' });
+        .send({ email: 'import-outsider@example.com', password: 'TestPass1@secure', name: 'Outsider' });
       const freshCookie = extractAuthCookie(freshRes)!;
 
       const res = await request(app)

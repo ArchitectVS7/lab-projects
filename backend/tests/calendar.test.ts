@@ -1,4 +1,5 @@
 import request from 'supertest';
+import crypto from 'crypto';
 import { PrismaClient } from '@prisma/client';
 import app from '../src/app';
 
@@ -35,7 +36,7 @@ describe('Calendar Feed API', () => {
     // Register primary user
     const regRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'cal-test@example.com', password: 'Password1', name: 'Cal Tester' });
+      .send({ email: 'cal-test@example.com', password: 'TestPass1@secure', name: 'Cal Tester' });
     expect(regRes.status).toBe(201);
     authCookie = extractAuthCookie(regRes)!;
     userId = regRes.body.user.id;
@@ -75,7 +76,7 @@ describe('Calendar Feed API', () => {
     // Register second user with their own project/task
     const reg2 = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'cal-other@example.com', password: 'Password1', name: 'Other User' });
+      .send({ email: 'cal-other@example.com', password: 'TestPass1@secure', name: 'Other User' });
     expect(reg2.status).toBe(201);
     otherCookie = extractAuthCookie(reg2)!;
 
@@ -118,15 +119,52 @@ describe('Calendar Feed API', () => {
     feedToken = res.body.token;
   });
 
-  it('GET /token/status returns hasToken: true and feedUrl after generation', async () => {
+  it('GET /token/status returns hasToken: true after generation (feedUrl is null — plaintext not stored)', async () => {
     const res = await request(app)
       .get('/api/calendar/token/status')
       .set('Cookie', authCookie);
     expect(res.status).toBe(200);
     expect(res.body.hasToken).toBe(true);
     expect(res.body.createdAt).toBeTruthy();
-    expect(res.body.feedUrl).toContain('/api/calendar/feed.ics?token=');
-    expect(res.body.feedUrl).toContain(feedToken);
+    // feedUrl is null because only the hash is persisted; the plaintext is only
+    // returned in the POST /token creation response.
+    expect(res.body.feedUrl).toBeNull();
+  });
+
+  // --- Token hashing security tests ---
+
+  it('stored DB value is a SHA-256 hash, not the plaintext token', async () => {
+    // feedToken was captured from the POST /token response above.
+    const dbUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { calendarToken: true },
+    });
+    expect(dbUser?.calendarToken).toBeDefined();
+    // Plaintext 64-char hex token must NOT be stored verbatim.
+    expect(dbUser?.calendarToken).not.toBe(feedToken);
+    // The stored value must be the SHA-256 hex digest of the plaintext token.
+    const expectedHash = crypto.createHash('sha256').update(feedToken).digest('hex');
+    expect(dbUser?.calendarToken).toBe(expectedHash);
+  });
+
+  it('GET /feed.ics accepts valid plaintext token and returns iCal data', async () => {
+    const res = await request(app).get(`/api/calendar/feed.ics?token=${feedToken}`);
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('text/calendar');
+    expect(res.text).toContain('BEGIN:VCALENDAR');
+  });
+
+  it('GET /feed.ics rejects the stored hash directly (must use plaintext)', async () => {
+    const storedHash = crypto.createHash('sha256').update(feedToken).digest('hex');
+    const res = await request(app).get(`/api/calendar/feed.ics?token=${storedHash}`);
+    // Presenting the hash itself (not the plaintext) must fail because the server
+    // would hash it again, producing a different value.
+    expect(res.status).toBe(401);
+  });
+
+  it('GET /feed.ics returns 401 for a completely invalid token', async () => {
+    const res = await request(app).get('/api/calendar/feed.ics?token=notarealtoken');
+    expect(res.status).toBe(401);
   });
 
   it('GET /token/status returns hasToken: false and no feedUrl for user without token', async () => {
@@ -207,11 +245,12 @@ describe('Calendar Feed API', () => {
     const newRes = await request(app).get(`/api/calendar/feed.ics?token=${feedToken}`);
     expect(newRes.status).toBe(200);
 
-    // Status endpoint should return new feed URL
+    // Status endpoint should still show hasToken: true (feedUrl is null — plaintext not stored)
     const statusRes = await request(app)
       .get('/api/calendar/token/status')
       .set('Cookie', authCookie);
-    expect(statusRes.body.feedUrl).toContain(feedToken);
+    expect(statusRes.body.hasToken).toBe(true);
+    expect(statusRes.body.feedUrl).toBeNull();
   });
 
   // --- Revoke ---

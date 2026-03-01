@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import crypto, { randomUUID } from 'crypto';
 import prisma from './prisma.js';
 
 const WEBHOOK_EVENTS = [
@@ -25,7 +25,8 @@ async function deliverWebhook(
   data: unknown,
   attempt: number = 1,
 ): Promise<void> {
-  const body = JSON.stringify({ event, timestamp: new Date().toISOString(), data });
+  const deliveryId = randomUUID();
+  const body = JSON.stringify({ event, timestamp: new Date().toISOString(), deliveryId, data });
   const signature = crypto.createHmac('sha256', secret).update(body).digest('hex');
 
   try {
@@ -45,14 +46,25 @@ async function deliverWebhook(
 
     clearTimeout(timeout);
 
-    // Log the delivery
-    await prisma.webhookLog.create({
-      data: {
+    // Upsert the delivery log (idempotent — keyed on deliveryId)
+    await prisma.webhookLog.upsert({
+      where: { deliveryId },
+      update: { statusCode: response.status },
+      create: {
         webhookId,
         event,
         statusCode: response.status,
+        deliveryId,
       },
     });
+
+    // Fire-and-forget: clean up logs older than 90 days for this webhook
+    prisma.webhookLog.deleteMany({
+      where: {
+        webhookId,
+        createdAt: { lt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) },
+      },
+    }).catch((err) => console.error('[webhookDispatcher] Failed to cleanup old logs:', err));
 
     if (response.ok) {
       // Reset failure count on success
@@ -64,14 +76,17 @@ async function deliverWebhook(
       throw new Error(`HTTP ${response.status}`);
     }
   } catch (error: unknown) {
-    // Log the failure
-    await prisma.webhookLog.create({
-      data: {
+    // Upsert the failure log (idempotent — keyed on deliveryId)
+    await prisma.webhookLog.upsert({
+      where: { deliveryId },
+      update: { error: error instanceof Error ? error.message : 'Unknown error' },
+      create: {
         webhookId,
         event,
         error: error instanceof Error ? error.message : 'Unknown error',
+        deliveryId,
       },
-    }).catch(() => { });
+    }).catch((err) => console.error(`[webhookDispatcher] Failed to log webhook failure for ${webhookId}:`, err));
 
     // Increment failure count
     const updated = await prisma.webhook.update({
@@ -84,7 +99,7 @@ async function deliverWebhook(
       await prisma.webhook.update({
         where: { id: webhookId },
         data: { active: false },
-      }).catch(() => { });
+      }).catch((err) => console.error(`[webhookDispatcher] Failed to disable webhook ${webhookId}:`, err));
       return; // Don't retry if disabled
     }
 
@@ -110,7 +125,7 @@ export async function dispatchWebhooks(event: string, data: unknown, userId: str
 
     for (const webhook of webhooks) {
       // Fire-and-forget: don't await delivery
-      void deliverWebhook(webhook.id, webhook.url, webhook.secret, event, data).catch(() => { });
+      void deliverWebhook(webhook.id, webhook.url, webhook.secret, event, data).catch((err) => console.error(`[webhookDispatcher] Failed to deliver webhook ${webhook.id}:`, err));
     }
   } catch (error) {
     console.error('Failed to dispatch webhooks:', error);

@@ -45,7 +45,7 @@ router.post(
           where: { projectId_userId: { projectId: task.projectId, userId: req.userId! } },
         });
         if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
-          throw new AppError('You do not have access to this task', 403);
+          throw new AppError('Task not found', 404);
         }
       }
 

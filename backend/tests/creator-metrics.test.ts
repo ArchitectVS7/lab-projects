@@ -47,31 +47,31 @@ describe('Creator Metrics API', () => {
         // Create users
         const ownerRes = await request(app)
             .post('/api/auth/register')
-            .send({ email: 'cm-owner@test.com', password: 'Password1', name: 'Owner User' });
+            .send({ email: 'cm-owner@test.com', password: 'TestPass1@secure', name: 'Owner User' });
         ownerCookie = extractAuthCookie(ownerRes)!;
         ownerId = ownerRes.body.user.id;
 
         const adminRes = await request(app)
             .post('/api/auth/register')
-            .send({ email: 'cm-admin@test.com', password: 'Password1', name: 'Admin User' });
+            .send({ email: 'cm-admin@test.com', password: 'TestPass1@secure', name: 'Admin User' });
         adminCookie = extractAuthCookie(adminRes)!;
         adminId = adminRes.body.user.id;
 
         const memberRes = await request(app)
             .post('/api/auth/register')
-            .send({ email: 'cm-member@test.com', password: 'Password1', name: 'Member User' });
+            .send({ email: 'cm-member@test.com', password: 'TestPass1@secure', name: 'Member User' });
         memberCookie = extractAuthCookie(memberRes)!;
         memberId = memberRes.body.user.id;
 
         const viewerRes = await request(app)
             .post('/api/auth/register')
-            .send({ email: 'cm-viewer@test.com', password: 'Password1', name: 'Viewer User' });
+            .send({ email: 'cm-viewer@test.com', password: 'TestPass1@secure', name: 'Viewer User' });
         viewerCookie = extractAuthCookie(viewerRes)!;
         viewerId = viewerRes.body.user.id;
 
         const nonMemberRes = await request(app)
             .post('/api/auth/register')
-            .send({ email: 'cm-nonmember@test.com', password: 'Password1', name: 'NonMember User' });
+            .send({ email: 'cm-nonmember@test.com', password: 'TestPass1@secure', name: 'NonMember User' });
         nonMemberCookie = extractAuthCookie(nonMemberRes)!;
         nonMemberId = nonMemberRes.body.user.id;
 

@@ -33,17 +33,17 @@ describe('Activity Logs', () => {
     // Create users
     const ownerRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'al-owner@test.com', password: 'Password1', name: 'AL Owner' });
+      .send({ email: 'al-owner@test.com', password: 'TestPass1@secure', name: 'AL Owner' });
     owner = { id: ownerRes.body.user.id, email: 'al-owner@test.com', cookie: extractAuthCookie(ownerRes)! };
 
     const memberRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'al-member@test.com', password: 'Password1', name: 'AL Member' });
+      .send({ email: 'al-member@test.com', password: 'TestPass1@secure', name: 'AL Member' });
     member = { id: memberRes.body.user.id, email: 'al-member@test.com', cookie: extractAuthCookie(memberRes)! };
 
     const outsiderRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'al-outsider@test.com', password: 'Password1', name: 'AL Outsider' });
+      .send({ email: 'al-outsider@test.com', password: 'TestPass1@secure', name: 'AL Outsider' });
     outsider = { id: outsiderRes.body.user.id, email: 'al-outsider@test.com', cookie: extractAuthCookie(outsiderRes)! };
 
     // Create project

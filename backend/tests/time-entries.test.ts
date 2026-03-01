@@ -242,4 +242,78 @@ describe('Time Entries API', () => {
             expect(res.body.id).toBe(entry.id);
         });
     });
+
+    describe('Cross-project authorization for GET /api/time-entries', () => {
+        it('filters out time entries after user is removed from project', async () => {
+            // Create a second user who will own a project
+            const secondUserAuth = await createTestUser('second-time-owner@example.com', 'Second Owner');
+
+            // Second user creates a project
+            const crossProj = await createTestProject(secondUserAuth.cookie, 'Cross Project');
+
+            // Second user adds first user (user) as a member
+            await request(app)
+                .post(`/api/projects/${crossProj.id}/members`)
+                .set('Cookie', secondUserAuth.cookie)
+                .send({ email: 'time-test@example.com', role: 'MEMBER' });
+
+            // Second user creates a task in their project
+            const crossTask = await createTestTask(secondUserAuth.cookie, {
+                projectId: crossProj.id,
+                title: 'Cross Project Task',
+            });
+
+            // First user creates a time entry on the cross-project task
+            const entry = await prisma.timeEntry.create({
+                data: {
+                    taskId: crossTask.id,
+                    userId: user.id,
+                    startTime: new Date(),
+                    endTime: new Date(),
+                    duration: 120,
+                },
+            });
+
+            // While a member, the entry should appear in the list
+            const beforeRes = await request(app)
+                .get('/api/time-entries')
+                .set('Cookie', cookie);
+            expect(beforeRes.status).toBe(200);
+            const beforeIds = beforeRes.body.map((e: any) => e.id);
+            expect(beforeIds).toContain(entry.id);
+
+            // Remove the first user from the project
+            await request(app)
+                .delete(`/api/projects/${crossProj.id}/members/${user.id}`)
+                .set('Cookie', secondUserAuth.cookie);
+
+            // After removal, the entry should no longer appear
+            const afterRes = await request(app)
+                .get('/api/time-entries')
+                .set('Cookie', cookie);
+            expect(afterRes.status).toBe(200);
+            const afterIds = afterRes.body.map((e: any) => e.id);
+            expect(afterIds).not.toContain(entry.id);
+
+            // Cleanup
+            await prisma.timeEntry.delete({ where: { id: entry.id } });
+        });
+
+        it('returns 404 when filtering by taskId of a project the user is not a member of', async () => {
+            // Create a third user who owns a separate project
+            const outsiderAuth = await createTestUser('outsider-time@example.com', 'Outsider');
+            const outsiderProj = await createTestProject(outsiderAuth.cookie, 'Outsider Project');
+            const outsiderTask = await createTestTask(outsiderAuth.cookie, {
+                projectId: outsiderProj.id,
+                title: 'Outsider Task',
+            });
+
+            // First user tries to query time entries filtered by the outsider's task
+            const res = await request(app)
+                .get(`/api/time-entries?taskId=${outsiderTask.id}`)
+                .set('Cookie', cookie);
+
+            expect(res.status).toBe(404);
+        });
+    });
 });

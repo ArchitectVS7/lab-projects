@@ -37,7 +37,7 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
     validateUUID(projectId, 'project ID');
 
     const membership = await getProjectMembership(req.userId!, projectId);
-    if (!membership) throw new AppError('Not a member of this project', 403);
+    if (!membership) throw new AppError('Project not found', 404);
 
     const tags = await prisma.tag.findMany({
       where: { projectId },

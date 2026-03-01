@@ -24,7 +24,7 @@ describe('Pagination', () => {
 
         const regRes = await request(app)
             .post('/api/auth/register')
-            .send({ email: 'pagination@example.com', password: 'Password1', name: 'Pagination User' });
+            .send({ email: 'pagination@example.com', password: 'TestPass1@secure', name: 'Pagination User' });
 
         authCookie = extractAuthCookie(regRes)!;
         userId = regRes.body.user.id;

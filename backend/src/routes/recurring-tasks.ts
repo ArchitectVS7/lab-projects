@@ -134,7 +134,7 @@ router.get('/:id', async (req: AuthRequest, res: Response, next: NextFunction) =
 
     const membership = await getProjectMembership(userId, recurringTask.projectId);
     if (!membership) {
-      throw new AppError('You do not have access to this recurring task', 403);
+      throw new AppError('Recurring task not found', 404);
     }
 
     res.json(recurringTask);

@@ -394,12 +394,13 @@ enum CustomFieldType {
 }
 
 model ApiKey {
-  id         String    @id @default(uuid())
-  userId     String    @map("user_id")
-  name       String
-  keyHash    String    @unique @map("key_hash")
-  lastUsedAt DateTime? @map("last_used_at")
-  createdAt  DateTime  @default(now()) @map("created_at")
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  name           String
+  keyHash        String    @unique @map("key_hash")
+  keyLookupHash  String    @unique @map("key_lookup_hash")
+  lastUsedAt     DateTime? @map("last_used_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -430,6 +431,7 @@ model WebhookLog {
   event      String
   statusCode Int?     @map("status_code")
   error      String?
+  deliveryId String?  @unique @map("delivery_id")
   createdAt  DateTime @default(now()) @map("created_at")
 
   webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
@@ -652,6 +654,7 @@ model Subscription {
   currentPeriodStart   DateTime           @map("current_period_start")
   currentPeriodEnd     DateTime           @map("current_period_end")
   cancelAtPeriodEnd    Boolean            @default(false) @map("cancel_at_period_end")
+  stripeEventId        String?            @map("stripe_event_id")
   createdAt            DateTime           @default(now()) @map("created_at")
   updatedAt            DateTime           @updatedAt @map("updated_at")
 

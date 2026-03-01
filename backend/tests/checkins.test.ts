@@ -13,7 +13,7 @@ function extractAuthCookie(res: request.Response): string | undefined {
 }
 
 // Helper: register a user and return auth cookie
-async function registerAndLogin(email: string, password = 'Password1', name = 'Test User'): Promise<string> {
+async function registerAndLogin(email: string, password = 'TestPass1@secure', name = 'Test User'): Promise<string> {
   const res = await request(app)
     .post('/api/auth/register')
     .send({ email, password, name });

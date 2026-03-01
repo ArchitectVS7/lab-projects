@@ -269,16 +269,27 @@ router.post('/:id/members', async (req: AuthRequest, res: Response, next: NextFu
       prisma.user.findUnique({ where: { id: req.userId! }, select: { name: true } }),
     ]);
 
+    const assignedRole = data.role || 'MEMBER';
     const newMember = await prisma.projectMember.create({
       data: {
         projectId: req.params.id,
         userId: targetUser.id,
-        role: data.role || 'MEMBER',
+        role: assignedRole,
       },
       include: {
         user: { select: userSelect },
       },
     });
+
+    // Audit log: member added
+    console.info(JSON.stringify({
+      audit: 'project.member.added',
+      projectId: req.params.id,
+      actorId: req.userId,
+      targetUserId: targetUser.id,
+      role: assignedRole,
+      timestamp: new Date().toISOString(),
+    }));
 
     // Notify the added user (non-blocking)
     notifyProjectInvite(
@@ -286,7 +297,7 @@ router.post('/:id/members', async (req: AuthRequest, res: Response, next: NextFu
       targetUser.id,
       inviter?.name || 'A team member',
       project?.name || 'a project',
-    ).catch(() => {});
+    ).catch((err) => console.error('[projects] Failed to send project invite notification:', err));
 
     res.status(201).json(newMember);
   } catch (error) {
@@ -332,7 +343,81 @@ router.delete('/:id/members/:userId', async (req: AuthRequest, res: Response, ne
       },
     });
 
+    // Audit log: member removed
+    console.info(JSON.stringify({
+      audit: 'project.member.removed',
+      projectId: req.params.id,
+      actorId: req.userId,
+      targetUserId: req.params.userId,
+      previousRole: targetMembership.role,
+      timestamp: new Date().toISOString(),
+    }));
+
     res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PATCH /api/projects/:id/members/:userId - Update member role
+router.patch('/:id/members/:userId', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    validateUUID(req.params.id, 'project ID');
+    validateUUID(req.params.userId, 'user ID');
+
+    const roleSchema = z.object({
+      role: z.enum(['ADMIN', 'MEMBER', 'VIEWER']),
+    });
+    const data = roleSchema.parse(req.body);
+
+    // Check requester is OWNER or ADMIN
+    const membership = await getProjectMembership(req.userId!, req.params.id);
+    if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
+      throw new AppError('Only project owners and admins can change member roles', 403);
+    }
+
+    // Cannot change the project owner's role
+    const project = await prisma.project.findUnique({
+      where: { id: req.params.id },
+    });
+    if (!project) {
+      throw new AppError('Project not found', 404);
+    }
+    if (project.ownerId === req.params.userId) {
+      throw new AppError('Cannot change the project owner\'s role', 400);
+    }
+
+    // Verify target is actually a member
+    const targetMembership = await getProjectMembership(req.params.userId, req.params.id);
+    if (!targetMembership) {
+      throw new AppError('User is not a member of this project', 404);
+    }
+
+    const updated = await prisma.projectMember.update({
+      where: {
+        projectId_userId: {
+          projectId: req.params.id,
+          userId: req.params.userId,
+        },
+      },
+      data: { role: data.role },
+      include: {
+        user: { select: userSelect },
+      },
+    });
+
+    // Audit log: role changed
+    console.info(JSON.stringify({
+      audit: 'project.member.role_changed',
+      projectId: req.params.id,
+      actorId: req.userId,
+      targetUserId: req.params.userId,
+      oldRole: targetMembership.role,
+      newRole: data.role,
+      timestamp: new Date().toISOString(),
+    }));
+
+    res.json(updated);
   } catch (error) {
     next(error);
   }

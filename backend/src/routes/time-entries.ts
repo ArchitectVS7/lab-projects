@@ -1,5 +1,6 @@
 import { Router, Response, NextFunction } from 'express';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
@@ -46,7 +47,7 @@ async function verifyProjectMembership(userId: string, taskId: string) {
   });
 
   if (!membership) {
-    throw new AppError('You are not a member of this task\'s project', 403);
+    throw new AppError('Task not found', 404);
   }
 
   return task;
@@ -80,14 +81,36 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
     const userId = req.userId!;
     const { taskId, dateFrom, dateTo } = req.query;
 
-    const where: Record<string, unknown> = { userId };
+    // Base filter: only return entries for tasks in projects the user is a member of
+    const where: Prisma.TimeEntryWhereInput = {
+      userId,
+      task: {
+        project: {
+          members: { some: { userId } },
+        },
+      },
+    };
 
     if (taskId && typeof taskId === 'string') {
+      // When filtering by taskId, verify the user has access to that task's project
+      const task = await prisma.task.findUnique({
+        where: { id: taskId },
+        select: { id: true, projectId: true },
+      });
+
+      if (!task) throw new AppError('Task not found', 404);
+
+      const membership = await prisma.projectMember.findUnique({
+        where: { projectId_userId: { projectId: task.projectId, userId } },
+      });
+
+      if (!membership) throw new AppError('Task not found', 404);
+
       where.taskId = taskId;
     }
 
     if (dateFrom || dateTo) {
-      const startTimeFilter: Record<string, Date> = {};
+      const startTimeFilter: Prisma.DateTimeFilter = {};
       if (dateFrom && typeof dateFrom === 'string') {
         startTimeFilter.gte = new Date(dateFrom);
       }
@@ -139,18 +162,26 @@ router.get('/stats', async (req: AuthRequest, res: Response, next: NextFunction)
     const userId = req.userId!;
     const { taskId, projectId, dateFrom, dateTo } = req.query;
 
-    const where: Record<string, unknown> = {
+    // Base filter: only return entries for tasks in projects the user is a member of
+    const taskFilter: Prisma.TaskWhereInput = {
+      project: {
+        members: { some: { userId } },
+      },
+    };
+
+    if (projectId && typeof projectId === 'string') {
+      taskFilter.projectId = projectId;
+    }
+
+    const where: Prisma.TimeEntryWhereInput = {
       userId,
       endTime: { not: null },
       duration: { not: null },
+      task: taskFilter,
     };
 
     if (taskId && typeof taskId === 'string') {
       where.taskId = taskId;
-    }
-
-    if (projectId && typeof projectId === 'string') {
-      where.task = { projectId };
     }
 
     if (dateFrom || dateTo) {

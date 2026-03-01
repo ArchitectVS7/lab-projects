@@ -1,11 +1,28 @@
+import { Prisma } from '@prisma/client';
 import prisma from './prisma.js';
 import { getIO } from './socket.js';
 
 const TRACKED_FIELDS = ['title', 'description', 'status', 'priority', 'assigneeId', 'dueDate'] as const;
 
-export async function logTaskCreated(taskId: string, userId: string) {
+const RETENTION_DAYS = 180;
+
+function scheduleRetentionCleanup(taskId: string): void {
+  prisma.activityLog.deleteMany({
+    where: {
+      taskId,
+      createdAt: { lt: new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000) },
+    },
+  }).catch((err) => console.error('[activityLog] Failed to cleanup old logs:', err));
+}
+
+export async function logTaskCreated(
+  taskId: string,
+  userId: string,
+  tx?: Prisma.TransactionClient,
+): Promise<void> {
+  const client = tx ?? prisma;
   try {
-    const activity = await prisma.activityLog.create({
+    const activity = await client.activityLog.create({
       data: {
         action: 'CREATED',
         taskId,
@@ -13,27 +30,37 @@ export async function logTaskCreated(taskId: string, userId: string) {
       },
     });
 
+    // Fire-and-forget retention cleanup outside transaction
+    if (!tx) {
+      scheduleRetentionCleanup(taskId);
+    }
+
     const io = getIO();
     if (io) {
       io.to(`task:${taskId}`).emit('task:updated', { taskId });
       io.to(`task:${taskId}`).emit('activity:new', activity);
     }
-  } catch (error) {
-    console.error('Failed to log task creation:', error);
+  } catch (err) {
+    console.error('Failed to log task creation:', err);
+    if (tx) throw err;
   }
 }
 
-export async function logTaskChanges({
-  taskId,
-  userId,
-  oldTask,
-  newTask,
-}: {
-  taskId: string;
-  userId: string;
-  oldTask: Record<string, unknown>;
-  newTask: Record<string, unknown>;
-}) {
+export async function logTaskChanges(
+  {
+    taskId,
+    userId,
+    oldTask,
+    newTask,
+  }: {
+    taskId: string;
+    userId: string;
+    oldTask: Record<string, unknown>;
+    newTask: Record<string, unknown>;
+  },
+  tx?: Prisma.TransactionClient,
+): Promise<void> {
+  const client = tx ?? prisma;
   try {
     const logsData: { action: 'UPDATED'; field: string; oldValue: string | null; newValue: string | null; taskId: string; userId: string }[] = [];
 
@@ -58,28 +85,44 @@ export async function logTaskChanges({
     }
 
     if (logsData.length > 0) {
-      const createdLogs = await prisma.$transaction(
-        logsData.map(log => prisma.activityLog.create({ data: log }))
-      );
+      // When inside a tx, create sequentially (can't nest $transaction inside another tx)
+      let createdLogs;
+      if (tx) {
+        createdLogs = await Promise.all(logsData.map(log => client.activityLog.create({ data: log })));
+      } else {
+        createdLogs = await prisma.$transaction(
+          logsData.map(log => prisma.activityLog.create({ data: log }))
+        );
+      }
+
+      // Fire-and-forget retention cleanup outside transaction
+      if (!tx) {
+        scheduleRetentionCleanup(taskId);
+      }
 
       const io = getIO();
       if (io) {
         io.to(`task:${taskId}`).emit('task:updated', { taskId });
-        // Emit each log or a batch? useTaskSocket expects 'activity:new'.
-        // Sending multiple might be noisy but correct.
         createdLogs.forEach(log => {
           io.to(`task:${taskId}`).emit('activity:new', log);
         });
       }
     }
-  } catch (error) {
-    console.error('Failed to log task changes:', error);
+  } catch (err) {
+    console.error('Failed to log task changes:', err);
+    if (tx) throw err;
   }
 }
 
-export async function logTaskDeleted(taskId: string, userId: string, taskTitle: string) {
+export async function logTaskDeleted(
+  taskId: string,
+  userId: string,
+  taskTitle: string,
+  tx?: Prisma.TransactionClient,
+): Promise<void> {
+  const client = tx ?? prisma;
   try {
-    await prisma.activityLog.create({
+    await client.activityLog.create({
       data: {
         action: 'DELETED',
         taskId,
@@ -88,13 +131,17 @@ export async function logTaskDeleted(taskId: string, userId: string, taskTitle: 
       },
     });
 
+    // No retention cleanup for deleted tasks — the task (and its logs) will be
+    // cascade-deleted when the task record is removed.
+
     const io = getIO();
     if (io) {
-      io.to(`task:${taskId}`).emit('task:deleted', { taskId }); // Custom event, though frontend might not listen to it yet
+      io.to(`task:${taskId}`).emit('task:deleted', { taskId });
       io.to(`task:${taskId}`).emit('task:updated', { taskId });
     }
-  } catch (error) {
-    console.error('Failed to log task deletion:', error);
+  } catch (err) {
+    console.error('Failed to log task deletion:', err);
+    if (tx) throw err;
   }
 }
 
@@ -108,6 +155,8 @@ export async function logDependencyAdded(taskId: string, userId: string, depends
         newValue: dependsOnTitle,
       },
     });
+
+    scheduleRetentionCleanup(taskId);
 
     const io = getIO();
     if (io) {
@@ -129,6 +178,8 @@ export async function logDependencyRemoved(taskId: string, userId: string, depen
         oldValue: dependsOnTitle,
       },
     });
+
+    scheduleRetentionCleanup(taskId);
 
     const io = getIO();
     if (io) {
@@ -154,11 +205,11 @@ export async function logCommentAction(
       },
     });
 
+    scheduleRetentionCleanup(taskId);
+
     const io = getIO();
     if (io) {
       io.to(`task:${taskId}`).emit('activity:new', activity);
-      // Comments have their own events (comment:new) usually emitted by the route, 
-      // but activity log should also trigger activity:new
     }
   } catch (error) {
     console.error('Failed to log comment action:', error);

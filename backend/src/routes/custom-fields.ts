@@ -18,15 +18,42 @@ async function getProjectMembership(userId: string, projectId: string) {
   });
 }
 
-const createFieldSchema = z.object({
-  name: z.string().min(1).max(100),
-  type: z.enum(['TEXT', 'NUMBER', 'DATE', 'DROPDOWN']),
-  options: z.string().optional(), // JSON array string for DROPDOWN
-  required: z.boolean().optional(),
-  projectId: z.string().uuid(),
-});
+const SELECT_TYPES = ['DROPDOWN'] as const;
 
-const updateFieldSchema = createFieldSchema.omit({ projectId: true }).partial();
+const createFieldSchema = z
+  .object({
+    name: z.string().min(1).max(100),
+    type: z.enum(['TEXT', 'NUMBER', 'DATE', 'DROPDOWN']),
+    options: z.array(z.string().max(100)).max(50).optional(),
+    required: z.boolean().optional(),
+    projectId: z.string().uuid(),
+  })
+  .refine(
+    (data) => {
+      if (data.options !== undefined && !SELECT_TYPES.includes(data.type as typeof SELECT_TYPES[number])) {
+        return false;
+      }
+      return true;
+    },
+    { message: 'options are only allowed for DROPDOWN fields', path: ['options'] },
+  );
+
+const updateFieldSchema = z
+  .object({
+    name: z.string().min(1).max(100).optional(),
+    type: z.enum(['TEXT', 'NUMBER', 'DATE', 'DROPDOWN']).optional(),
+    options: z.array(z.string().max(100)).max(50).optional(),
+    required: z.boolean().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.options !== undefined && data.type !== undefined && !SELECT_TYPES.includes(data.type as typeof SELECT_TYPES[number])) {
+        return false;
+      }
+      return true;
+    },
+    { message: 'options are only allowed for DROPDOWN fields', path: ['options'] },
+  );
 
 const setFieldValuesSchema = z.object({
   fields: z.array(z.object({
@@ -43,13 +70,16 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
     validateUUID(projectId, 'project ID');
 
     const membership = await getProjectMembership(req.userId!, projectId);
-    if (!membership) throw new AppError('Not a member of this project', 403);
+    if (!membership) throw new AppError('Project not found', 404);
 
     const fields = await prisma.customFieldDefinition.findMany({
       where: { projectId },
       orderBy: { createdAt: 'asc' },
     });
-    res.json(fields);
+    res.json(fields.map((f) => ({
+      ...f,
+      options: f.options !== null ? JSON.parse(f.options) : null,
+    })));
   } catch (error) { next(error); }
 });
 
@@ -70,12 +100,15 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
       data: {
         name: data.name,
         type: data.type,
-        options: data.options,
+        options: data.options !== undefined ? JSON.stringify(data.options) : undefined,
         required: data.required ?? false,
         projectId: data.projectId,
       },
     });
-    res.status(201).json(field);
+    res.status(201).json({
+      ...field,
+      options: field.options !== null ? JSON.parse(field.options) : null,
+    });
   } catch (error) { next(error); }
 });
 
@@ -98,11 +131,14 @@ router.put('/:id', async (req: AuthRequest, res: Response, next: NextFunction) =
       data: {
         ...(data.name !== undefined && { name: data.name }),
         ...(data.type !== undefined && { type: data.type }),
-        ...(data.options !== undefined && { options: data.options }),
+        ...(data.options !== undefined && { options: JSON.stringify(data.options) }),
         ...(data.required !== undefined && { required: data.required }),
       },
     });
-    res.json(updated);
+    res.json({
+      ...updated,
+      options: updated.options !== null ? JSON.parse(updated.options) : null,
+    });
   } catch (error) { next(error); }
 });
 
@@ -131,13 +167,19 @@ router.get('/task/:taskId', async (req: AuthRequest, res: Response, next: NextFu
     if (!task) throw new AppError('Task not found', 404);
 
     const membership = await getProjectMembership(req.userId!, task.projectId);
-    if (!membership) throw new AppError('Not a member of this project', 403);
+    if (!membership) throw new AppError('Task not found', 404);
 
     const values = await prisma.customFieldValue.findMany({
       where: { taskId: req.params.taskId },
       include: { field: true },
     });
-    res.json(values);
+    res.json(values.map((v) => ({
+      ...v,
+      field: {
+        ...v.field,
+        options: v.field.options !== null ? JSON.parse(v.field.options) : null,
+      },
+    })));
   } catch (error) { next(error); }
 });
 

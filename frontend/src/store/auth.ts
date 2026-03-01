@@ -21,6 +21,11 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
+      // Only persist the user profile — never the token.
+      // The backend sets an HttpOnly cookie on login, so the token in memory
+      // is a fallback for mobile browsers (ITP/SameSite). Storing it in
+      // localStorage would expose it to XSS attacks.
+      partialize: (state) => ({ user: state.user }),
     }
   )
 );

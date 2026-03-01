@@ -176,7 +176,7 @@ router.post('/milestones', authenticate, async (req: AuthRequest, res: Response,
 
   // ---- Activity logs (fire-and-forget) ----
   for (const task of createdTasks) {
-    logTaskCreated(task.id, userId).catch(() => {});
+    logTaskCreated(task.id, userId).catch((err) => console.error('[import] Failed to log task creation:', err));
   }
 
   res.status(201).json({

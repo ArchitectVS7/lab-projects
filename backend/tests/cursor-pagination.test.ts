@@ -27,7 +27,7 @@ describe('Cursor-based Pagination', () => {
 
         const regRes = await request(app)
             .post('/api/auth/register')
-            .send({ email: 'cursor-pagination@example.com', password: 'Password1', name: 'Cursor User' });
+            .send({ email: 'cursor-pagination@example.com', password: 'TestPass1@secure', name: 'Cursor User' });
 
         authCookie = extractAuthCookie(regRes)!;
         userId = regRes.body.user.id;

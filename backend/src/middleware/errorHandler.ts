@@ -16,8 +16,6 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction
 ) => {
-  console.error('Error:', err.message);
-
   if (err instanceof ZodError) {
     return res.status(400).json({
       error: 'Validation error',
@@ -29,8 +27,12 @@ export const errorHandler = (
   }
 
   if (err instanceof AppError) {
+    console.error('Error:', err.message);
     return res.status(err.statusCode).json({ error: err.message });
   }
 
-  return res.status(500).json({ error: 'Internal server error' });
+  // Unexpected server error — include requestId so support can correlate logs
+  const requestId = (res.locals.requestId as string) || 'unknown';
+  console.error(`[${requestId}] Unhandled error:`, err);
+  return res.status(500).json({ error: 'Internal server error', requestId });
 };

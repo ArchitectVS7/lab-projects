@@ -222,6 +222,10 @@ router.post(
         throw new AppError('Missing stripe-signature header', 400);
       }
 
+      if (!Buffer.isBuffer(req.body) && typeof req.body !== 'string') {
+        return res.status(400).json({ error: 'Webhook body must be raw' });
+      }
+
       let event: Stripe.Event;
       try {
         // req.body should be raw buffer for webhook verification
@@ -231,25 +235,34 @@ router.post(
         throw new AppError('Invalid webhook signature', 400);
       }
 
+      // Idempotency guard: skip events we have already processed
+      const alreadyProcessed = await prisma.subscription.findFirst({
+        where: { stripeEventId: event.id },
+      });
+      if (alreadyProcessed) {
+        console.log(`[billing] Skipping duplicate event ${event.id}`);
+        return res.json({ received: true });
+      }
+
       switch (event.type) {
         case 'checkout.session.completed': {
           const session = event.data.object as Stripe.Checkout.Session;
-          await handleCheckoutCompleted(stripe, session);
+          await handleCheckoutCompleted(stripe, session, event.id);
           break;
         }
         case 'customer.subscription.updated': {
           const subscription = event.data.object as Stripe.Subscription;
-          await handleSubscriptionUpdated(subscription);
+          await handleSubscriptionUpdated(subscription, event.id);
           break;
         }
         case 'customer.subscription.deleted': {
           const subscription = event.data.object as Stripe.Subscription;
-          await handleSubscriptionDeleted(subscription);
+          await handleSubscriptionDeleted(subscription, event.id);
           break;
         }
         case 'invoice.payment_failed': {
           const invoice = event.data.object as Stripe.Invoice;
-          await handlePaymentFailed(invoice);
+          await handlePaymentFailed(invoice, event.id);
           break;
         }
         default:
@@ -264,7 +277,7 @@ router.post(
 
 // ─── Webhook handlers ──────────────────────────────────
 
-async function handleCheckoutCompleted(stripe: Stripe, session: Stripe.Checkout.Session) {
+async function handleCheckoutCompleted(stripe: Stripe, session: Stripe.Checkout.Session, eventId: string) {
   const userId = session.metadata?.userId;
   if (!userId || !session.subscription) return;
 
@@ -298,6 +311,7 @@ async function handleCheckoutCompleted(stripe: Stripe, session: Stripe.Checkout.
         seats,
         currentPeriodStart: new Date(periodStart * 1000),
         currentPeriodEnd: new Date(periodEnd * 1000),
+        stripeEventId: eventId,
       },
       update: {
         stripeSubscriptionId: subscriptionId,
@@ -307,6 +321,7 @@ async function handleCheckoutCompleted(stripe: Stripe, session: Stripe.Checkout.
         seats,
         currentPeriodStart: new Date(periodStart * 1000),
         currentPeriodEnd: new Date(periodEnd * 1000),
+        stripeEventId: eventId,
       },
     }),
     prisma.user.update({
@@ -318,7 +333,7 @@ async function handleCheckoutCompleted(stripe: Stripe, session: Stripe.Checkout.
   console.log(`[Billing] User ${userId} upgraded to ${planTier}`);
 }
 
-async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription, eventId: string) {
   const existing = await prisma.subscription.findUnique({
     where: { stripeSubscriptionId: subscription.id },
   });
@@ -350,11 +365,12 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
       ...(periodStart && { currentPeriodStart: new Date(periodStart * 1000) }),
       ...(periodEnd && { currentPeriodEnd: new Date(periodEnd * 1000) }),
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      stripeEventId: eventId,
     },
   });
 }
 
-async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription, eventId: string) {
   const existing = await prisma.subscription.findUnique({
     where: { stripeSubscriptionId: subscription.id },
   });
@@ -364,7 +380,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   await prisma.$transaction([
     prisma.subscription.update({
       where: { stripeSubscriptionId: subscription.id },
-      data: { status: 'CANCELED' },
+      data: { status: 'CANCELED', stripeEventId: eventId },
     }),
     prisma.user.update({
       where: { id: existing.userId },
@@ -375,7 +391,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   console.log(`[Billing] User ${existing.userId} downgraded to FREE (subscription canceled)`);
 }
 
-async function handlePaymentFailed(invoice: Stripe.Invoice) {
+async function handlePaymentFailed(invoice: Stripe.Invoice, eventId: string) {
   // Extract subscription ID (field location varies by Stripe API version)
   const invoiceAny = invoice as unknown as Record<string, unknown>;
   const subField = invoiceAny.subscription;
@@ -392,7 +408,7 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
 
   await prisma.subscription.update({
     where: { stripeSubscriptionId: subId },
-    data: { status: 'PAST_DUE' },
+    data: { status: 'PAST_DUE', stripeEventId: eventId },
   });
 
   console.log(`[Billing] Payment failed for user ${existing.userId}`);

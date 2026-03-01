@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import prisma from '../lib/prisma.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
+import { AppError } from '../middleware/errorHandler.js';
 import ical, { ICalCalendarMethod } from 'ical-generator';
 
 const router = Router();
@@ -32,18 +33,32 @@ function publicBaseUrl(req: Request): string {
 // POST /api/calendar/token — Generate or regenerate calendar feed token
 router.post('/token', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    // Store plain token — it's a long random bearer token, not a password.
-    // Storing it in plain text lets us show the feed URL at any time without
-    // requiring the user to regenerate (which would break existing subscriptions).
     const plainToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(plainToken).digest('hex');
 
-    await prisma.user.update({
+    // Read current state for optimistic concurrency check (prevents race conditions
+    // where two concurrent requests both generate a token simultaneously).
+    const currentUser = await prisma.user.findUnique({
       where: { id: req.userId },
+      select: { calendarTokenCreatedAt: true },
+    });
+
+    // Store the hash — the plaintext is never persisted, only returned once here.
+    const updated = await prisma.user.updateMany({
+      where: {
+        id: req.userId,
+        calendarTokenCreatedAt: currentUser?.calendarTokenCreatedAt ?? null,
+      },
       data: {
-        calendarToken: plainToken,
+        calendarToken: tokenHash,
         calendarTokenCreatedAt: new Date(),
       },
     });
+
+    if (updated.count === 0) {
+      // Another concurrent request already updated the token — ask the caller to retry.
+      throw new AppError('Token generation conflict, please retry', 409);
+    }
 
     const feedUrl = `${publicBaseUrl(req)}/api/calendar/feed.ics?token=${plainToken}`;
     res.status(201).json({ token: plainToken, feedUrl });
@@ -69,7 +84,9 @@ router.delete('/token', authenticate, async (req: AuthRequest, res: Response, ne
   }
 });
 
-// GET /api/calendar/token/status — Check token status and return feed URL if active
+// GET /api/calendar/token/status — Check token status
+// Note: the feed URL cannot be reconstructed from storage because only the hash is stored.
+// Clients that need the feed URL must regenerate the token via POST /token.
 router.get('/token/status', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const user = await prisma.user.findUnique({
@@ -82,10 +99,9 @@ router.get('/token/status', authenticate, async (req: AuthRequest, res: Response
       return;
     }
 
-    const feedUrl = `${publicBaseUrl(req)}/api/calendar/feed.ics?token=${user.calendarToken}`;
     res.json({
       hasToken: true,
-      feedUrl,
+      feedUrl: null,
       createdAt: user.calendarTokenCreatedAt,
     });
   } catch (error) {
@@ -104,8 +120,11 @@ router.get('/feed.ics', async (req: Request, res: Response, next: NextFunction) 
       return;
     }
 
-    const user = await prisma.user.findUnique({
-      where: { calendarToken: token },
+    // Hash the incoming token before querying — only hashes are stored in the DB.
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await prisma.user.findFirst({
+      where: { calendarToken: tokenHash },
       select: { id: true, name: true },
     });
 

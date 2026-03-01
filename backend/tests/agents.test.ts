@@ -34,7 +34,7 @@ describe('Agent Delegation API', () => {
     // Register primary test user and upgrade to PRO (agent delegation is gated)
     const regRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'agent-test@example.com', password: 'Password1', name: 'Agent Tester' });
+      .send({ email: 'agent-test@example.com', password: 'TestPass1@secure', name: 'Agent Tester' });
     expect(regRes.status).toBe(201);
     authCookie = extractAuthCookie(regRes)!;
     userId = regRes.body.user.id;
@@ -59,7 +59,7 @@ describe('Agent Delegation API', () => {
     // Register a second user
     const reg2 = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'agent-other@example.com', password: 'Password1', name: 'Other User' });
+      .send({ email: 'agent-other@example.com', password: 'TestPass1@secure', name: 'Other User' });
     expect(reg2.status).toBe(201);
     otherCookie = extractAuthCookie(reg2)!;
 

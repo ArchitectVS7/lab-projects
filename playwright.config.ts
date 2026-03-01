@@ -27,7 +27,7 @@ export default defineConfig({
     {
       command: 'cd backend && npm run dev',
       port: 4000,
-      reuseExistingServer: true,
+      reuseExistingServer: false,
       timeout: 30_000,
       env: {
         DATABASE_URL: 'postgresql://taskapp:taskapp_secret@localhost:5432/taskapp_test',

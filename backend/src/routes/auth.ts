@@ -21,7 +21,7 @@ const router = Router();
 // Rate limiter for auth endpoints (brute-force protection)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // 20 requests per window per IP
+  max: 10, // 10 requests per window per IP
   message: { error: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -34,10 +34,11 @@ const registerSchema = z.object({
   email: z.string().email().transform((v) => v.toLowerCase().trim()),
   password: z
     .string()
-    .min(8, 'Password must be at least 8 characters')
+    .min(12, 'Password must be at least 12 characters')
     .regex(/[a-z]/, 'Password must contain a lowercase letter')
     .regex(/[A-Z]/, 'Password must contain an uppercase letter')
-    .regex(/\d/, 'Password must contain a digit'),
+    .regex(/\d/, 'Password must contain a digit')
+    .regex(/[^a-zA-Z0-9]/, 'Password must contain a special character'),
   name: z.string().trim().min(2, 'Name must be at least 2 characters'),
 });
 
@@ -55,10 +56,11 @@ const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
   newPassword: z
     .string()
-    .min(8, 'Password must be at least 8 characters')
+    .min(12, 'Password must be at least 12 characters')
     .regex(/[a-z]/, 'Password must contain a lowercase letter')
     .regex(/[A-Z]/, 'Password must contain an uppercase letter')
-    .regex(/\d/, 'Password must contain a digit'),
+    .regex(/\d/, 'Password must contain a digit')
+    .regex(/[^a-zA-Z0-9]/, 'Password must contain a special character'),
 });
 
 const forgotPasswordSchema = z.object({
@@ -69,10 +71,11 @@ const resetPasswordSchema = z.object({
   token: z.string().min(1, 'Token is required'),
   newPassword: z
     .string()
-    .min(8, 'Password must be at least 8 characters')
+    .min(12, 'Password must be at least 12 characters')
     .regex(/[a-z]/, 'Password must contain a lowercase letter')
     .regex(/[A-Z]/, 'Password must contain an uppercase letter')
-    .regex(/\d/, 'Password must contain a digit'),
+    .regex(/\d/, 'Password must contain a digit')
+    .regex(/[^a-zA-Z0-9]/, 'Password must contain a special character'),
 });
 
 // Standard user select (never return passwordHash)
@@ -466,13 +469,14 @@ const createApiKeySchema = z.object({
 router.post('/api-keys', authenticate, requirePlan('PRO', 'TEAM'), async (req: PlanRequest, res: Response, next: NextFunction) => {
   try {
     const data = createApiKeySchema.parse(req.body);
-    const { plainKey, keyHash } = await generateApiKey(req.userId!);
+    const { plainKey, keyHash, keyLookupHash } = await generateApiKey(req.userId!);
 
     const apiKey = await prisma.apiKey.create({
       data: {
         userId: req.userId!,
         name: data.name,
         keyHash,
+        keyLookupHash,
       },
       select: {
         id: true,

@@ -13,8 +13,8 @@ function extractAuthCookie(res: request.Response): string | undefined {
 }
 
 const TEST_EMAIL = 'reset-test@example.com';
-const TEST_PASSWORD = 'OldPass1';
-const NEW_PASSWORD = 'NewPass1';
+const TEST_PASSWORD = 'OldP@ss1secure';
+const NEW_PASSWORD = 'NewP@ss1secure';
 
 describe('Password Reset API', () => {
   let userId: string;
@@ -208,7 +208,7 @@ describe('Password Reset API', () => {
       // Try to use the same token again
       const res = await request(app)
         .post('/api/auth/reset-password')
-        .send({ token: validToken, newPassword: 'AnotherPass1' });
+        .send({ token: validToken, newPassword: 'Anoth3r!SecurePass' });
       expect(res.status).toBe(400);
     });
   });
@@ -246,7 +246,7 @@ describe('Password Reset API', () => {
       expect(validateRes.body.valid).toBe(true);
 
       // Step 4: reset password
-      const e2ePassword = 'E2ePass1';
+      const e2ePassword = 'E2eP@ss1secure';
       const resetRes = await request(app)
         .post('/api/auth/reset-password')
         .send({ token: plainToken, newPassword: e2ePassword });

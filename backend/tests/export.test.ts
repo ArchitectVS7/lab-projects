@@ -24,7 +24,7 @@ describe('Export API', () => {
 
         const regRes = await request(app)
             .post('/api/auth/register')
-            .send({ email: 'export@example.com', password: 'Password1', name: 'Export User' });
+            .send({ email: 'export@example.com', password: 'TestPass1@secure', name: 'Export User' });
 
         authCookie = extractAuthCookie(regRes)!;
         userId = regRes.body.user.id;

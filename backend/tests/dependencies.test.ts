@@ -47,7 +47,7 @@ describe('Task Dependencies API', () => {
     // Register owner
     const ownerRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'dep-owner@test.com', password: 'Password1', name: 'Dep Owner' });
+      .send({ email: 'dep-owner@test.com', password: 'TestPass1@secure', name: 'Dep Owner' });
     ownerUser = {
       id: ownerRes.body.user.id,
       email: 'dep-owner@test.com',
@@ -57,7 +57,7 @@ describe('Task Dependencies API', () => {
     // Register member
     const memberRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'dep-member@test.com', password: 'Password1', name: 'Dep Member' });
+      .send({ email: 'dep-member@test.com', password: 'TestPass1@secure', name: 'Dep Member' });
     memberUser = {
       id: memberRes.body.user.id,
       email: 'dep-member@test.com',
@@ -67,7 +67,7 @@ describe('Task Dependencies API', () => {
     // Register viewer
     const viewerRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'dep-viewer@test.com', password: 'Password1', name: 'Dep Viewer' });
+      .send({ email: 'dep-viewer@test.com', password: 'TestPass1@secure', name: 'Dep Viewer' });
     viewerUser = {
       id: viewerRes.body.user.id,
       email: 'dep-viewer@test.com',
@@ -77,7 +77,7 @@ describe('Task Dependencies API', () => {
     // Register non-member
     const nonMemberRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'dep-nonmember@test.com', password: 'Password1', name: 'Dep NonMember' });
+      .send({ email: 'dep-nonmember@test.com', password: 'TestPass1@secure', name: 'Dep NonMember' });
     nonMemberUser = {
       id: nonMemberRes.body.user.id,
       email: 'dep-nonmember@test.com',

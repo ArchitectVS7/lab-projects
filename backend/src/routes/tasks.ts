@@ -158,14 +158,13 @@ router.patch('/bulk-status', async (req: AuthRequest, res: Response, next: NextF
       },
     });
 
-    // Optimization: Group tasks by project to avoid N+1 queries
+    // Optimization: Batch all membership checks into a single DB query
     const projectIds = Array.from(new Set(tasks.map((t) => t.projectId)));
-    const memberships = new Map<string, { role: string } | null>();
-
-    for (const projectId of projectIds) {
-      const membership = await getProjectMembership(req.userId!, projectId);
-      memberships.set(projectId, membership);
-    }
+    const membershipRows = await prisma.projectMember.findMany({
+      where: { projectId: { in: projectIds }, userId: req.userId! },
+      select: { projectId: true, role: true },
+    });
+    const memberships = new Map(membershipRows.map(m => [m.projectId, m]));
 
     for (const task of tasks) {
       const membership = memberships.get(task.projectId) || null;
@@ -586,21 +585,25 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
       }
     }
 
-    const task = await prisma.task.create({
-      data: {
-        title: data.title,
-        description: data.description,
-        projectId: data.projectId,
-        assigneeId: data.assigneeId,
-        status: data.status || 'TODO',
-        priority: data.priority || 'MEDIUM',
-        dueDate: data.dueDate ? new Date(data.dueDate) : null,
-        creatorId: req.userId!,
-      },
-      include: taskInclude,
+    const task = await prisma.$transaction(async (tx) => {
+      const created = await tx.task.create({
+        data: {
+          title: data.title,
+          description: data.description,
+          projectId: data.projectId,
+          assigneeId: data.assigneeId,
+          status: data.status || 'TODO',
+          priority: data.priority || 'MEDIUM',
+          dueDate: data.dueDate ? new Date(data.dueDate) : null,
+          creatorId: req.userId!,
+        },
+        include: taskInclude,
+      });
+
+      await logTaskCreated(created.id, req.userId!, tx);
+      return created;
     });
 
-    await logTaskCreated(task.id, req.userId!);
     await dispatchWebhooks('task.created', task, req.userId!);
 
     res.status(201).json(task);
@@ -698,31 +701,35 @@ router.put('/:id', async (req: AuthRequest, res: Response, next: NextFunction) =
       dueDate: task.dueDate ? task.dueDate.toISOString() : null,
     };
 
-    const updatedTask = await prisma.task.update({
-      where: { id: req.params.id },
-      data: {
-        ...(data.title !== undefined && { title: data.title }),
-        ...(data.description !== undefined && { description: data.description }),
-        ...(data.status !== undefined && { status: data.status }),
-        ...(data.priority !== undefined && { priority: data.priority }),
-        ...(data.assigneeId !== undefined && { assigneeId: data.assigneeId }),
-        ...(data.dueDate !== undefined && { dueDate: data.dueDate ? new Date(data.dueDate) : null }),
-      },
-      include: taskInclude,
-    });
+    const updatedTask = await prisma.$transaction(async (tx) => {
+      const result = await tx.task.update({
+        where: { id: req.params.id },
+        data: {
+          ...(data.title !== undefined && { title: data.title }),
+          ...(data.description !== undefined && { description: data.description }),
+          ...(data.status !== undefined && { status: data.status }),
+          ...(data.priority !== undefined && { priority: data.priority }),
+          ...(data.assigneeId !== undefined && { assigneeId: data.assigneeId }),
+          ...(data.dueDate !== undefined && { dueDate: data.dueDate ? new Date(data.dueDate) : null }),
+        },
+        include: taskInclude,
+      });
 
-    await logTaskChanges({
-      taskId: req.params.id,
-      userId: req.userId!,
-      oldTask,
-      newTask: {
-        title: updatedTask.title,
-        description: updatedTask.description,
-        status: updatedTask.status,
-        priority: updatedTask.priority,
-        assigneeId: updatedTask.assigneeId,
-        dueDate: updatedTask.dueDate ? updatedTask.dueDate.toISOString() : null,
-      },
+      await logTaskChanges({
+        taskId: req.params.id,
+        userId: req.userId!,
+        oldTask,
+        newTask: {
+          title: result.title,
+          description: result.description,
+          status: result.status,
+          priority: result.priority,
+          assigneeId: result.assigneeId,
+          dueDate: result.dueDate ? result.dueDate.toISOString() : null,
+        },
+      }, tx);
+
+      return result;
     });
 
     // Emit socket event

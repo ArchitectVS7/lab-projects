@@ -19,6 +19,7 @@ function extractAuthCookie(res: request.Response): string | undefined {
 
 describe('Sprint 6: Tags, Custom Fields, Attachments', () => {
   let authCookie: string;
+  let nonMemberCookie: string;
   let projectId: string;
   let taskId: string;
   let tagId: string;
@@ -37,11 +38,17 @@ describe('Sprint 6: Tags, Custom Fields, Attachments', () => {
     await prisma.project.deleteMany();
     await prisma.user.deleteMany();
 
-    // Register user
+    // Register primary user
     const regRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'sprint6@test.com', password: 'Password1', name: 'Sprint6 Tester' });
+      .send({ email: 'sprint6@test.com', password: 'TestPass1@secure', name: 'Sprint6 Tester' });
     authCookie = extractAuthCookie(regRes)!;
+
+    // Register a second user who is NOT a member of any project
+    const nonMemberRes = await request(app)
+      .post('/api/auth/register')
+      .send({ email: 'sprint6-nonmember@test.com', password: 'TestPass1@secure', name: 'Non Member' });
+    nonMemberCookie = extractAuthCookie(nonMemberRes)!;
 
     // Create project
     const projRes = await request(app)
@@ -157,7 +164,7 @@ describe('Sprint 6: Tags, Custom Fields, Attachments', () => {
       const res = await request(app)
         .post('/api/custom-fields')
         .set('Cookie', authCookie)
-        .send({ name: 'Environment', type: 'DROPDOWN', options: '["Dev","Staging","Prod"]', projectId });
+        .send({ name: 'Environment', type: 'DROPDOWN', options: ['Dev', 'Staging', 'Prod'], projectId });
       expect(res.status).toBe(201);
       expect(res.body.type).toBe('DROPDOWN');
     });
@@ -244,6 +251,20 @@ describe('Sprint 6: Tags, Custom Fields, Attachments', () => {
         .get(`/api/attachments/${attachmentId}/download`)
         .set('Cookie', authCookie);
       expect(res.status).toBe(200);
+    });
+
+    it('non-member requesting a valid attachment ID gets 404 (not 403)', async () => {
+      const res = await request(app)
+        .get(`/api/attachments/${attachmentId}/download`)
+        .set('Cookie', nonMemberCookie);
+      expect(res.status).toBe(404);
+    });
+
+    it('non-member listing attachments for a task gets 404 (not 403)', async () => {
+      const res = await request(app)
+        .get(`/api/attachments/task/${taskId}`)
+        .set('Cookie', nonMemberCookie);
+      expect(res.status).toBe(404);
     });
 
     it('DELETE /api/attachments/:id deletes attachment', async () => {

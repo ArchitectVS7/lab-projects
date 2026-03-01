@@ -28,23 +28,27 @@ describe('Webhooks', () => {
   }>;
 
   beforeAll(async () => {
-    // Clean DB in correct order (respecting FK constraints)
-    await prisma.webhookLog.deleteMany();
-    await prisma.webhook.deleteMany();
-    await prisma.activityLog.deleteMany();
-    await prisma.comment.deleteMany();
-    await prisma.notification.deleteMany();
-    await prisma.timeEntry.deleteMany();
-    await prisma.recurringTask.deleteMany();
-    await prisma.task.deleteMany();
-    await prisma.projectMember.deleteMany();
-    await prisma.project.deleteMany();
-    await prisma.user.deleteMany();
+    // Clean DB using TRUNCATE CASCADE to handle all FK relationships reliably
+    await prisma.$executeRawUnsafe(`
+      TRUNCATE TABLE
+        webhook_logs, webhooks,
+        activity_logs, comments, notifications,
+        time_entries, task_dependencies, task_tags, task_domains,
+        custom_field_values, custom_field_definitions, tags, attachments,
+        agent_delegations, recurring_tasks, tasks,
+        project_members, projects,
+        daily_checkins, domains,
+        user_achievements, user_quests, user_skills,
+        xp_logs, streak_protection_logs,
+        usage_records, subscriptions,
+        api_keys, users
+      RESTART IDENTITY CASCADE
+    `);
 
     // Register user1 (upgrade to PRO — webhooks are gated)
     const user1Res = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'wh-user1@test.com', password: 'Password1', name: 'Webhook User1' });
+      .send({ email: 'wh-user1@test.com', password: 'P@ssword1234', name: 'Webhook User1' });
     user1 = {
       id: user1Res.body.user.id,
       email: 'wh-user1@test.com',
@@ -55,7 +59,7 @@ describe('Webhooks', () => {
     // Register user2 (upgrade to PRO — webhooks are gated)
     const user2Res = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'wh-user2@test.com', password: 'Password1', name: 'Webhook User2' });
+      .send({ email: 'wh-user2@test.com', password: 'P@ssword1234', name: 'Webhook User2' });
     user2 = {
       id: user2Res.body.user.id,
       email: 'wh-user2@test.com',
@@ -109,18 +113,22 @@ describe('Webhooks', () => {
       testServer.close(() => resolve());
     });
 
-    // Clean DB
-    await prisma.webhookLog.deleteMany();
-    await prisma.webhook.deleteMany();
-    await prisma.activityLog.deleteMany();
-    await prisma.comment.deleteMany();
-    await prisma.notification.deleteMany();
-    await prisma.timeEntry.deleteMany();
-    await prisma.recurringTask.deleteMany();
-    await prisma.task.deleteMany();
-    await prisma.projectMember.deleteMany();
-    await prisma.project.deleteMany();
-    await prisma.user.deleteMany();
+    // Clean DB using TRUNCATE CASCADE to handle all FK relationships reliably
+    await prisma.$executeRawUnsafe(`
+      TRUNCATE TABLE
+        webhook_logs, webhooks,
+        activity_logs, comments, notifications,
+        time_entries, task_dependencies, task_tags, task_domains,
+        custom_field_values, custom_field_definitions, tags, attachments,
+        agent_delegations, recurring_tasks, tasks,
+        project_members, projects,
+        daily_checkins, domains,
+        user_achievements, user_quests, user_skills,
+        xp_logs, streak_protection_logs,
+        usage_records, subscriptions,
+        api_keys, users
+      RESTART IDENTITY CASCADE
+    `);
     await prisma.$disconnect();
   });
 
@@ -144,7 +152,7 @@ describe('Webhooks', () => {
         .post('/api/webhooks')
         .set('Cookie', user1.cookie)
         .send({
-          url: `http://127.0.0.1:${testServerPort}/hook`,
+          url: 'https://example.com/hook',
           events: ['task.created', 'task.updated'],
         });
 
@@ -153,7 +161,7 @@ describe('Webhooks', () => {
       expect(res.body).toHaveProperty('secret');
       expect(typeof res.body.secret).toBe('string');
       expect(res.body.secret.length).toBeGreaterThan(0);
-      expect(res.body.url).toBe(`http://127.0.0.1:${testServerPort}/hook`);
+      expect(res.body.url).toBe('https://example.com/hook');
       expect(res.body.events).toEqual(['task.created', 'task.updated']);
       expect(res.body.active).toBe(true);
       expect(res.body.failureCount).toBe(0);
@@ -173,7 +181,7 @@ describe('Webhooks', () => {
 
       const webhook = res.body.find((w: any) => w.id === webhookId);
       expect(webhook).toBeDefined();
-      expect(webhook.url).toBe(`http://127.0.0.1:${testServerPort}/hook`);
+      expect(webhook.url).toBe('https://example.com/hook');
       // Secret should NOT be included in list response
       expect(webhook).not.toHaveProperty('secret');
     });
@@ -193,13 +201,13 @@ describe('Webhooks', () => {
         .put(`/api/webhooks/${webhookId}`)
         .set('Cookie', user1.cookie)
         .send({
-          url: `http://127.0.0.1:${testServerPort}/updated-hook`,
+          url: 'https://example.com/updated-hook',
           events: ['task.created'],
           active: false,
         });
 
       expect(res.status).toBe(200);
-      expect(res.body.url).toBe(`http://127.0.0.1:${testServerPort}/updated-hook`);
+      expect(res.body.url).toBe('https://example.com/updated-hook');
       expect(res.body.events).toEqual(['task.created']);
       expect(res.body.active).toBe(false);
     });
@@ -209,7 +217,7 @@ describe('Webhooks', () => {
         .put(`/api/webhooks/${webhookId}`)
         .set('Cookie', user1.cookie)
         .send({
-          url: `http://127.0.0.1:${testServerPort}/hook`,
+          url: 'https://example.com/hook',
           events: ['task.created', 'task.updated'],
           active: true,
         });
@@ -304,6 +312,44 @@ describe('Webhooks', () => {
       expect(res.status).toBe(400);
     });
 
+    it('should reject localhost webhook URL (SSRF protection, 400)', async () => {
+      const res = await request(app)
+        .post('/api/webhooks')
+        .set('Cookie', user1.cookie)
+        .send({ url: 'http://localhost/hook', events: ['task.created'] });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject 127.0.0.1 webhook URL (SSRF protection, 400)', async () => {
+      const res = await request(app)
+        .post('/api/webhooks')
+        .set('Cookie', user1.cookie)
+        .send({ url: 'http://127.0.0.1/hook', events: ['task.created'] });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject 192.168.x.x webhook URL (SSRF protection, 400)', async () => {
+      const res = await request(app)
+        .post('/api/webhooks')
+        .set('Cookie', user1.cookie)
+        .send({ url: 'http://192.168.1.1/hook', events: ['task.created'] });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('should accept a valid public URL (201)', async () => {
+      const res = await request(app)
+        .post('/api/webhooks')
+        .set('Cookie', user1.cookie)
+        .send({ url: 'https://example.com/hook', events: ['task.created'] });
+
+      expect(res.status).toBe(201);
+      // Clean up
+      await prisma.webhook.delete({ where: { id: res.body.id } });
+    });
+
     it('should reject non-owner update (403)', async () => {
       // Get user1's webhook
       const listRes = await request(app)
@@ -346,16 +392,18 @@ describe('Webhooks', () => {
       await prisma.webhookLog.deleteMany();
       await prisma.webhook.deleteMany({ where: { userId: user1.id } });
 
-      const res = await request(app)
-        .post('/api/webhooks')
-        .set('Cookie', user1.cookie)
-        .send({
+      // Insert the dispatch webhook directly via Prisma (bypasses SSRF validation
+      // intentionally — dispatch tests need a real local server to receive deliveries)
+      dispatchWebhookSecret = crypto.randomBytes(32).toString('hex');
+      const created = await prisma.webhook.create({
+        data: {
+          userId: user1.id,
           url: `http://127.0.0.1:${testServerPort}/dispatch`,
           events: ['task.created'],
-        });
-
-      dispatchWebhookId = res.body.id;
-      dispatchWebhookSecret = res.body.secret;
+          secret: dispatchWebhookSecret,
+        },
+      });
+      dispatchWebhookId = created.id;
 
       // Clear any previously received requests
       receivedRequests = [];
@@ -439,6 +487,51 @@ describe('Webhooks', () => {
       expect(latestLog.event).toBe('task.created');
       expect(latestLog.statusCode).toBe(200);
       expect(latestLog.error).toBeNull();
+    });
+
+    it('should include a deliveryId in the WebhookLog entry', async () => {
+      const logs = await prisma.webhookLog.findMany({
+        where: { webhookId: dispatchWebhookId },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      expect(logs.length).toBeGreaterThanOrEqual(1);
+      const latestLog = logs[0];
+      expect(latestLog.deliveryId).toBeDefined();
+      expect(typeof latestLog.deliveryId).toBe('string');
+      // Should be a valid UUID format
+      expect(latestLog.deliveryId).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+      );
+    });
+
+    it('should include deliveryId in the webhook payload body', async () => {
+      const delivery = receivedRequests[receivedRequests.length - 1];
+      expect(delivery.parsed).toBeDefined();
+      expect(delivery.parsed.deliveryId).toBeDefined();
+      expect(typeof delivery.parsed.deliveryId).toBe('string');
+      expect(delivery.parsed.deliveryId).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+      );
+    });
+
+    it('should have unique deliveryIds across separate deliveries', async () => {
+      // Create another task to trigger a second delivery
+      await request(app)
+        .post('/api/tasks')
+        .set('Cookie', user1.cookie)
+        .send({ title: 'Second delivery dedup test task', projectId });
+
+      await new Promise((r) => setTimeout(r, 500));
+
+      const logs = await prisma.webhookLog.findMany({
+        where: { webhookId: dispatchWebhookId },
+        orderBy: { createdAt: 'desc' },
+        take: 2,
+      });
+
+      expect(logs.length).toBe(2);
+      expect(logs[0].deliveryId).not.toBe(logs[1].deliveryId);
     });
 
     it('should not deliver to inactive webhooks', async () => {
@@ -542,6 +635,73 @@ describe('Webhooks', () => {
         const second = new Date(res.body[1].createdAt).getTime();
         expect(first).toBeGreaterThanOrEqual(second);
       }
+    });
+  });
+
+  // -------------------------------------------------------
+  // 5. Log Retention (90-day cleanup)
+  // -------------------------------------------------------
+  describe('Log Retention', () => {
+    let retentionWebhookId: string;
+
+    beforeAll(async () => {
+      // Clean up all webhooks and logs, create a fresh webhook for this suite
+      await prisma.webhookLog.deleteMany();
+      await prisma.webhook.deleteMany({ where: { userId: user1.id } });
+
+      // Insert the retention webhook directly via Prisma (bypasses SSRF validation
+      // intentionally — this test needs a local server to receive deliveries)
+      const retentionSecret = crypto.randomBytes(32).toString('hex');
+      const created = await prisma.webhook.create({
+        data: {
+          userId: user1.id,
+          url: `http://127.0.0.1:${testServerPort}/retention`,
+          events: ['task.created'],
+          secret: retentionSecret,
+        },
+      });
+      retentionWebhookId = created.id;
+      receivedRequests = [];
+    });
+
+    it('should delete logs older than 90 days after a new delivery', async () => {
+      // Insert 3 old log entries with createdAt > 90 days ago
+      const oldDate = new Date(Date.now() - 91 * 24 * 60 * 60 * 1000);
+      await prisma.webhookLog.createMany({
+        data: [
+          { webhookId: retentionWebhookId, event: 'task.created', statusCode: 200, createdAt: oldDate },
+          { webhookId: retentionWebhookId, event: 'task.created', statusCode: 200, createdAt: oldDate },
+          { webhookId: retentionWebhookId, event: 'task.created', error: 'timeout', createdAt: oldDate },
+        ],
+      });
+
+      // Verify the old logs are in the DB before triggering a delivery
+      const beforeCount = await prisma.webhookLog.count({ where: { webhookId: retentionWebhookId } });
+      expect(beforeCount).toBe(3);
+
+      // Trigger a new delivery by creating a task (fires task.created)
+      const taskRes = await request(app)
+        .post('/api/tasks')
+        .set('Cookie', user1.cookie)
+        .send({ title: 'Retention test task', projectId });
+      expect(taskRes.status).toBe(201);
+
+      // Wait for the fire-and-forget delivery AND the async cleanup to complete
+      await new Promise((r) => setTimeout(r, 1000));
+
+      // Old logs (>90 days) should have been deleted; only the new log remains
+      const remainingLogs = await prisma.webhookLog.findMany({
+        where: { webhookId: retentionWebhookId },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+      const oldLogsRemaining = remainingLogs.filter((l) => l.createdAt < cutoff);
+      expect(oldLogsRemaining).toHaveLength(0);
+
+      // The new delivery log should be present
+      expect(remainingLogs.length).toBeGreaterThanOrEqual(1);
+      expect(remainingLogs[0].event).toBe('task.created');
     });
   });
 });

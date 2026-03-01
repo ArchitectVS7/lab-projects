@@ -32,7 +32,7 @@ describe('Phase 3: Tasks & Views', () => {
     // Create test users
     const aliceRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'alice@example.com', password: 'Password1', name: 'Alice' });
+      .send({ email: 'alice@example.com', password: 'TestPass1@secure', name: 'Alice' });
     alice = {
       id: aliceRes.body.user.id,
       email: aliceRes.body.user.email,
@@ -41,7 +41,7 @@ describe('Phase 3: Tasks & Views', () => {
 
     const bobRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'bob@example.com', password: 'Password1', name: 'Bob' });
+      .send({ email: 'bob@example.com', password: 'TestPass1@secure', name: 'Bob' });
     bob = {
       id: bobRes.body.user.id,
       email: bobRes.body.user.email,
@@ -50,7 +50,7 @@ describe('Phase 3: Tasks & Views', () => {
 
     const charlieRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'charlie@example.com', password: 'Password1', name: 'Charlie' });
+      .send({ email: 'charlie@example.com', password: 'TestPass1@secure', name: 'Charlie' });
     charlie = {
       id: charlieRes.body.user.id,
       email: charlieRes.body.user.email,
@@ -259,7 +259,7 @@ describe('Phase 3: Tasks & Views', () => {
       // Create new user not in project
       const danRes = await request(app)
         .post('/api/auth/register')
-        .send({ email: 'dan@example.com', password: 'Password1', name: 'Dan' });
+        .send({ email: 'dan@example.com', password: 'TestPass1@secure', name: 'Dan' });
 
       const res = await request(app)
         .post('/api/tasks')
@@ -588,7 +588,7 @@ describe('Phase 3: Tasks & Views', () => {
       // Create new user with no projects
       const newUserRes = await request(app)
         .post('/api/auth/register')
-        .send({ email: 'newuser@example.com', password: 'Password1', name: 'New User' });
+        .send({ email: 'newuser@example.com', password: 'TestPass1@secure', name: 'New User' });
 
       const res = await request(app)
         .get('/api/tasks')
@@ -847,7 +847,7 @@ describe('Phase 3: Tasks & Views', () => {
       // Dan is not in ownerProject
       const danRes = await request(app)
         .post('/api/auth/register')
-        .send({ email: 'dan2@example.com', password: 'Password1', name: 'Dan2' });
+        .send({ email: 'dan2@example.com', password: 'TestPass1@secure', name: 'Dan2' });
 
       const res = await request(app)
         .put(`/api/tasks/${ownerTask.id}`)

@@ -27,7 +27,7 @@ describe('Phase 2: Projects & Team Management', () => {
     // Create test users
     const aliceRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'alice@example.com', password: 'Password1', name: 'Alice' });
+      .send({ email: 'alice@example.com', password: 'TestPass1@secure', name: 'Alice' });
     alice = {
       id: aliceRes.body.user.id,
       email: aliceRes.body.user.email,
@@ -36,7 +36,7 @@ describe('Phase 2: Projects & Team Management', () => {
 
     const bobRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'bob@example.com', password: 'Password1', name: 'Bob' });
+      .send({ email: 'bob@example.com', password: 'TestPass1@secure', name: 'Bob' });
     bob = {
       id: bobRes.body.user.id,
       email: bobRes.body.user.email,
@@ -45,7 +45,7 @@ describe('Phase 2: Projects & Team Management', () => {
 
     const charlieRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'charlie@example.com', password: 'Password1', name: 'Charlie' });
+      .send({ email: 'charlie@example.com', password: 'TestPass1@secure', name: 'Charlie' });
     charlie = {
       id: charlieRes.body.user.id,
       email: charlieRes.body.user.email,
@@ -750,7 +750,7 @@ describe('Phase 2: Projects & Team Management', () => {
       // Create another user as VIEWER
       const viewerRegRes = await request(app)
         .post('/api/auth/register')
-        .send({ email: 'viewer@example.com', password: 'Password1', name: 'Viewer' });
+        .send({ email: 'viewer@example.com', password: 'TestPass1@secure', name: 'Viewer' });
       viewerId = viewerRegRes.body.user.id;
 
       await request(app)

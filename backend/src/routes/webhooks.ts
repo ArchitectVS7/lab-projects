@@ -10,10 +10,37 @@ import { ALLOWED_WEBHOOK_EVENTS } from '../lib/webhookDispatcher.js';
 const router = Router();
 router.use(authenticate);
 
+// --- SSRF Protection ---
+
+const PRIVATE_IP_PATTERNS = [
+  /^localhost$/i,
+  /^127\./,
+  /^10\./,
+  /^172\.(1[6-9]|2[0-9]|3[01])\./,
+  /^192\.168\./,
+  /^169\.254\./,
+  /^\[?::1\]?$/,
+  /^\[?fe80:/i,
+  /^0\.0\.0\.0/,
+];
+
+function isPrivateUrl(urlString: string): boolean {
+  try {
+    const url = new URL(urlString);
+    const hostname = url.hostname;
+    return PRIVATE_IP_PATTERNS.some(p => p.test(hostname));
+  } catch {
+    return true; // invalid URL = reject
+  }
+}
+
 // --- Zod Schemas ---
 
 const createWebhookSchema = z.object({
-  url: z.string().url('Must be a valid URL'),
+  url: z.string().url('Must be a valid URL').max(2048, 'URL must be 2048 characters or less').refine(
+    url => !isPrivateUrl(url),
+    'Webhook URL must be a public URL'
+  ),
   events: z.array(z.string()).min(1, 'At least one event is required').refine(
     (events) => events.every((e) => (ALLOWED_WEBHOOK_EVENTS as readonly string[]).includes(e)),
     { message: `Events must be one of: ${ALLOWED_WEBHOOK_EVENTS.join(', ')}` }
@@ -21,7 +48,10 @@ const createWebhookSchema = z.object({
 });
 
 const updateWebhookSchema = z.object({
-  url: z.string().url('Must be a valid URL').optional(),
+  url: z.string().url('Must be a valid URL').max(2048, 'URL must be 2048 characters or less').refine(
+    url => !isPrivateUrl(url),
+    'Webhook URL must be a public URL'
+  ).optional(),
   events: z.array(z.string()).min(1, 'At least one event is required').refine(
     (events) => events.every((e) => (ALLOWED_WEBHOOK_EVENTS as readonly string[]).includes(e)),
     { message: `Events must be one of: ${ALLOWED_WEBHOOK_EVENTS.join(', ')}` }
@@ -141,6 +171,16 @@ router.delete('/:id', async (req: AuthRequest, res: Response, next: NextFunction
     await prisma.webhook.delete({
       where: { id: req.params.id },
     });
+
+    // Audit log: webhook deleted (url logged, secret never logged)
+    console.info(JSON.stringify({
+      audit: 'webhook.deleted',
+      webhookId: webhook.id,
+      url: webhook.url,
+      events: webhook.events,
+      actorId: req.userId,
+      timestamp: new Date().toISOString(),
+    }));
 
     res.status(204).send();
   } catch (error) {

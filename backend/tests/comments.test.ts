@@ -36,27 +36,27 @@ describe('Comments System', () => {
     // Create users
     const ownerRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'c-owner@test.com', password: 'Password1', name: 'Owner User' });
+      .send({ email: 'c-owner@test.com', password: 'TestPass1@secure', name: 'Owner User' });
     owner = { id: ownerRes.body.user.id, email: 'c-owner@test.com', cookie: extractAuthCookie(ownerRes)!, name: 'Owner User' };
 
     const adminRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'c-admin@test.com', password: 'Password1', name: 'Admin User' });
+      .send({ email: 'c-admin@test.com', password: 'TestPass1@secure', name: 'Admin User' });
     admin = { id: adminRes.body.user.id, email: 'c-admin@test.com', cookie: extractAuthCookie(adminRes)!, name: 'Admin User' };
 
     const memberRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'c-member@test.com', password: 'Password1', name: 'Member User' });
+      .send({ email: 'c-member@test.com', password: 'TestPass1@secure', name: 'Member User' });
     member = { id: memberRes.body.user.id, email: 'c-member@test.com', cookie: extractAuthCookie(memberRes)!, name: 'Member User' };
 
     const viewerRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'c-viewer@test.com', password: 'Password1', name: 'Viewer User' });
+      .send({ email: 'c-viewer@test.com', password: 'TestPass1@secure', name: 'Viewer User' });
     viewer = { id: viewerRes.body.user.id, email: 'c-viewer@test.com', cookie: extractAuthCookie(viewerRes)!, name: 'Viewer User' };
 
     const outsiderRes = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'c-outsider@test.com', password: 'Password1', name: 'Outsider User' });
+      .send({ email: 'c-outsider@test.com', password: 'TestPass1@secure', name: 'Outsider User' });
     outsider = { id: outsiderRes.body.user.id, email: 'c-outsider@test.com', cookie: extractAuthCookie(outsiderRes)!, name: 'Outsider User' };
 
     // Create project and add members
@@ -244,7 +244,71 @@ describe('Comments System', () => {
       const res = await request(app)
         .post(`/api/tasks/${taskId}/comments`)
         .set('Cookie', member.cookie)
-        .send({ content: 'x'.repeat(5001) });
+        .send({ content: 'x'.repeat(50001) });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject comment containing <script> tag → 400', async () => {
+      const res = await request(app)
+        .post(`/api/tasks/${taskId}/comments`)
+        .set('Cookie', member.cookie)
+        .send({ content: '<script>alert(1)</script>' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Validation error');
+    });
+
+    it('should reject comment containing javascript: protocol → 400', async () => {
+      const res = await request(app)
+        .post(`/api/tasks/${taskId}/comments`)
+        .set('Cookie', member.cookie)
+        .send({ content: '<a href="javascript:alert(1)">click</a>' });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject comment with inline event handler → 400', async () => {
+      const res = await request(app)
+        .post(`/api/tasks/${taskId}/comments`)
+        .set('Cookie', member.cookie)
+        .send({ content: '<img src="x" onerror="alert(1)">' });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject comment containing <iframe> → 400', async () => {
+      const res = await request(app)
+        .post(`/api/tasks/${taskId}/comments`)
+        .set('Cookie', member.cookie)
+        .send({ content: '<iframe src="https://evil.com"></iframe>' });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('should allow normal markdown content → 201', async () => {
+      const res = await request(app)
+        .post(`/api/tasks/${taskId}/comments`)
+        .set('Cookie', member.cookie)
+        .send({ content: '**bold** _italic_ `code` [link](https://example.com)' });
+
+      expect(res.status).toBe(201);
+      expect(res.body.content).toBe('**bold** _italic_ `code` [link](https://example.com)');
+    });
+
+    it('should reject XSS in comment update → 400', async () => {
+      // First create a valid comment
+      const createRes = await request(app)
+        .post(`/api/tasks/${taskId}/comments`)
+        .set('Cookie', member.cookie)
+        .send({ content: 'Safe comment for update test' });
+      expect(createRes.status).toBe(201);
+
+      // Then try to update it with XSS content
+      const res = await request(app)
+        .put(`/api/comments/${createRes.body.id}`)
+        .set('Cookie', member.cookie)
+        .send({ content: '<script>alert("xss")</script>' });
 
       expect(res.status).toBe(400);
     });

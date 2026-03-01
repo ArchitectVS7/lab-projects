@@ -52,7 +52,7 @@ describe('Phase 1: Authentication', () => {
     it('registers with valid data → 201, user returned, cookie set', async () => {
       const res = await request(app)
         .post('/api/auth/register')
-        .send({ email: 'test@example.com', password: 'Password1', name: 'Test User' });
+        .send({ email: 'test@example.com', password: 'P@ssword1234', name: 'Test User' });
 
       expect(res.status).toBe(201);
       expect(res.body.message).toBe('Registration successful');
@@ -73,7 +73,7 @@ describe('Phase 1: Authentication', () => {
     it('sets cookie with correct attributes (httpOnly, path)', async () => {
       const res = await request(app)
         .post('/api/auth/register')
-        .send({ email: 'cookie-test@example.com', password: 'Password1', name: 'Cookie Test' });
+        .send({ email: 'cookie-test@example.com', password: 'P@ssword1234', name: 'Cookie Test' });
 
       const cookie = extractAuthCookie(res);
       expect(cookie).toBeDefined();
@@ -85,7 +85,7 @@ describe('Phase 1: Authentication', () => {
     it('normalizes email to lowercase', async () => {
       const res = await request(app)
         .post('/api/auth/register')
-        .send({ email: 'UPPER@Example.COM', password: 'Password1', name: 'Upper User' });
+        .send({ email: 'UPPER@Example.COM', password: 'P@ssword1234', name: 'Upper User' });
 
       expect(res.status).toBe(201);
       expect(res.body.user.email).toBe('upper@example.com');
@@ -94,7 +94,7 @@ describe('Phase 1: Authentication', () => {
     it('rejects duplicate email → 409', async () => {
       const res = await request(app)
         .post('/api/auth/register')
-        .send({ email: 'test@example.com', password: 'Password1', name: 'Duplicate' });
+        .send({ email: 'test@example.com', password: 'P@ssword1234', name: 'Duplicate' });
 
       expect(res.status).toBe(409);
       expect(res.body.error).toBe('Email already registered');
@@ -103,7 +103,7 @@ describe('Phase 1: Authentication', () => {
     it('rejects invalid email → 400 Zod error', async () => {
       const res = await request(app)
         .post('/api/auth/register')
-        .send({ email: 'not-an-email', password: 'Password1', name: 'Bad Email' });
+        .send({ email: 'not-an-email', password: 'P@ssword1234', name: 'Bad Email' });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Validation error');
@@ -144,21 +144,32 @@ describe('Phase 1: Authentication', () => {
       )).toBe(true);
     });
 
-    it('rejects password shorter than 8 chars → 400', async () => {
+    it('rejects password shorter than 12 chars → 400', async () => {
       const res = await request(app)
         .post('/api/auth/register')
         .send({ email: 'weak4@example.com', password: 'Pass1', name: 'Weak Pass' });
 
       expect(res.status).toBe(400);
       expect(res.body.details.some((d: { message: string }) =>
-        d.message.includes('8 characters')
+        d.message.includes('12 characters')
+      )).toBe(true);
+    });
+
+    it('rejects password without special character → 400', async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({ email: 'weak5@example.com', password: 'Password1234', name: 'Weak Pass' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.details.some((d: { message: string }) =>
+        d.message.includes('special character')
       )).toBe(true);
     });
 
     it('rejects name shorter than 2 chars → 400', async () => {
       const res = await request(app)
         .post('/api/auth/register')
-        .send({ email: 'shortname@example.com', password: 'Password1', name: 'A' });
+        .send({ email: 'shortname@example.com', password: 'P@ssword1234', name: 'A' });
 
       expect(res.status).toBe(400);
       expect(res.body.details.some((d: { field: string }) => d.field === 'name')).toBe(true);
@@ -180,7 +191,7 @@ describe('Phase 1: Authentication', () => {
     it('logs in with valid credentials → 200, user returned with createdAt, cookie set', async () => {
       const res = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'test@example.com', password: 'Password1' });
+        .send({ email: 'test@example.com', password: 'P@ssword1234' });
 
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('Login successful');
@@ -195,7 +206,7 @@ describe('Phase 1: Authentication', () => {
     it('normalizes email on login', async () => {
       const res = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'TEST@Example.COM', password: 'Password1' });
+        .send({ email: 'TEST@Example.COM', password: 'P@ssword1234' });
 
       expect(res.status).toBe(200);
     });
@@ -203,7 +214,7 @@ describe('Phase 1: Authentication', () => {
     it('rejects wrong password → 401, generic message (no user enumeration)', async () => {
       const res = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'test@example.com', password: 'WrongPassword1' });
+        .send({ email: 'test@example.com', password: 'WrongP@ssword1234' });
 
       expect(res.status).toBe(401);
       expect(res.body.error).toBe('Invalid email or password');
@@ -212,7 +223,7 @@ describe('Phase 1: Authentication', () => {
     it('rejects non-existent email → 401, same generic message', async () => {
       const res = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'nobody@example.com', password: 'Password1' });
+        .send({ email: 'nobody@example.com', password: 'P@ssword1234' });
 
       expect(res.status).toBe(401);
       expect(res.body.error).toBe('Invalid email or password');
@@ -221,7 +232,7 @@ describe('Phase 1: Authentication', () => {
     it('rejects invalid email format → 400', async () => {
       const res = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'bad-email', password: 'Password1' });
+        .send({ email: 'bad-email', password: 'P@ssword1234' });
 
       expect(res.status).toBe(400);
     });
@@ -266,7 +277,7 @@ describe('Phase 1: Authentication', () => {
     beforeAll(async () => {
       const loginRes = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'test@example.com', password: 'Password1' });
+        .send({ email: 'test@example.com', password: 'P@ssword1234' });
       authCookie = extractAuthCookie(loginRes)!;
     });
 
@@ -322,7 +333,7 @@ describe('Phase 1: Authentication', () => {
     beforeAll(async () => {
       const loginRes = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'test@example.com', password: 'Password1' });
+        .send({ email: 'test@example.com', password: 'P@ssword1234' });
       authCookie = extractAuthCookie(loginRes)!;
     });
 
@@ -360,7 +371,7 @@ describe('Phase 1: Authentication', () => {
     beforeAll(async () => {
       const loginRes = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'test@example.com', password: 'Password1' });
+        .send({ email: 'test@example.com', password: 'P@ssword1234' });
       authCookie = extractAuthCookie(loginRes)!;
     });
 
@@ -434,7 +445,7 @@ describe('Phase 1: Authentication', () => {
 
       const regRes = await request(app)
         .post('/api/auth/register')
-        .send({ email: 'test@example.com', password: 'Password1', name: 'Test User' });
+        .send({ email: 'test@example.com', password: 'P@ssword1234', name: 'Test User' });
 
       authCookie = extractAuthCookie(regRes)!;
     });
@@ -443,7 +454,7 @@ describe('Phase 1: Authentication', () => {
       const res = await request(app)
         .put('/api/auth/password')
         .set('Cookie', authCookie)
-        .send({ currentPassword: 'Password1', newPassword: 'NewPassword2' });
+        .send({ currentPassword: 'P@ssword1234', newPassword: 'NewP@ssword22' });
 
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('Password updated successfully');
@@ -451,13 +462,13 @@ describe('Phase 1: Authentication', () => {
       // Verify new password works for login
       const loginRes = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'test@example.com', password: 'NewPassword2' });
+        .send({ email: 'test@example.com', password: 'NewP@ssword22' });
       expect(loginRes.status).toBe(200);
 
       // Verify old password no longer works
       const oldLoginRes = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'test@example.com', password: 'Password1' });
+        .send({ email: 'test@example.com', password: 'P@ssword1234' });
       expect(oldLoginRes.status).toBe(401);
     });
 
@@ -465,13 +476,13 @@ describe('Phase 1: Authentication', () => {
       // Re-login with new password
       const loginRes = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'test@example.com', password: 'NewPassword2' });
+        .send({ email: 'test@example.com', password: 'NewP@ssword22' });
       authCookie = extractAuthCookie(loginRes)!;
 
       const res = await request(app)
         .put('/api/auth/password')
         .set('Cookie', authCookie)
-        .send({ currentPassword: 'WrongCurrent1', newPassword: 'AnotherPassword3' });
+        .send({ currentPassword: 'WrongCurrent1', newPassword: 'Anoth3r!Password' });
 
       expect(res.status).toBe(401);
       expect(res.body.error).toBe('Current password is incorrect');
@@ -481,7 +492,7 @@ describe('Phase 1: Authentication', () => {
       const res = await request(app)
         .put('/api/auth/password')
         .set('Cookie', authCookie)
-        .send({ currentPassword: 'NewPassword2', newPassword: 'weak' });
+        .send({ currentPassword: 'NewP@ssword22', newPassword: 'weak' });
 
       expect(res.status).toBe(400);
     });
@@ -489,7 +500,7 @@ describe('Phase 1: Authentication', () => {
     it('returns 401 without authentication', async () => {
       const res = await request(app)
         .put('/api/auth/password')
-        .send({ currentPassword: 'x', newPassword: 'Password1' });
+        .send({ currentPassword: 'x', newPassword: 'P@ssword1234' });
 
       expect(res.status).toBe(401);
     });
@@ -507,14 +518,14 @@ describe('Phase 1: Authentication', () => {
       // Register
       const regRes = await request(app)
         .post('/api/auth/register')
-        .send({ email: 'leak-check@example.com', password: 'Password1', name: 'Leak Check' });
+        .send({ email: 'leak-check@example.com', password: 'P@ssword1234', name: 'Leak Check' });
       expect(regRes.body.user.passwordHash).toBeUndefined();
       expect(regRes.body.user.password_hash).toBeUndefined();
 
       // Login
       const loginRes = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'leak-check@example.com', password: 'Password1' });
+        .send({ email: 'leak-check@example.com', password: 'P@ssword1234' });
       expect(loginRes.body.user.passwordHash).toBeUndefined();
       expect(loginRes.body.user.password_hash).toBeUndefined();
 
@@ -538,7 +549,7 @@ describe('Phase 1: Authentication', () => {
     it('user object always includes id, email, name, avatarUrl', async () => {
       const res = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'leak-check@example.com', password: 'Password1' });
+        .send({ email: 'leak-check@example.com', password: 'P@ssword1234' });
 
       const user = res.body.user;
       if (!user) {

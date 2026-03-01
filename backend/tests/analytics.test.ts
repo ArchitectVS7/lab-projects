@@ -27,7 +27,7 @@ describe('Analytics API', () => {
         // Create User
         const regRes = await request(app)
             .post('/api/auth/register')
-            .send({ email: 'analytics@example.com', password: 'Password1', name: 'Analytics User' });
+            .send({ email: 'analytics@example.com', password: 'TestPass1@secure', name: 'Analytics User' });
 
         authCookie = extractAuthCookie(regRes)!;
         userId = regRes.body.user.id;

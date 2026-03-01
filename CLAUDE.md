@@ -25,8 +25,9 @@ npm run prisma:seed            # Seed database with test data
 
 # Testing
 npm test                       # Run all tests with Jest
-# Or manually with env vars:
-cross-env DATABASE_URL=postgresql://taskapp:taskapp_secret@localhost:5432/taskapp_test?schema=public JWT_SECRET=test-jwt-secret jest --runInBand --forceExit
+npm test -- --testPathPattern=auth   # Run a single test suite (e.g., auth.test.ts)
+npm test -- --testNamePattern="login"  # Run tests matching a name pattern
+# NODE_OPTIONS=--experimental-vm-modules is required (included in npm test script)
 
 # Linting
 npm run lint                   # Check for lint errors
@@ -45,6 +46,8 @@ npm run preview                # Preview production build
 npm test                       # Run Vitest tests
 npm run test:watch             # Run tests in watch mode
 npm run coverage               # Generate coverage report
+# Run a single test file:
+npx vitest run src/components/SomeComponent.test.tsx
 
 # Type checking & linting
 npm run type-check             # TypeScript type checking
@@ -150,6 +153,15 @@ JWT_SECRET=your-secret-key-here
 JWT_EXPIRES_IN=7d
 CORS_ORIGIN=http://localhost:5173
 NODE_ENV=development
+RESEND_API_KEY=re_...           # Email delivery (forgot-password, etc.)
+FRONTEND_URL=http://localhost:5173  # Used for reset-password links
+# Stripe (required for billing features):
+STRIPE_SECRET_KEY=sk_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_PRO_MONTHLY=price_...
+STRIPE_PRICE_PRO_ANNUAL=price_...
+STRIPE_PRICE_TEAM_MONTHLY=price_...
+STRIPE_PRICE_TEAM_ANNUAL=price_...
 ```
 
 **Important**:
@@ -186,6 +198,19 @@ VITE_API_URL=http://localhost:4000
 2. Emit events from route handlers after DB updates
 3. Add socket listener in frontend (`src/hooks/useSocket.ts` or `useTaskSocket.ts`)
 4. Update Zustand store or React Query cache
+
+### Billing & Plan Enforcement
+
+- **Plans**: `PlanTier` enum — `FREE`, `PRO`, `TEAM` (stored on `User.plan`)
+- **Stripe**: `backend/src/lib/stripe.ts` (SDK); `backend/src/routes/billing.ts` (checkout session, customer portal, webhook)
+- **Webhook**: requires raw body — mounted with `express.raw()` BEFORE `express.json()` in `app.ts`
+- **Middleware chain**: `authenticate` → `loadPlan` → `requirePlan('PRO', 'TEAM')` or `requireQuota('agentDelegations')`
+  - `loadPlan`: attaches `req.userPlan` from DB
+  - `requirePlan(...tiers)`: blocks if user's plan not in list
+  - `requireQuota(feature)`: checks usage against `PLAN_LIMITS` (does NOT increment — increment after success via `incrementUsage()`)
+- **Usage tracking**: `backend/src/lib/usage.ts` — `incrementUsage()`, `getUsage()`, `checkFeatureAccess()`
+- **Gated features**: AI delegation, API keys, webhooks (all require PRO/TEAM)
+- **Frontend**: `/billing` route → `BillingPage.tsx`; `UpgradePrompt` component for in-app gates; `PlanBadge` shows current plan
 
 ## Pre-existing Errors Policy
 

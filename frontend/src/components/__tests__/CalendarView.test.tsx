@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -87,12 +87,15 @@ describe('CalendarView', () => {
     },
   });
 
+  // Fixed point in time: noon UTC on the 15th so local date == UTC date in any timezone
+  const FIXED_NOW = new Date('2026-01-15T12:00:00.000Z');
+
   const mockTasks = [
     {
       id: '1',
       title: 'Meeting with team',
       description: 'Discuss project timeline',
-      dueDate: new Date().toISOString(),
+      dueDate: '2026-01-15T12:00:00.000Z', // same day as FIXED_NOW
       status: 'TODO',
       priority: 'HIGH',
       project: { id: 'proj1', name: 'Project Alpha', color: '#3b82f6' },
@@ -101,7 +104,7 @@ describe('CalendarView', () => {
       id: '2',
       title: 'Review documents',
       description: 'Prepare for presentation',
-      dueDate: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+      dueDate: '2026-01-16T12:00:00.000Z', // day after FIXED_NOW, still in January
       status: 'IN_PROGRESS',
       priority: 'MEDIUM',
       project: { id: 'proj2', name: 'Project Beta', color: '#ef4444' },
@@ -112,7 +115,13 @@ describe('CalendarView', () => {
   const mockOnTaskClick = vi.fn();
 
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(FIXED_NOW);
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('renders calendar with tasks', () => {
