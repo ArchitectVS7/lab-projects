@@ -44,23 +44,26 @@ test.describe('Keyboard Shortcuts Modal', () => {
     test('displays navigation shortcuts category', async ({ page }) => {
         await page.keyboard.press('Shift+Slash');
 
-        // Verify navigation section exists (uppercase in actual implementation)
-        await expect(page.getByText('Navigation', { exact: false })).toBeVisible();
+        // Verify navigation section exists (rendered with CSS uppercase)
+        // The actual DOM text is "Navigation" with CSS text-transform: uppercase
+        const modal = page.locator('.fixed.inset-0');
+        await expect(modal.getByText('Navigation')).toBeVisible();
 
         // Verify specific navigation shortcuts
-        await expect(page.getByText(/dashboard/i)).toBeVisible();
-        await expect(page.getByText(/tasks/i)).toBeVisible();
+        await expect(modal.getByText(/go to dashboard/i)).toBeVisible();
+        await expect(modal.getByText(/go to tasks/i)).toBeVisible();
     });
 
     test('displays general shortcuts category', async ({ page }) => {
         await page.keyboard.press('Shift+Slash');
 
-        // Verify general section (uppercase in actual implementation)
-        await expect(page.getByText('General', { exact: false })).toBeVisible();
+        // Verify general section exists
+        const modal = page.locator('.fixed.inset-0');
+        await expect(modal.getByText('General')).toBeVisible();
 
         // Verify specific shortcuts
-        await expect(page.getByText(/keyboard shortcuts/i)).toBeVisible();
-        await expect(page.getByText(/command palette/i)).toBeVisible();
+        await expect(modal.getByText(/show keyboard shortcuts/i)).toBeVisible();
+        await expect(modal.getByText(/open command palette/i)).toBeVisible();
     });
 
     test('displays command palette shortcut', async ({ page }) => {
@@ -100,12 +103,16 @@ test.describe('Keyboard Shortcuts Modal', () => {
     });
 
     test('groups shortcuts by category', async ({ page }) => {
+        // Ensure focus is not on an input element
+        await page.locator('body').click();
         await page.keyboard.press('Shift+Slash');
+        await expect(page.getByRole('heading', { name: /keyboard shortcuts/i })).toBeVisible({ timeout: 3000 });
 
-        // Verify multiple category headings exist
-        await expect(page.getByText('GENERAL')).toBeVisible();
-        await expect(page.getByText('NAVIGATION')).toBeVisible();
-        await expect(page.getByText('COMMAND PALETTE')).toBeVisible();
+        // Verify multiple category headings exist (they are <h3> elements)
+        const modal = page.locator('.fixed.inset-0');
+        await expect(modal.getByRole('heading', { name: 'General' })).toBeVisible();
+        await expect(modal.getByRole('heading', { name: 'Navigation' })).toBeVisible();
+        await expect(modal.getByRole('heading', { name: 'Command Palette' })).toBeVisible();
     });
 
     test('clicking outside modal closes it', async ({ page }) => {

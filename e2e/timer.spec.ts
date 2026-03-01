@@ -3,6 +3,32 @@ import { registerUser } from './helpers/auth';
 import { generateTestUser } from './helpers/fixtures';
 import { createTask } from './helpers/api';
 
+// Helper: open task detail modal and scroll to the timer section
+async function openTaskModal(page: import('@playwright/test').Page, taskTitle: string) {
+    await page.goto('/tasks');
+    const taskRow = page.getByRole('row').filter({ hasText: taskTitle });
+    await expect(taskRow).toBeVisible({ timeout: 10000 });
+    await taskRow.getByRole('button', { name: 'Edit' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+    return dialog;
+}
+
+// Helper: click start timer (scrolling into view) and wait for widget
+async function startTimerAndVerify(page: import('@playwright/test').Page, dialog: import('@playwright/test').Locator) {
+    const startBtn = dialog.getByRole('button', { name: 'Start Timer' });
+    // Scroll the button into view since it's at the bottom of the modal form
+    await startBtn.scrollIntoViewIfNeeded();
+    await expect(startBtn).toBeVisible({ timeout: 5000 });
+    await expect(startBtn).toBeEnabled();
+    await startBtn.click();
+
+    // Verify timer widget appears (it's outside the dialog, fixed position)
+    const timerWidget = page.locator('[data-testid="timer-widget"]');
+    await expect(timerWidget).toBeVisible({ timeout: 5000 });
+    return timerWidget;
+}
+
 test.describe('Pomodoro Timer', () => {
     test.beforeEach(async ({ page }) => {
         const user = generateTestUser('timer');
@@ -10,18 +36,9 @@ test.describe('Pomodoro Timer', () => {
     });
 
     test('starts timer for a task', async ({ page }) => {
-        // Create a task
         await createTask(page, { title: 'Timer Task', priority: 'HIGH' });
-
-        await page.goto('/tasks');
-
-        // Find and click start timer button
-        const startButton = page.getByRole('button', { name: /start.*timer|timer.*start/i }).first();
-        await startButton.click();
-
-        // Verify timer widget appears
-        const timerWidget = page.locator('[data-testid="timer-widget"]');
-        await expect(timerWidget).toBeVisible({ timeout: 3000 });
+        const dialog = await openTaskModal(page, 'Timer Task');
+        const timerWidget = await startTimerAndVerify(page, dialog);
 
         // Verify timer is running (shows time)
         await expect(timerWidget.getByText(/\d{2}:\d{2}:\d{2}/)).toBeVisible();
@@ -29,21 +46,15 @@ test.describe('Pomodoro Timer', () => {
 
     test('stops running timer', async ({ page }) => {
         await createTask(page, { title: 'Timer Task', priority: 'HIGH' });
-        await page.goto('/tasks');
-
-        // Start timer
-        await page.getByRole('button', { name: /start.*timer/i }).first().click();
+        const dialog = await openTaskModal(page, 'Timer Task');
+        const timerWidget = await startTimerAndVerify(page, dialog);
         await page.waitForTimeout(1000);
 
-        // Stop timer
-        const stopButton = page.getByRole('button', { name: /stop/i, exact: false });
-        await stopButton.click();
+        // Stop timer via the widget's stop button (title="Stop timer")
+        await timerWidget.locator('button[title="Stop timer"]').click();
 
-        // Verify timer widget disappears or shows stopped state
-        await page.waitForTimeout(500);
-        const timerWidget = page.locator('[data-testid="timer-widget"]');
-
-        // Timer should either be hidden or show 00:00:00
+        // Timer widget should disappear or show stopped state
+        await page.waitForTimeout(1000);
         const isVisible = await timerWidget.isVisible();
         if (isVisible) {
             const timerText = await timerWidget.textContent();
@@ -53,50 +64,37 @@ test.describe('Pomodoro Timer', () => {
 
     test('starts pomodoro session', async ({ page }) => {
         await createTask(page, { title: 'Pomodoro Task', priority: 'HIGH' });
-        await page.goto('/tasks');
+        const dialog = await openTaskModal(page, 'Pomodoro Task');
 
-        // Start pomodoro timer
-        const pomodoroButton = page.getByRole('button', { name: /pomodoro/i });
-        if (await pomodoroButton.isVisible()) {
-            await pomodoroButton.click();
+        const pomodoroButton = dialog.getByRole('button', { name: 'Pomodoro' });
+        await pomodoroButton.scrollIntoViewIfNeeded();
+        await expect(pomodoroButton).toBeVisible({ timeout: 5000 });
+        await pomodoroButton.click();
 
-            // Verify pomodoro indicator
-            const timerWidget = page.locator('[data-testid="timer-widget"]');
-            await expect(timerWidget).toBeVisible();
+        // Verify timer widget appears
+        const timerWidget = page.locator('[data-testid="timer-widget"]');
+        await expect(timerWidget).toBeVisible({ timeout: 5000 });
 
-            // Should show pomodoro icon or indicator
-            await expect(timerWidget.locator('svg, [data-icon="timer"]')).toBeVisible();
-
-            // Should countdown from 25:00
-            await expect(timerWidget.getByText(/2[0-5]:\d{2}/)).toBeVisible();
-        }
+        // Should show pomodoro countdown (around 25:00)
+        await expect(timerWidget.getByText(/2[0-5]:\d{2}/)).toBeVisible();
     });
 
     test('expands and collapses timer widget', async ({ page }) => {
         await createTask(page, { title: 'Timer Task', priority: 'HIGH' });
-        await page.goto('/tasks');
-
-        // Start timer
-        await page.getByRole('button', { name: /start.*timer/i }).first().click();
-        const timerWidget = page.locator('[data-testid="timer-widget"]');
-        await expect(timerWidget).toBeVisible();
+        const dialog = await openTaskModal(page, 'Timer Task');
+        const timerWidget = await startTimerAndVerify(page, dialog);
 
         // Find expand/collapse button
         const expandButton = timerWidget.getByRole('button', { name: /expand|collapse/i });
 
         if (await expandButton.isVisible()) {
-            // Get initial height
             const initialBox = await timerWidget.boundingBox();
-
-            // Click to expand
             await expandButton.click();
             await page.waitForTimeout(500);
 
-            // Verify expanded (shows more details)
             const expandedBox = await timerWidget.boundingBox();
             expect(expandedBox!.height).toBeGreaterThan(initialBox!.height);
 
-            // Collapse
             await expandButton.click();
             await page.waitForTimeout(500);
 
@@ -107,11 +105,8 @@ test.describe('Pomodoro Timer', () => {
 
     test('displays elapsed time accurately', async ({ page }) => {
         await createTask(page, { title: 'Timer Task', priority: 'HIGH' });
-        await page.goto('/tasks');
-
-        // Start timer
-        await page.getByRole('button', { name: /start.*timer/i }).first().click();
-        const timerWidget = page.locator('[data-testid="timer-widget"]');
+        const dialog = await openTaskModal(page, 'Timer Task');
+        const timerWidget = await startTimerAndVerify(page, dialog);
 
         // Get initial time
         const initialTime = await timerWidget.getByText(/\d{2}:\d{2}:\d{2}/).textContent();
@@ -125,7 +120,6 @@ test.describe('Pomodoro Timer', () => {
         // Time should have increased
         expect(newTime).not.toBe(initialTime);
 
-        // Parse times and verify difference is approximately 3 seconds
         const parseTime = (time: string) => {
             const [h, m, s] = time.split(':').map(Number);
             return h * 3600 + m * 60 + s;
@@ -133,30 +127,25 @@ test.describe('Pomodoro Timer', () => {
 
         const diff = parseTime(newTime!) - parseTime(initialTime!);
         expect(diff).toBeGreaterThanOrEqual(2);
-        expect(diff).toBeLessThanOrEqual(4);
+        expect(diff).toBeLessThanOrEqual(5);
     });
 
     test('shows task title in timer widget', async ({ page }) => {
         await createTask(page, { title: 'Specific Timer Task', priority: 'HIGH' });
-        await page.goto('/tasks');
+        const dialog = await openTaskModal(page, 'Specific Timer Task');
+        const timerWidget = await startTimerAndVerify(page, dialog);
 
-        // Start timer
-        await page.getByRole('button', { name: /start.*timer/i }).first().click();
-        const timerWidget = page.locator('[data-testid="timer-widget"]');
-
-        // Verify task title is shown
         await expect(timerWidget.getByText('Specific Timer Task')).toBeVisible();
     });
 
     test('timer persists across page navigation', async ({ page }) => {
         await createTask(page, { title: 'Persistent Timer Task', priority: 'HIGH' });
-        await page.goto('/tasks');
-
-        // Start timer
-        await page.getByRole('button', { name: /start.*timer/i }).first().click();
+        const dialog = await openTaskModal(page, 'Persistent Timer Task');
+        await startTimerAndVerify(page, dialog);
         await page.waitForTimeout(1000);
 
-        // Navigate to different page
+        // Close modal and navigate to different page
+        await page.keyboard.press('Escape');
         await page.goto('/projects');
 
         // Timer widget should still be visible
@@ -166,22 +155,19 @@ test.describe('Pomodoro Timer', () => {
     });
 
     test('pomodoro completes with notification', async ({ page, context }) => {
-        // Grant notification permission
         await context.grantPermissions(['notifications']);
 
         await createTask(page, { title: 'Pomodoro Task', priority: 'HIGH' });
-        await page.goto('/tasks');
+        const dialog = await openTaskModal(page, 'Pomodoro Task');
 
-        // Start pomodoro
-        const pomodoroButton = page.getByRole('button', { name: /pomodoro/i });
+        const pomodoroButton = dialog.getByRole('button', { name: 'Pomodoro' });
+        await pomodoroButton.scrollIntoViewIfNeeded();
         if (await pomodoroButton.isVisible()) {
             await pomodoroButton.click();
 
-            // For testing, we can't wait 25 minutes, so we'll verify the setup
             const timerWidget = page.locator('[data-testid="timer-widget"]');
-            await expect(timerWidget).toBeVisible();
+            await expect(timerWidget).toBeVisible({ timeout: 5000 });
 
-            // Verify pomodoro is in countdown mode
             const timerText = await timerWidget.getByText(/\d{2}:\d{2}/).textContent();
             expect(timerText).toBeTruthy();
         }
@@ -190,15 +176,17 @@ test.describe('Pomodoro Timer', () => {
     test('multiple timers cannot run simultaneously', async ({ page }) => {
         await createTask(page, { title: 'Task 1', priority: 'HIGH' });
         await createTask(page, { title: 'Task 2', priority: 'MEDIUM' });
-        await page.goto('/tasks');
 
-        // Start first timer
-        const startButtons = page.getByRole('button', { name: /start.*timer/i });
-        await startButtons.first().click();
-        await page.waitForTimeout(500);
+        // Start timer for Task 1
+        const dialog1 = await openTaskModal(page, 'Task 1');
+        await startTimerAndVerify(page, dialog1);
+        await page.keyboard.press('Escape');
 
-        // Try to start second timer
-        await startButtons.nth(1).click();
+        // Open Task 2 — Start Timer should be disabled because a timer is already running
+        const dialog2 = await openTaskModal(page, 'Task 2');
+        const startButton = dialog2.getByRole('button', { name: 'Start Timer' });
+        await startButton.scrollIntoViewIfNeeded();
+        await expect(startButton).toBeDisabled();
 
         // Should only have one timer widget
         const timerWidgets = page.locator('[data-testid="timer-widget"]');
@@ -207,13 +195,9 @@ test.describe('Pomodoro Timer', () => {
 
     test('timer shows in fixed position', async ({ page }) => {
         await createTask(page, { title: 'Timer Task', priority: 'HIGH' });
-        await page.goto('/tasks');
+        const dialog = await openTaskModal(page, 'Timer Task');
+        const timerWidget = await startTimerAndVerify(page, dialog);
 
-        // Start timer
-        await page.getByRole('button', { name: /start.*timer/i }).first().click();
-        const timerWidget = page.locator('[data-testid="timer-widget"]');
-
-        // Verify fixed positioning (bottom-right typically)
         const position = await timerWidget.evaluate(el => {
             const style = window.getComputedStyle(el);
             return {

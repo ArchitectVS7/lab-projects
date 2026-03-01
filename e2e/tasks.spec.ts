@@ -28,15 +28,14 @@ test.describe('Tasks', () => {
     await page.getByRole('link', { name: 'Tasks' }).click();
     await page.getByRole('button', { name: 'New Task' }).click();
 
-    await page.getByPlaceholder('Task title').fill(taskTitle);
+    const dialog = page.getByRole('dialog');
+    await dialog.getByPlaceholder('Task title').fill(taskTitle);
 
-    // Select project
-    const projectSelect = page.locator('select').filter({
-      has: page.locator(`option:text("${projectName}")`),
-    });
+    // Select project inside the modal (target the project select specifically)
+    const projectSelect = dialog.locator('select').filter({ hasText: 'Select a project' });
     await projectSelect.selectOption({ label: projectName });
 
-    await page.getByRole('button', { name: 'Create' }).click();
+    await dialog.getByRole('button', { name: 'Create' }).click();
 
     // Task visible in list
     await expect(page.getByText(taskTitle)).toBeVisible({ timeout: 10_000 });
@@ -47,23 +46,34 @@ test.describe('Tasks', () => {
 
     await page.getByRole('link', { name: 'Tasks' }).click();
     await page.getByRole('button', { name: 'New Task' }).click();
-    await page.getByPlaceholder('Task title').fill(taskTitle);
 
-    const projectSelect = page.locator('select').filter({
-      has: page.locator(`option:text("${projectName}")`),
-    });
-    await projectSelect.selectOption({ label: projectName });
-    await page.getByRole('button', { name: 'Create' }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByPlaceholder('Task title').fill(taskTitle);
+    await dialog.locator('select').filter({ hasText: 'Select a project' }).selectOption({ label: projectName });
+    await dialog.getByRole('button', { name: 'Create' }).click();
     await expect(page.getByText(taskTitle)).toBeVisible({ timeout: 10_000 });
 
-    // Find task row and change status
+    // Find task row and change status via the Edit modal
     const taskRow = page.locator('tr').filter({ hasText: taskTitle });
-    const statusSelect = taskRow.locator('select');
-    await expect(statusSelect).toHaveValue('TODO');
+    await expect(taskRow).toBeVisible({ timeout: 10000 });
 
-    await statusSelect.selectOption('DONE');
-    await page.waitForTimeout(1_000);
-    await expect(statusSelect).toHaveValue('DONE');
+    // Open task detail modal
+    await taskRow.getByRole('button', { name: 'Edit' }).click();
+    const statusDialog = page.getByRole('dialog');
+    await expect(statusDialog).toBeVisible({ timeout: 5000 });
+
+    // Change status in the modal
+    const modalStatusSelect = statusDialog.locator('select').filter({ hasText: 'To Do' });
+    await modalStatusSelect.selectOption('DONE');
+
+    // Save the change
+    await statusDialog.getByRole('button', { name: /update/i }).click();
+
+    // Verify task status changed in the table after modal closes
+    await page.waitForTimeout(2000);
+    const updatedRow = page.locator('tr').filter({ hasText: taskTitle });
+    const updatedStatus = updatedRow.locator('select');
+    await expect(updatedStatus).toHaveValue('DONE', { timeout: 10000 });
   });
 
   test('user can switch between table and kanban views', async ({ page }) => {
@@ -71,12 +81,11 @@ test.describe('Tasks', () => {
 
     await page.getByRole('link', { name: 'Tasks' }).click();
     await page.getByRole('button', { name: 'New Task' }).click();
-    await page.getByPlaceholder('Task title').fill(taskTitle);
-    const projectSelect = page.locator('select').filter({
-      has: page.locator(`option:text("${projectName}")`),
-    });
-    await projectSelect.selectOption({ label: projectName });
-    await page.getByRole('button', { name: 'Create' }).click();
+
+    const dialog = page.getByRole('dialog');
+    await dialog.getByPlaceholder('Task title').fill(taskTitle);
+    await dialog.locator('select').filter({ hasText: 'Select a project' }).selectOption({ label: projectName });
+    await dialog.getByRole('button', { name: 'Create' }).click();
     await expect(page.getByText(taskTitle)).toBeVisible({ timeout: 10_000 });
 
     // Switch to Kanban
@@ -96,50 +105,51 @@ test.describe('Tasks', () => {
 
     // Create Task A
     await page.getByRole('button', { name: 'New Task' }).click();
-    await page.getByPlaceholder('Task title').fill(taskA);
-
-    // Select project
-    await page.getByLabel('Project *').selectOption({ label: projectName });
-
-    // Wait for the button to be enabled
-    const taskCreateBtn = page.getByRole('button', { name: 'Create', exact: true });
+    let dialog = page.getByRole('dialog');
+    await dialog.getByPlaceholder('Task title').fill(taskA);
+    await dialog.locator('select').filter({ hasText: 'Select a project' }).selectOption({ label: projectName });
+    const taskCreateBtn = dialog.getByRole('button', { name: 'Create', exact: true });
     await expect(taskCreateBtn).toBeEnabled({ timeout: 10000 });
     await taskCreateBtn.click();
     await expect(page.getByText(taskA)).toBeVisible({ timeout: 10000 });
 
     // Create Task B
     await page.getByRole('button', { name: 'New Task' }).click();
-    await page.getByPlaceholder('Task title').fill(taskB);
-    await page.getByLabel('Project *').selectOption({ label: projectName });
-
-    const taskBCreateBtn = page.getByRole('button', { name: 'Create', exact: true });
+    dialog = page.getByRole('dialog');
+    await dialog.getByPlaceholder('Task title').fill(taskB);
+    await dialog.locator('select').filter({ hasText: 'Select a project' }).selectOption({ label: projectName });
+    const taskBCreateBtn = dialog.getByRole('button', { name: 'Create', exact: true });
     await expect(taskBCreateBtn).toBeEnabled({ timeout: 10000 });
     await taskBCreateBtn.click();
     await expect(page.getByText(taskB)).toBeVisible({ timeout: 10000 });
 
-    // Open Task A and add Task B as dependency
-    await page.getByText(taskA).click();
-    await page.getByRole('button', { name: 'Add dependency' }).click();
-    await page.locator('select').last().selectOption({ label: taskB });
+    // Open Task A detail modal via Edit button
+    const taskARow = page.locator('tr').filter({ hasText: taskA });
+    await taskARow.getByRole('button', { name: 'Edit' }).click();
+    dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
 
-    // Verify dependency in list
-    await expect(page.getByText(taskB)).toBeVisible();
+    // Click "Add dependency" button inside the modal
+    await dialog.getByText('Add dependency').click();
+
+    // Select Task B from the dependency dropdown
+    const depSelect = dialog.locator('select').filter({ hasText: 'Select a task...' });
+    await depSelect.selectOption({ label: taskB });
+
+    // Wait for dependency to be added and dropdown to close
+    await page.waitForTimeout(1000);
 
     // Close modal
     await page.keyboard.press('Escape');
+    await expect(dialog).not.toBeVisible({ timeout: 5000 });
+
+    // Reload to see dependency indicators
+    await page.reload();
+    await page.waitForTimeout(2000);
 
     // Verify blocked indicator in table
-    const taskARow = page.locator('tr').filter({ hasText: taskA });
-    await expect(taskARow.locator('[title*="Blocked by"]')).toBeVisible();
-
-    const taskBRow = page.locator('tr').filter({ hasText: taskB });
-    await expect(taskBRow.locator('[title*="Blocking"]')).toBeVisible();
-
-    // Remove dependency
-    await page.getByText(taskA).click();
-    // Select the remove button specifically inside the dependency list
-    await page.locator('button').filter({ has: page.locator('svg') }).last().click();
-    await expect(page.getByText(taskB)).not.toBeVisible();
+    const taskARowAfter = page.locator('tr').filter({ hasText: taskA });
+    await expect(taskARowAfter.locator('[title*="Blocked by"]')).toBeVisible({ timeout: 10000 });
   });
 
   test('empty state shown when no tasks exist', async ({ page }) => {

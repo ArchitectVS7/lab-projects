@@ -79,13 +79,13 @@ test.describe('Accessibility Controls', () => {
     test('profile information form exists', async ({ page }) => {
         await expect(page.getByText('Profile Information')).toBeVisible();
         await expect(page.getByLabel('Name')).toBeVisible();
-        await expect(page.getByLabel('Email')).toBeVisible();
+        await expect(page.getByLabel('Avatar URL')).toBeVisible();
     });
 
     test('password change form exists', async ({ page }) => {
-        await expect(page.getByText('Change Password')).toBeVisible();
-        await expect(page.getByLabel('Current Password')).toBeVisible();
-        await expect(page.getByLabel('New Password')).toBeVisible();
-        await expect(page.getByLabel('Confirm New Password')).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Change Password' })).toBeVisible();
+        await expect(page.locator('#currentPassword')).toBeVisible();
+        await expect(page.locator('#newPassword')).toBeVisible();
+        await expect(page.locator('#confirmPassword')).toBeVisible();
     });
 });

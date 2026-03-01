@@ -14,9 +14,10 @@ test.describe('Projects', () => {
     await page.getByRole('link', { name: 'Projects' }).click();
 
     await page.getByRole('button', { name: 'New Project' }).click();
-    await page.getByPlaceholder('Project name').fill(projectName);
-    await page.getByPlaceholder('Optional description').fill('E2E test project');
-    await page.getByRole('button', { name: 'Create' }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByPlaceholder('Project name').fill(projectName);
+    await dialog.getByPlaceholder('Optional description').fill('E2E test project');
+    await dialog.getByRole('button', { name: 'Create', exact: true }).click();
 
     // Modal closes, project visible in list
     await expect(page.getByText(projectName)).toBeVisible({ timeout: 10_000 });
@@ -27,8 +28,9 @@ test.describe('Projects', () => {
 
     await page.getByRole('link', { name: 'Projects' }).click();
     await page.getByRole('button', { name: 'New Project' }).click();
-    await page.getByPlaceholder('Project name').fill(projectName);
-    await page.getByRole('button', { name: 'Create' }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByPlaceholder('Project name').fill(projectName);
+    await dialog.getByRole('button', { name: 'Create', exact: true }).click();
 
     await expect(page.getByText(projectName)).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText('0 tasks').first()).toBeVisible();
@@ -39,9 +41,10 @@ test.describe('Projects', () => {
 
     await page.getByRole('link', { name: 'Projects' }).click();
     await page.getByRole('button', { name: 'New Project' }).click();
-    await page.getByPlaceholder('Project name').fill(projectName);
-    await page.getByPlaceholder('Optional description').fill('Detail view test');
-    await page.getByRole('button', { name: 'Create' }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByPlaceholder('Project name').fill(projectName);
+    await dialog.getByPlaceholder('Optional description').fill('Detail view test');
+    await dialog.getByRole('button', { name: 'Create', exact: true }).click();
     await expect(page.getByText(projectName)).toBeVisible({ timeout: 10_000 });
 
     // Click project to go to detail

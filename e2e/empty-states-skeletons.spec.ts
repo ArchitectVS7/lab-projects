@@ -10,13 +10,9 @@ test.describe('Empty States and Skeletons', () => {
     });
 
     test('displays skeleton loaders during initial page load', async ({ page }) => {
-        // Navigate to tasks page
         await page.goto('/tasks');
 
-        // Skeleton should appear briefly
         const skeleton = page.locator('[class*="skeleton"], [class*="animate-pulse"], .loading');
-
-        // Check if skeleton was visible (might be very brief)
         const skeletonVisible = await skeleton.isVisible().catch(() => false);
 
         // Either skeleton appeared or content loaded immediately
@@ -25,37 +21,30 @@ test.describe('Empty States and Skeletons', () => {
 
     test('shows empty state when no tasks exist', async ({ page }) => {
         await page.goto('/tasks');
-
-        // Wait for loading to complete
         await page.waitForTimeout(1000);
 
-        // Should show empty state
-        await expect(page.getByText(/no tasks|get started|create.*first task/i)).toBeVisible();
+        // EmptyTasksState shows "No tasks yet"
+        await expect(page.getByText('No tasks yet')).toBeVisible();
 
-        // Should show CTA button
-        await expect(page.getByRole('button', { name: /create.*task|new task/i })).toBeVisible();
+        // CTA button says "Create Task"
+        await expect(page.getByRole('button', { name: 'Create Task' })).toBeVisible();
     });
 
     test('shows empty state when no projects exist', async ({ page }) => {
         await page.goto('/projects');
         await page.waitForTimeout(1000);
 
-        // Empty state message
-        await expect(page.getByText(/no projects|create.*project/i)).toBeVisible();
+        // EmptyProjectsState shows "No projects yet"
+        await expect(page.getByText('No projects yet')).toBeVisible();
 
-        // CTA button
-        await expect(page.getByRole('button', { name: /create.*project|new project/i })).toBeVisible();
+        // CTA button says "Create Project"
+        await expect(page.getByRole('button', { name: 'Create Project' })).toBeVisible();
     });
 
     test('transitions from skeleton to content', async ({ page }) => {
-        // Create a task first
         await createTask(page, { title: 'Transition Test Task', priority: 'HIGH' });
 
-        // Navigate to tasks (force reload)
         await page.goto('/tasks', { waitUntil: 'domcontentloaded' });
-
-        // Skeleton might appear
-        const skeleton = page.locator('[class*="skeleton"], [class*="animate-pulse"]');
 
         // Wait for content to load
         await page.waitForTimeout(2000);
@@ -64,6 +53,7 @@ test.describe('Empty States and Skeletons', () => {
         await expect(page.getByText('Transition Test Task')).toBeVisible();
 
         // Skeleton should be gone
+        const skeleton = page.locator('[class*="skeleton"], [class*="animate-pulse"]');
         const skeletonStillVisible = await skeleton.isVisible().catch(() => false);
         expect(skeletonStillVisible).toBeFalsy();
     });
@@ -71,11 +61,9 @@ test.describe('Empty States and Skeletons', () => {
     test('displays table skeleton for task list', async ({ page }) => {
         await page.goto('/tasks', { waitUntil: 'domcontentloaded' });
 
-        // Look for table skeleton structure
         const tableSkeleton = page.locator('[data-testid="table-skeleton"], .table-skeleton');
 
         if (await tableSkeleton.isVisible({ timeout: 500 }).catch(() => false)) {
-            // Verify skeleton has rows
             const skeletonRows = tableSkeleton.locator('tr, [class*="row"]');
             expect(await skeletonRows.count()).toBeGreaterThan(0);
         }
@@ -84,11 +72,9 @@ test.describe('Empty States and Skeletons', () => {
     test('displays card skeleton for project grid', async ({ page }) => {
         await page.goto('/projects', { waitUntil: 'domcontentloaded' });
 
-        // Look for card skeletons
         const cardSkeleton = page.locator('[data-testid="card-skeleton"], .card-skeleton');
 
         if (await cardSkeleton.isVisible({ timeout: 500 }).catch(() => false)) {
-            // Verify skeleton cards exist
             expect(await cardSkeleton.count()).toBeGreaterThan(0);
         }
     });
@@ -97,25 +83,26 @@ test.describe('Empty States and Skeletons', () => {
         await page.goto('/tasks');
         await page.waitForTimeout(1000);
 
-        // Look for empty state illustration
-        const illustration = page.locator('svg, img[alt*="empty"], [data-testid="empty-illustration"]');
+        // Verify empty state heading is visible
+        await expect(page.getByRole('heading', { name: /no tasks yet/i })).toBeVisible();
 
-        if (await illustration.isVisible()) {
-            // Verify it has reasonable size
-            const box = await illustration.boundingBox();
-            expect(box!.width).toBeGreaterThan(50);
-        }
+        // EmptyTasksState has an inline SVG illustration (64x64) as a sibling of the heading
+        const illustration = page.locator('svg[viewBox="0 0 64 64"]');
+        await expect(illustration).toBeVisible();
+
+        const box = await illustration.boundingBox();
+        expect(box!.width).toBeGreaterThan(20);
     });
 
     test('empty state CTA creates new item', async ({ page }) => {
         await page.goto('/tasks');
         await page.waitForTimeout(1000);
 
-        // Click CTA button
-        const ctaButton = page.getByRole('button', { name: /create.*task|new task/i });
+        // Click CTA button "Create Task"
+        const ctaButton = page.getByRole('button', { name: 'Create Task' });
         await ctaButton.click();
 
-        // Should open create modal or form
+        // Should open create modal
         const modal = page.getByRole('dialog');
         await expect(modal).toBeVisible({ timeout: 3000 });
     });
@@ -125,13 +112,13 @@ test.describe('Empty States and Skeletons', () => {
         await page.goto('/tasks');
 
         // Filter by LOW priority (no matches)
-        const priorityFilter = page.locator('select').filter({ hasText: /priority/i });
+        const priorityFilter = page.locator('select').filter({ hasText: /all priorities/i });
         if (await priorityFilter.isVisible()) {
             await priorityFilter.selectOption('LOW');
             await page.waitForTimeout(500);
 
-            // Should show "no results" message
-            await expect(page.getByText(/no.*tasks.*found|no.*matches/i)).toBeVisible();
+            // Should show "No tasks match" message
+            await expect(page.getByText(/no tasks match/i)).toBeVisible();
         }
     });
 
@@ -141,7 +128,6 @@ test.describe('Empty States and Skeletons', () => {
         const skeleton = page.locator('[class*="animate-pulse"]').first();
 
         if (await skeleton.isVisible({ timeout: 500 }).catch(() => false)) {
-            // Verify animation class
             const classes = await skeleton.getAttribute('class');
             expect(classes).toContain('animate-pulse');
         }
@@ -149,19 +135,22 @@ test.describe('Empty States and Skeletons', () => {
 
     test('shows skeleton during search', async ({ page }) => {
         await page.goto('/tasks');
+        await page.waitForTimeout(500);
+
+        // Ensure page has focus before keyboard shortcut
+        await page.locator('body').click();
 
         // Open command palette
-        await page.keyboard.press('Control+K');
+        await page.keyboard.press('Control+KeyK');
         const palette = page.getByRole('dialog');
+        await expect(palette).toBeVisible({ timeout: 5000 });
 
         // Type search query
-        await palette.getByPlaceholder(/type a command|search/i).fill('searching');
+        await palette.getByPlaceholder(/type a command or search/i).fill('searching');
 
         // Skeleton or loading indicator might appear
-        const loading = palette.locator('[class*="loading"], [class*="skeleton"]');
-
-        // This is brief, so we just verify search works
         await page.waitForTimeout(500);
+        // Just verify search works without errors
     });
 
     test('empty state for calendar with no events', async ({ page }) => {
@@ -169,7 +158,6 @@ test.describe('Empty States and Skeletons', () => {
         await page.waitForTimeout(1000);
 
         // Calendar should show but with no events
-        // Look for empty date cells
         const dateCells = page.locator('[class*="border"]');
         expect(await dateCells.count()).toBeGreaterThan(0);
     });
@@ -178,32 +166,32 @@ test.describe('Empty States and Skeletons', () => {
         await page.goto('/focus');
         await page.waitForTimeout(1000);
 
-        // Should show empty state
-        await expect(page.getByText(/no.*tasks.*focus|nothing.*to.*focus/i)).toBeVisible();
+        // FocusPage shows "All priorities complete!" heading when there are no tasks to focus on
+        await expect(page.getByRole('heading', { name: /all priorities complete/i })).toBeVisible();
 
-        // Should suggest creating tasks
-        await expect(page.getByRole('link', { name: /create.*task/i })).toBeVisible();
+        // Should have a "View all tasks" button
+        await expect(page.getByRole('button', { name: /view all tasks/i })).toBeVisible();
     });
 
     test('empty state for dependencies graph', async ({ page }) => {
         await page.goto('/dependencies');
         await page.waitForTimeout(1000);
 
-        // Should show message about no dependencies
-        const emptyMessage = page.getByText(/no.*dependencies|create.*tasks/i);
+        // Should show "No Projects" or "No Dependencies" or a canvas graph
+        const noProjects = page.getByText(/no projects/i);
+        const noDeps = page.getByText(/no dependencies/i);
         const graph = page.locator('canvas');
 
-        // Either empty message or empty graph
-        const hasMessage = await emptyMessage.isVisible().catch(() => false);
+        const hasNoProjects = await noProjects.isVisible().catch(() => false);
+        const hasNoDeps = await noDeps.isVisible().catch(() => false);
         const hasGraph = await graph.isVisible().catch(() => false);
 
-        expect(hasMessage || hasGraph).toBeTruthy();
+        expect(hasNoProjects || hasNoDeps || hasGraph).toBeTruthy();
     });
 
     test('skeleton matches content layout', async ({ page }) => {
         await createTask(page, { title: 'Layout Test', priority: 'HIGH' });
 
-        // Navigate and capture skeleton
         await page.goto('/tasks', { waitUntil: 'domcontentloaded' });
 
         const skeleton = page.locator('[class*="skeleton"]').first();
@@ -215,7 +203,6 @@ test.describe('Empty States and Skeletons', () => {
         const content = page.getByText('Layout Test').locator('..');
         const contentBox = await content.boundingBox().catch(() => null);
 
-        // Skeleton and content should have similar dimensions (within reason)
         if (skeletonBox && contentBox) {
             expect(Math.abs(skeletonBox.width - contentBox.width)).toBeLessThan(100);
         }
@@ -227,7 +214,6 @@ test.describe('Empty States and Skeletons', () => {
         const skeletons = page.locator('[data-testid="skeleton-row"], [class*="skeleton"]');
 
         if (await skeletons.first().isVisible({ timeout: 500 }).catch(() => false)) {
-            // Should show multiple skeleton rows (3-5 typically)
             const count = await skeletons.count();
             expect(count).toBeGreaterThanOrEqual(1);
         }
@@ -237,28 +223,22 @@ test.describe('Empty States and Skeletons', () => {
         await page.goto('/tasks');
         await page.waitForTimeout(1000);
 
-        // Empty state should have proper heading
-        const heading = page.getByRole('heading', { name: /no tasks|empty/i });
+        // EmptyTasksState uses h3 heading "No tasks yet"
+        const heading = page.getByRole('heading', { name: /no tasks yet/i });
+        await expect(heading).toBeVisible();
 
-        if (await heading.isVisible()) {
-            // Verify heading level
-            const tagName = await heading.evaluate(el => el.tagName);
-            expect(['H1', 'H2', 'H3']).toContain(tagName);
-        }
+        const tagName = await heading.evaluate(el => el.tagName);
+        expect(['H1', 'H2', 'H3']).toContain(tagName);
     });
 
     test('skeleton respects reduced motion preference', async ({ page }) => {
-        // Emulate reduced motion preference
         await page.emulateMedia({ reducedMotion: 'reduce' });
-
         await page.goto('/tasks', { waitUntil: 'domcontentloaded' });
 
         const skeleton = page.locator('[class*="skeleton"]').first();
 
         if (await skeleton.isVisible({ timeout: 500 }).catch(() => false)) {
-            // Animation might be disabled
             const classes = await skeleton.getAttribute('class');
-            // This is hard to test, but skeleton should still appear
             expect(classes).toBeTruthy();
         }
     });

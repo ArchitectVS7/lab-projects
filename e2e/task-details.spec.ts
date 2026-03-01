@@ -110,9 +110,9 @@ test.describe('Task Details (Comments & Attachments)', () => {
             // Wait for upload to complete (it shows the filename)
             await expect(dialog.getByText('temp-upload.txt')).toBeVisible({ timeout: 10000 });
 
-            // Delete Attachment
-            const attachmentItem = dialog.locator('li', { hasText: 'temp-upload.txt' });
-            await attachmentItem.getByRole('button', { name: /delete/i }).click();
+            // Delete Attachment — the file row is a div, and delete button has title="Delete"
+            const attachmentItem = dialog.locator('div').filter({ hasText: 'temp-upload.txt' }).first();
+            await attachmentItem.locator('button[title="Delete"]').click();
 
             // Verify Gone
             await expect(dialog.getByText('temp-upload.txt')).not.toBeVisible();
