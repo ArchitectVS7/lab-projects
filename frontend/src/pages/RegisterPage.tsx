@@ -22,6 +22,15 @@ export default function RegisterPage() {
       return;
     }
 
+    if (password.length < 12) {
+      setError('Password must be at least 12 characters');
+      return;
+    }
+    if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password) || !/[^a-zA-Z0-9]/.test(password)) {
+      setError('Password must contain uppercase, lowercase, a digit, and a special character');
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await authApi.register({ email, password, name });
@@ -92,7 +101,7 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="Min 8 chars, uppercase, lowercase, digit"
+                placeholder="Min 12 chars, upper, lower, digit, symbol"
               />
             </div>
 
