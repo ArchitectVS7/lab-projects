@@ -29,6 +29,7 @@ import agentRoutes from './routes/agents.js';
 import calendarRoutes from './routes/calendar.js';
 import importRoutes from './routes/import.js';
 import billingRoutes from './routes/billing.js';
+import questRoutes from './routes/quests.js';
 import { apiKeyRateLimiter } from './middleware/apiKeyRateLimiter.js';
 import { userRateLimiter, tryAuthenticate } from './middleware/userRateLimiter.js';
 import specs from './lib/swagger.js';
@@ -115,6 +116,7 @@ app.use('/api/agents', agentRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/import', importRoutes);
 app.use('/api/billing', billingRoutes);
+app.use('/api/quests', questRoutes);
 
 // Health check -- verifies database connectivity
 app.get('/health', async (_req, res) => {
