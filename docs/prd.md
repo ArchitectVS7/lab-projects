@@ -163,7 +163,24 @@ TaskMan is a full-stack task management platform that transforms productivity th
 - [ ] Agent delegations: rewritable subtasks, research, code review suggestions
 - [ ] Agent status notifications (per-task real-time via WebSocket)
 - [ ] Cost model: PRO tier gets N free delegations/month, TEAM tier gets more
-- [ ] Fallback on API/auth failure (task marked in FAILED, user can retry)
+- [ ] Fallback on API/auth failure: task marked FAILED with error message displayed in queue UI; user can retry via "Retry" button; failed delegations do not count against monthly quota; if Claude API is unreachable after 3 attempts with exponential backoff (2s, 4s, 8s), delegation permanently marked FAILED with `failureReason` stored for support diagnosis
+
+#### AI Agent Scope and Limitations
+
+Agents operate as an **advisory and draft-generation layer only** — they do not take autonomous actions on external systems. Specifically:
+
+| Capability | Supported | Notes |
+|------------|-----------|-------|
+| Subtask decomposition | Yes | Agent proposes subtasks; user must approve before creation |
+| Research summarization | Yes | Agent retrieves context from task history and linked comments |
+| Code review suggestions | Yes | Draft feedback on code snippets pasted into the task description |
+| Writing draft descriptions | Yes | Agent rewrites vague task descriptions into structured acceptance criteria |
+| Direct file or codebase access | No | Agent has no external tool calls; operates on task data only |
+| Autonomous task status changes | No | Agent cannot mark tasks complete; changes require explicit user action |
+| Sending notifications on behalf of user | No | Agents cannot @mention or email team members |
+| Integrating with external APIs | No | No OAuth tokens or secrets are accessible to agents |
+
+The agent receives: the task title, description, comments, assignee, priority, and project context (up to 15 most recent activity log entries). It does not receive: user credentials, API keys, file attachments, or data from other users' tasks outside the project.
 
 #### AI Insights
 - [ ] Daily/weekly summarization of productivity patterns
@@ -185,11 +202,30 @@ TaskMan is a full-stack task management platform that transforms productivity th
 
 #### Webhooks
 - [ ] Project-level webhook subscriptions (PRO+ feature)
-- [ ] Events: task.created, task.updated, task.completed, comment.added, project_member.added
+- [ ] Events: `task.created`, `task.updated`, `task.completed`, `task.deleted`, `comment.added`, `project_member.added`, `project_member.removed`, `agent_delegation.completed`, `agent_delegation.failed`
 - [ ] Webhook payload with full task context and change delta
-- [ ] Delivery retry logic (exponential backoff, max 5 retries)
-- [ ] Delivery log with success/failure status and timestamps
+- [ ] Delivery retry logic (exponential backoff: 10s, 30s, 2m, 10m, 30m — max 5 retries over ~43 minutes)
+- [ ] Delivery log with success/failure status, HTTP response code, response body (truncated at 2KB), and timestamps
 - [ ] IP whitelisting option for enterprise users
+- [ ] Webhook secret (HMAC-SHA256 signature in `X-TaskMan-Signature` header) for payload verification
+- [ ] Configurable per-event filtering: subscribers select which event types they receive
+
+**Payload schema** (all events share this envelope):
+
+```json
+{
+  "event": "task.completed",
+  "timestamp": "2026-03-07T14:23:00Z",
+  "project_id": "proj_...",
+  "actor": { "id": "usr_...", "name": "Jordan" },
+  "data": {
+    "task": { "id": "task_...", "title": "...", "status": "Done", "priority": "High" },
+    "changes": { "status": { "from": "In Progress", "to": "Done" } }
+  }
+}
+```
+
+Fields present in `data` vary by event type; `changes` is omitted for `task.created` and `task.deleted`.
 
 #### API Keys
 - [ ] User-generated API keys with scopes (READ_TASKS, WRITE_TASKS, READ_PROJECTS, etc.)
@@ -270,6 +306,136 @@ TaskMan is a full-stack task management platform that transforms productivity th
 - [ ] 180-day retention on activity logs, 90-day on webhook logs
 - [ ] GDPR data export endpoint (JSON dump of all user data)
 - [ ] Account deletion with 30-day grace period
+
+---
+
+## Data Model Summary
+
+The full Prisma schema lives in `backend/prisma/schema.prisma` and is documented in [docs/architecture.md](./architecture.md). The 28 core models are grouped below for quick reference.
+
+| Group | Models | Notes |
+|-------|--------|-------|
+| **Identity** | `User`, `ApiKey` | Users own projects; API keys scoped per user |
+| **Projects** | `Project`, `ProjectMember` | Role: OWNER > ADMIN > MEMBER > VIEWER |
+| **Tasks** | `Task`, `TaskDependency`, `RecurringTask`, `TaskTag`, `Tag`, `Attachment`, `CustomFieldDefinition`, `CustomFieldValue`, `TimeEntry`, `Comment`, `ActivityLog` | Core entity group |
+| **Gamification** | `Achievement`, `UserAchievement`, `UserQuest`, `UserSkill`, `XPLog`, `StreakProtectionLog`, `Domain`, `TaskDomain` | XP, quests, streaks, skills, domains |
+| **Check-ins** | `DailyCheckin` | One record per user per day |
+| **AI** | `AgentDelegation` | Status: QUEUED → IN_PROGRESS → COMPLETED / FAILED |
+| **Notifications** | `Notification` | In-app; email via Resend |
+| **Integrations** | `Webhook`, `WebhookLog` | Per-project, PRO+ |
+| **Billing** | Stripe-managed; `User.plan` (FREE / PRO / TEAM) | No billing model in Prisma; Stripe is source of truth |
+
+Key field conventions: all PKs are `cuid()`; all timestamps are UTC; `ActivityLog` records carry `userId`, `taskId`, `action`, `field`, `oldValue`, `newValue`. See architecture.md for full field-level documentation and index strategy.
+
+---
+
+## Pricing Tiers
+
+| Feature | Free | Pro ($12/mo or $115/yr) | Team ($29/seat/mo or $278/seat/yr) |
+|---------|------|--------------------------|-------------------------------------|
+| Projects | 1 | 5 | Unlimited |
+| Team members per project | 1 (solo) | Up to 5 | Up to 20 per project |
+| Custom fields | 0 | 10 per project | 20 per project |
+| AI agent delegations | 0 | 10 / month | 50 / month (pooled per team) |
+| API keys | 0 | 3 | 10 |
+| Webhooks | 0 | 2 per project | 10 per project |
+| File attachments | 0 | 500 MB / month | 2 GB / month |
+| Calendar sync | Google only (read) | Google + Outlook + Apple | Google + Outlook + Apple (bidirectional in v2.1) |
+| Priority support | No | Email | Dedicated Slack channel |
+| Annual discount | N/A | 20% (pay $115 vs $144) | 20% (pay $278 vs $348 per seat) |
+| Free trial | 14-day Pro trial (no card required for first 7 days) | — | 14-day Team trial |
+| Seat billing | N/A | N/A | Prorated on add/remove; billed monthly |
+
+**Plan enforcement:** Enforced at the route layer via `requirePlan()` and `requireQuota()` middleware (see `backend/src/middleware/`). Attempting a gated action as a Free user returns HTTP 402 with an upgrade prompt payload.
+
+---
+
+## Performance and Scalability Requirements
+
+| Requirement | Target | Notes |
+|-------------|--------|-------|
+| API p95 response time | < 300 ms | For reads (GET /tasks, GET /projects) |
+| API p95 response time | < 500 ms | For writes (task create, status update) |
+| Concurrent authenticated users | 500 simultaneous | Single Railway instance; horizontal scaling at 1,000+ |
+| Tasks per project | Up to 10,000 | Pagination required beyond 200 per list response |
+| WebSocket connections | 500 concurrent | Socket.io with sticky sessions |
+| Webhook delivery throughput | 100 events/minute per project | Queued via in-process job; Redis queue at scale |
+| Rate limits (API keys) | 10 req/sec per key, 300 req/min per session | Enforced via token bucket middleware |
+| Database connection pool | 10 connections (Prisma default) | Increase to 20 at 200+ concurrent users |
+| Email (Resend) | Daily digest: < 5 min latency; transactional: < 30 sec | Via Resend webhooks for delivery status |
+
+**Scaling strategy:** Railway auto-deploy with horizontal scaling triggers at 80% CPU or 500+ concurrent WebSocket connections. PostgreSQL remains single-instance with read replicas added at 1,000+ DAU.
+
+---
+
+## Security and Compliance
+
+### Data Encryption
+
+- **At rest:** PostgreSQL data encrypted at rest by Railway (AES-256). File attachments stored with provider-level encryption.
+- **In transit:** TLS 1.2+ enforced on all connections; HSTS header set on production.
+- **API keys:** Stored as SHA-256 hashes; plaintext shown only once at creation.
+- **Passwords:** bcrypt with cost factor 12.
+
+### GDPR
+
+- Users may request a full data export (JSON) via the account settings page — export generated within 24 hours.
+- Account deletion removes all personal data within 30 days (grace period allows recovery); task content created in shared projects is anonymised (author set to "Deleted User").
+- Data processing agreement (DPA) available to Team plan customers on request.
+- No personal data transferred outside EU/EEA unless user selects a non-EU deployment region (not offered in v1).
+
+### SOC 2 Readiness
+
+- Activity logs retained 180 days; webhook delivery logs retained 90 days.
+- All mutations recorded in `ActivityLog` with actor, resource, action, and old/new values.
+- Access control (OWNER > ADMIN > MEMBER > VIEWER) enforced at route layer with unit tests per role.
+- Structured logging shipped to Railway Log Drain for external SIEM ingestion.
+- SOC 2 Type II audit targeted for Year 2 (post 1,000 Team plan customers).
+
+---
+
+## Mobile Responsiveness
+
+TaskMan is a **responsive web application** targeting browser-based use on mobile devices. No native app exists in v1.
+
+| Breakpoint | Viewport | Adaptations |
+|------------|----------|-------------|
+| `xs` | < 480 px | Single-column layout; sidebar hidden behind hamburger; Kanban shows one column at a time |
+| `sm` | 480–767 px | Two-column Kanban; table view scrolls horizontally; focus mode full-screen |
+| `md` | 768–1023 px | Three-column Kanban; sidebar collapsible; calendar shows week view by default |
+| `lg` | 1024–1279 px | Full sidebar; all views available |
+| `xl` | ≥ 1280 px | Wide layout with optional two-pane task detail |
+
+**Touch targets:** All interactive elements ≥ 44×44 px. Drag-to-status in Kanban uses `dnd-kit` with pointer and touch event support. Quick-add command palette accessible via floating action button on mobile (replacing keyboard shortcut).
+
+**Testing targets:** Chrome on iOS 16+ Safari, Android Chrome 110+. Minimum tested device: iPhone SE (375 px wide), Samsung Galaxy A-series (360 px wide).
+
+---
+
+## Rollout and Migration Strategy
+
+### New User Onboarding
+
+- On first login, users are shown a 3-step guided tour (dismissible): create first project, add first task, complete it for XP.
+- Default domain set ("Work") pre-created; 5 domains total seeded on first `/api/domains` fetch.
+- Free trial of Pro automatically activated for 14 days; no credit card required for the first 7 days.
+
+### Existing User Data Import
+
+TaskMan supports bulk import for users migrating from other tools:
+
+| Source | Format | Mechanism |
+|--------|--------|-----------|
+| CSV (any tool) | `.csv` with columns: title, description, status, priority, due_date, tags | `/api/import/csv` endpoint; field mapping UI |
+| Todoist | JSON export | `/api/import/todoist` — maps projects, tasks, labels, due dates |
+| Linear | CSV export | `/api/import/linear` — maps teams → projects, states → statuses |
+| Asana | CSV export | `/api/import/asana` — maps sections → projects, assignees matched by email |
+
+Import behavior: duplicate detection by title+project (warns, does not auto-merge). Attachments not imported. Time entries not imported. Import creates an `ActivityLog` entry of type `IMPORT` with source and item count.
+
+### Plan Downgrades
+
+When a Team plan downgrades to Pro or Free, excess resources are not deleted immediately. Users receive a 14-day grace period to reduce usage (archive projects, remove members, delete webhooks). After the grace period, the system auto-archives excess projects (oldest first) and deactivates excess webhooks. Archived projects remain readable but not editable.
 
 ---
 

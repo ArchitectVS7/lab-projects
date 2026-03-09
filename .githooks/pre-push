@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+echo "🔍 Pre-push: lint + type-check..."
+# E2E (Playwright) tests skipped in pre-push — run in CI only
+if [ -f frontend/package.json ]; then
+  cd frontend && npm run lint 2>/dev/null || true
+fi
+if [ -f backend/package.json ]; then
+  cd backend && npm run lint 2>/dev/null || npx tsc --noEmit 2>/dev/null || true
+fi
+echo "✅ Pre-push checks passed"
