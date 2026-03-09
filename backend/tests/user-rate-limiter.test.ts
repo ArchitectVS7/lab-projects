@@ -8,8 +8,10 @@
 import request from 'supertest';
 import prisma from '../src/lib/prisma';
 
-// Must be set BEFORE importing app so the limiter is not skipped.
+// Must be set BEFORE importing app so the limiter uses test-friendly limits.
 process.env.TEST_RATE_LIMITER = 'true';
+process.env.RATE_LIMIT_MAX = '5';
+process.env.RATE_LIMIT_WINDOW_MS = '60000';
 
 // Imported after env var is set.
 // eslint-disable-next-line import/first
@@ -48,12 +50,14 @@ describe('Per-user rate limiter', () => {
   afterAll(async () => {
     await prisma.user.deleteMany({ where: { email: TEST_EMAIL } });
     delete process.env.TEST_RATE_LIMITER;
+    delete process.env.RATE_LIMIT_MAX;
+    delete process.env.RATE_LIMIT_WINDOW_MS;
     await prisma.$disconnect();
   });
 
-  it('allows first 300 requests and blocks the 301st with 429', async () => {
-    // Fire 300 requests — all should be allowed (status 200).
-    for (let i = 0; i < 300; i++) {
+  it('allows first 5 requests and blocks the 6th with 429', async () => {
+    // Fire 5 requests — all should be allowed (status 200).
+    for (let i = 0; i < 5; i++) {
       const res = await request(app)
         .get('/api/auth/me')
         .set('Cookie', authCookie);
@@ -62,7 +66,7 @@ describe('Per-user rate limiter', () => {
       expect(res.status).not.toBe(429);
     }
 
-    // The 301st request must be rejected with 429.
+    // The 6th request must be rejected with 429.
     const res = await request(app)
       .get('/api/auth/me')
       .set('Cookie', authCookie);
@@ -70,5 +74,5 @@ describe('Per-user rate limiter', () => {
     expect(res.status).toBe(429);
     expect(res.body).toHaveProperty('error');
     expect(res.body.error).toMatch(/rate limit|429|too many/i);
-  }, 60_000); // generous timeout for 301 sequential requests
+  }, 30_000);
 });

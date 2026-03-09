@@ -55,7 +55,8 @@ export const tryAuthenticate = (req: Request, _res: Response, next: NextFunction
 
 export const userRateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 300,
+  // Read max per-request so tests can override via RATE_LIMIT_MAX env var
+  max: () => parseInt(process.env.RATE_LIMIT_MAX || '300', 10),
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req: AuthRequest) => {

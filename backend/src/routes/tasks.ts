@@ -1,5 +1,4 @@
 import { Router, Response, NextFunction } from 'express';
-import { z } from 'zod';
 import prisma from '../lib/prisma.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
@@ -7,98 +6,11 @@ import { logTaskCreated, logTaskChanges, logTaskDeleted } from '../lib/activityL
 import { getIO } from '../lib/socket.js';
 import { dispatchWebhooks } from '../lib/webhookDispatcher.js';
 import { calculateTaskXP, awardXP } from '../services/xpService.js';
+import { createTaskSchema, updateTaskSchema, bulkStatusSchema } from '../lib/task-schemas.js';
+import { taskInclude, getProjectMembership, canModifyTask, validateUUID } from '../lib/task-helpers.js';
 
 const router = Router();
 router.use(authenticate);
-
-// --- Zod Schemas ---
-
-const createTaskSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(200, 'Title must be 200 characters or less'),
-  description: z.string().max(2000, 'Description must be 2000 characters or less').optional(),
-  projectId: z.string().uuid('Invalid project ID format'),
-  assigneeId: z.string().uuid('Invalid assignee ID format').optional().nullable(),
-  status: z.enum(['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE']).optional(),
-  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
-  dueDate: z.string().datetime().optional().nullable(),
-});
-
-const updateTaskSchema = createTaskSchema.omit({ projectId: true }).partial();
-
-const bulkStatusSchema = z.object({
-  taskIds: z.array(z.string().uuid()),
-  status: z.enum(['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE']),
-});
-
-// --- Helpers ---
-
-const userSelect = {
-  id: true,
-  name: true,
-  avatarUrl: true,
-} as const;
-
-const taskInclude = {
-  project: {
-    select: {
-      id: true,
-      name: true,
-      color: true,
-    },
-  },
-  assignee: {
-    select: userSelect,
-  },
-  creator: {
-    select: userSelect,
-  },
-  tags: {
-    include: {
-      tag: true,
-    },
-  },
-  domains: {
-    include: { domain: true },
-  },
-  agentDelegations: {
-    select: { id: true, agentType: true, status: true },
-  },
-  _count: {
-    select: {
-      dependsOn: true,
-      dependedOnBy: true,
-    },
-  },
-} as const;
-
-async function getProjectMembership(userId: string, projectId: string) {
-  return prisma.projectMember.findUnique({
-    where: { projectId_userId: { projectId, userId } },
-  });
-}
-
-function canModifyTask(
-  membership: { role: string } | null,
-  task: { creatorId: string },
-  userId: string
-): boolean {
-  if (!membership) return false;
-  // OWNER and ADMIN can modify any task in the project
-  if (['OWNER', 'ADMIN'].includes(membership.role)) return true;
-  // MEMBER can only modify tasks they created
-  if (membership.role === 'MEMBER' && task.creatorId === userId) return true;
-  // VIEWER cannot modify tasks
-  return false;
-}
-
-// --- UUID validation helper ---
-const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function validateUUID(id: string, label: string): void {
-  if (!uuidRegex.test(id)) {
-    throw new AppError(`Invalid ${label} format`, 400);
-  }
-}
 
 // --- Routes ---
 

@@ -1,15 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCorners, useDraggable } from '@dnd-kit/core';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { tasksApi, projectsApi, recurringTasksApi, exportApi, domainsApi } from '../lib/api';
 import { useAuthStore } from '../store/auth';
 import { useCelebrationStore } from '../store/celebration';
-import { Plus, Table, Columns3, Calendar as CalendarIcon, CalendarDays, Pencil, Trash2, Repeat, Download, Zap, Loader2, Shield, ShieldAlert, X } from 'lucide-react';
-import { format } from 'date-fns';
+import { Plus, Table, Columns3, Calendar as CalendarIcon, CalendarDays, Download, Zap, Loader2, X } from 'lucide-react';
 import clsx from 'clsx';
-import type { Task, Project, TaskStatus, TaskPriority } from '../types';
+import type { Task, TaskStatus, TaskPriority } from '../types';
 import type { TaskFilters } from '../lib/api';
 import TaskCompletionCelebration from '../components/TaskCompletionCelebration';
 import RecurrencePickerModal, { RecurrenceConfig } from '../components/RecurrencePickerModal';
@@ -19,373 +17,12 @@ import CalendarView from '../components/CalendarView';
 import WeekView from '../components/WeekView';
 import TaskDetailModal from '../components/TaskDetailModal';
 import type { TaskFormData } from '../components/TaskDetailModal';
-import { modalOverlay, modalContent } from '../lib/animations';
 import SmartTaskInput from '../components/SmartTaskInput';
 import DomainPicker from '../components/DomainPicker';
-
-import TaskCard from '../components/TaskCard';
-import KanbanColumn from '../components/KanbanColumn';
-
-// --- Constants ---
-
-const STATUSES: TaskStatus[] = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'];
-
-const STATUS_LABELS: Record<TaskStatus, string> = {
-  TODO: 'To Do',
-  IN_PROGRESS: 'In Progress',
-  IN_REVIEW: 'In Review',
-  DONE: 'Done',
-};
-
-const STATUS_BG: Record<TaskStatus, string> = {
-  TODO: 'bg-gray-400',
-  IN_PROGRESS: 'bg-blue-500',
-  IN_REVIEW: 'bg-yellow-500',
-  DONE: 'bg-green-500',
-};
-
-
-
-const PRIORITY_COLORS: Record<TaskPriority, string> = {
-  LOW: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300',
-  MEDIUM: 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300',
-  HIGH: 'bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-300',
-  URGENT: 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300',
-};
-
-function canEditTask(task: Task, currentUserId: string, projects: Project[]): boolean {
-  const project = projects.find(p => p.id === task.projectId);
-  const membership = project?.members?.find(m => m.userId === currentUserId);
-  if (!membership) return false;
-  if (['OWNER', 'ADMIN'].includes(membership.role)) return true;
-  return membership.role === 'MEMBER' && task.creatorId === currentUserId;
-}
-
-// TaskFormData imported from TaskDetailModal
-
-// --- Delete Confirmation ---
-
-function DeleteConfirmDialog({
-  taskTitle,
-  onClose,
-  onConfirm,
-  isDeleting,
-}: {
-  taskTitle: string;
-  onClose: () => void;
-  onConfirm: () => void;
-  isDeleting: boolean;
-}) {
-  return (
-    <motion.div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-      onClick={onClose}
-      {...modalOverlay}
-    >
-      <motion.div
-        className="glass-card dark:glass-card-dark rounded-lg shadow-xl w-full max-w-sm mx-4 p-6"
-        onClick={(e) => e.stopPropagation()}
-        {...modalContent}
-      >
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Delete Task</h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Are you sure you want to delete <span className="font-medium">"{taskTitle}"</span>?
-        </p>
-        <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md">Cancel</button>
-          <button onClick={onConfirm} disabled={isDeleting}
-            className="px-4 py-2 text-sm text-white bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800 rounded-md disabled:opacity-50">
-            {isDeleting ? 'Deleting...' : 'Delete'}
-          </button>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-// --- Table View ---
-
-function TableView({
-  tasks,
-  projects,
-  currentUserId,
-  onStatusChange,
-  onEdit,
-  onDelete,
-  onFilterByAssignee,
-  onFilterByCreator,
-}: {
-  tasks: Task[];
-  projects: Project[];
-  currentUserId: string;
-  onStatusChange: (id: string, status: TaskStatus) => void;
-  onEdit: (task: Task) => void;
-  onDelete: (task: Task) => void;
-  onFilterByAssignee?: (userId: string) => void;
-  onFilterByCreator?: (userId: string) => void;
-}) {
-  if (tasks.length === 0) {
-    return <p className="text-center py-8 text-gray-400 dark:text-gray-500">No tasks match the current filters.</p>;
-  }
-
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
-            <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Task</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Status</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Priority</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Project</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Assignee</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Creator</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Dependencies</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Recurrence</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-400">Due</th>
-            <th className="px-4 py-3 text-right font-medium text-gray-600 dark:text-gray-400">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tasks.map((task, index) => (
-            <motion.tr
-              key={task.id}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2 }}
-              className={clsx(
-                'border-b border-gray-100 dark:border-gray-700 transition-colors',
-                index % 2 === 0
-                  ? 'bg-gray-50/50 dark:bg-gray-900/30'
-                  : 'bg-white dark:bg-gray-800/50',
-                'hover:bg-gray-100 dark:hover:bg-gray-700'
-              )}
-            >
-              <td className="px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <div className="font-medium text-gray-900 dark:text-gray-100">{task.title}</div>
-                  {task.isRecurring && (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-300" title="Recurring task">
-                      <Repeat size={10} />
-                    </span>
-                  )}
-                  {(task._count?.dependsOn ?? 0) > 0 && (
-                    <span className="text-red-500 dark:text-red-400" title={`Blocked by ${task._count!.dependsOn} tasks`}>
-                      <ShieldAlert size={14} />
-                    </span>
-                  )}
-                  {(task._count?.dependedOnBy ?? 0) > 0 && (
-                    <span className="text-amber-500 dark:text-amber-400" title={`Blocking ${task._count!.dependedOnBy} tasks`}>
-                      <Shield size={14} />
-                    </span>
-                  )}
-                </div>
-                {task.description && (
-                  <div className="text-gray-500 dark:text-gray-400 text-xs line-clamp-1 mt-0.5">{task.description}</div>
-                )}
-              </td>
-              <td className="px-4 py-3">
-                <select
-                  value={task.status}
-                  onChange={(e) => onStatusChange(task.id, e.target.value as TaskStatus)}
-                  className={clsx('px-2 py-1 rounded text-xs font-medium text-white border-0 cursor-pointer', STATUS_BG[task.status])}
-                >
-                  {STATUSES.map((s) => (
-                    <option key={s} value={s}>{STATUS_LABELS[s]}</option>
-                  ))}
-                </select>
-              </td>
-              <td className="px-4 py-3">
-                <span className={clsx('px-2 py-1 rounded text-xs font-medium', PRIORITY_COLORS[task.priority])}>
-                  {task.priority}
-                </span>
-              </td>
-              <td className="px-4 py-3">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: task.project.color }} />
-                  <span className="text-gray-700 dark:text-gray-300 text-xs">{task.project.name}</span>
-                </div>
-              </td>
-              <td className="px-4 py-3">
-                {task.assignee ? (
-                  <button
-                    onClick={() => onFilterByAssignee?.(task.assignee!.id)}
-                    className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
-                    title={`Filter tasks assigned to ${task.assignee.name}`}
-                  >
-                    <div className="w-5 h-5 rounded-full bg-[var(--primary-base)] flex items-center justify-center text-[10px] font-medium text-white">
-                      {task.assignee.name.charAt(0).toUpperCase()}
-                    </div>
-                    <span className="text-xs text-gray-600 dark:text-gray-400">{task.assignee.name}</span>
-                  </button>
-                ) : (
-                  <span className="text-xs text-gray-400 dark:text-gray-500">--</span>
-                )}
-              </td>
-              <td className="px-4 py-3">
-                {task.creator ? (
-                  <button
-                    onClick={() => onFilterByCreator?.(task.creator!.id)}
-                    className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
-                    title={`Filter tasks created by ${task.creator.name}`}
-                  >
-                    <div className="w-5 h-5 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-[10px] font-medium text-gray-900 dark:text-gray-100">
-                      {task.creator.name.charAt(0).toUpperCase()}
-                    </div>
-                    <span className="text-xs text-gray-600 dark:text-gray-400">{task.creator.name}</span>
-                  </button>
-                ) : (
-                  <span className="text-xs text-gray-400 dark:text-gray-500">--</span>
-                )}
-              </td>
-              <td className="px-4 py-3">
-                <div className="flex items-center gap-2">
-                  {(task._count?.dependsOn ?? 0) > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 font-medium">
-                      ⚠️ {task._count!.dependsOn}
-                    </span>
-                  )}
-                  {(task._count?.dependedOnBy ?? 0) > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-medium">
-                      🔗 {task._count!.dependedOnBy}
-                    </span>
-                  )}
-                  {(task._count?.dependsOn ?? 0) === 0 && (task._count?.dependedOnBy ?? 0) === 0 && (
-                    <span className="text-xs text-gray-400 dark:text-gray-500">--</span>
-                  )}
-                </div>
-              </td>
-              <td className="px-4 py-3">
-                {task.isRecurring && (
-                  <span className="text-[10px] px-2 py-1 rounded font-medium text-purple-700 dark:text-purple-300" style={{ backgroundColor: 'color-mix(in srgb, #a855f7 20%, transparent)' }}>
-                    🔄 Repeats
-                  </span>
-                )}
-                {!task.isRecurring && <span className="text-xs text-gray-400 dark:text-gray-500">--</span>}
-              </td>
-              <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
-                {task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : '--'}
-              </td>
-              <td className="px-4 py-3 text-right">
-                {canEditTask(task, currentUserId, projects) && (
-                  <div className="flex items-center justify-end gap-1">
-                    <button onClick={() => onEdit(task)} className="p-1 text-gray-400 hover:text-[var(--primary-base)]" title="Edit">
-                      <Pencil size={14} />
-                    </button>
-                    <button onClick={() => onDelete(task)} className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400" title="Delete">
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                )}
-              </td>
-            </motion.tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-// --- Kanban Components ---
-
-// KanbanColumn replaced by shared component
-
-function DraggableTaskCard({ task, onEdit, canEdit }: { task: Task; onEdit: (task: Task) => void; canEdit: boolean }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
-  const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
-      className={clsx(isDragging && 'opacity-50 z-50')}
-    >
-      <TaskCard
-        task={task}
-        onEdit={onEdit}
-        canEdit={canEdit}
-        isDraggable={true}
-        showStatus={false} // Status is shown in column header
-      />
-    </div>
-  );
-}
-
-function TaskCardOverlay({ task }: { task: Task }) {
-  return (
-    <div className="w-[280px] opacity-90 rotate-3 cursor-grabbing shadow-2xl">
-      <TaskCard
-        task={task}
-        showStatus={false}
-        isDraggable={true}
-      />
-    </div>
-  );
-}
-
-function KanbanView({
-  tasks,
-  projects,
-  currentUserId,
-  onEdit,
-  onBulkStatus,
-}: {
-  tasks: Task[];
-  projects: Project[];
-  currentUserId: string;
-  onEdit: (task: Task) => void;
-  onBulkStatus: (taskIds: string[], status: TaskStatus) => void;
-}) {
-  const [activeTask, setActiveTask] = useState<Task | null>(null);
-
-  const handleDragStart = (event: DragStartEvent) => {
-    const draggedTask = tasks.find((t) => t.id === event.active.id);
-    setActiveTask(draggedTask || null);
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    setActiveTask(null);
-    const { active, over } = event;
-    if (!over) return;
-
-    const taskId = active.id as string;
-    const newStatus = over.id as string;
-    const task = tasks.find((t) => t.id === taskId);
-
-    if (task && STATUSES.includes(newStatus as TaskStatus) && newStatus !== task.status) {
-      onBulkStatus([taskId], newStatus as TaskStatus);
-    }
-  };
-
-  return (
-    <DndContext collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {STATUSES.map((status) => {
-          const columnTasks = tasks.filter((t) => t.status === status);
-          return (
-            <KanbanColumn key={status} status={status} tasks={columnTasks}>
-              {columnTasks.map((task) => (
-                <DraggableTaskCard
-                  key={task.id}
-                  task={task}
-                  onEdit={onEdit}
-                  canEdit={canEditTask(task, currentUserId, projects)}
-                />
-              ))}
-              {columnTasks.length === 0 && (
-                <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-4">No tasks</p>
-              )}
-            </KanbanColumn>
-          );
-        })}
-      </div>
-      <DragOverlay>
-        {activeTask ? <TaskCardOverlay task={activeTask} /> : null}
-      </DragOverlay>
-    </DndContext>
-  );
-}
+import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog';
+import { TaskTableView } from '../components/TaskTableView';
+import { TaskKanbanView } from '../components/TaskKanbanView';
+import { STATUSES, STATUS_LABELS } from '../lib/taskConstants';
 
 // --- Main Page ---
 
@@ -942,7 +579,7 @@ export default function TasksPage() {
       {tasks.length === 0 && !filters.projectId && !filters.status && !filters.priority && !filters.assigneeId && !filters.creatorId && !filters.hasBlockers && !filters.isBlocking && selectedDomainIds.length === 0 ? (
         <EmptyTasksState onCreateTask={() => { setEditingTask(null); setModalOpen(true); }} />
       ) : viewMode === 'table' ? (
-        <TableView
+        <TaskTableView
           tasks={tasks}
           projects={projects}
           currentUserId={currentUser!.id}
@@ -963,7 +600,7 @@ export default function TasksPage() {
           }}
         />
       ) : viewMode === 'kanban' ? (
-        <KanbanView
+        <TaskKanbanView
           tasks={tasks}
           projects={projects}
           currentUserId={currentUser!.id}
