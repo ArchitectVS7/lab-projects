@@ -75,7 +75,7 @@ docker-compose down            # Stop all services
 - **Error handling**: Centralized error handler with `AppError` class
 - **Rate limiting**: API key-specific rate limiting middleware
 - **Routes**: Organized by feature in `src/routes/`, mounted in `src/app.ts`
-- **Middleware**: Authentication, error handling, and rate limiting in `src/middleware/`
+- **Middleware**: Authentication, error handling, rate limiting, and RBAC in `src/middleware/`
 - **Database**: Prisma ORM with PostgreSQL, schema in `prisma/schema.prisma`
 
 ### Frontend Structure
@@ -208,6 +208,7 @@ VITE_API_URL=http://localhost:4000
   - `loadPlan`: attaches `req.userPlan` from DB
   - `requirePlan(...tiers)`: blocks if user's plan not in list
   - `requireQuota(feature)`: checks usage against `PLAN_LIMITS` (does NOT increment — increment after success via `incrementUsage()`)
+  - `requireProjectRole(...roles)`: project-level RBAC gate — reads `req.params.projectId` (or `.id`), fetches membership, rejects non-members and wrong roles with 403; attaches `req.projectMembership` on success
 - **Usage tracking**: `backend/src/lib/usage.ts` — `incrementUsage()`, `getUsage()`, `checkFeatureAccess()`
 - **Gated features**: AI delegation, API keys, webhooks (all require PRO/TEAM)
 - **Frontend**: `/billing` route → `BillingPage.tsx`; `UpgradePrompt` component for in-app gates; `PlanBadge` shows current plan
